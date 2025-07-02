@@ -1,0 +1,36 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "useUnknownInCatchVariables": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve"
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
+    "strictTemplates": true
+  },
+  "files": [
+    "/Users/dylanmarks-macbookpro/code/niskachat/src/app/components/smart-launch/smart-launch.component.spec.ts",
+    "/Users/dylanmarks-macbookpro/code/niskachat/src/app/components/smart-launch/smart-launch.component.ts",
+    "/Users/dylanmarks-macbookpro/code/niskachat/src/app/services/fhir-client.service.spec.ts",
+    "/Users/dylanmarks-macbookpro/code/niskachat/src/app/services/fhir-client.service.ts"
+  ],
+  "include": []
+}

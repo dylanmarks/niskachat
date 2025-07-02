@@ -38,16 +38,16 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ## Phase 3: SMART Context Handling (Frontend)
 
-- [ ] Use `fhirclient.js` to initialize from launch URL
-- [ ] Retrieve `Patient` resource using token
-- [ ] Store token in memory (not local storage)
-- [ ] Create `FhirClientService` for reusable logic
+- [x] Use `fhirclient.js` to initialize from launch URL
+- [x] Retrieve `Patient` resource using token
+- [x] Store token in memory (not local storage)
+- [x] Create `FhirClientService` for reusable logic
 
 **Tests**
 
-- [ ] `FHIR.oauth2.ready()` resolves
-- [ ] Patient is parsed correctly
-- [ ] Invalid SMART launch fails gracefully
+- [x] `FHIR.oauth2.ready()` resolves
+- [x] Patient is parsed correctly
+- [x] Invalid SMART launch fails gracefully
 
 ---
 
