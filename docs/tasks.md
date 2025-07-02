@@ -53,13 +53,13 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ## Phase 4: Patient Summary Component
 
-- [ ] Create component for demographics (name, DOB, age, gender, MRN)
-- [ ] Integrate with `FhirClientService`
+- [x] Create component for demographics (name, DOB, age, gender, MRN)
+- [x] Integrate with `FhirClientService`
 
 **Tests**
 
-- [ ] Displays all available fields
-- [ ] Handles missing fields gracefully
+- [x] Displays all available fields
+- [x] Handles missing fields gracefully
 
 ---
 
