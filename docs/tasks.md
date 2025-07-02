@@ -23,16 +23,16 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ## Phase 2: OAuth2 SMART Login (Backend)
 
-- [ ] Implement `/auth/launch` endpoint with correct OAuth2 parameters
-- [ ] Implement `/auth/callback` to exchange code for token
-- [ ] Store token securely (session or in-memory)
-- [ ] Handle error scenarios on invalid/missing code
+- [x] Implement `/auth/launch` endpoint with correct OAuth2 parameters
+- [x] Implement `/auth/callback` to exchange code for token
+- [x] Store token securely (session or in-memory)
+- [x] Handle error scenarios on invalid/missing code
 
 **Tests**
 
-- [ ] Redirect includes `client_id`, `redirect_uri`, `scope`, `state`, `code_challenge`
-- [ ] Callback with valid code stores token
-- [ ] Invalid code returns HTTP 400
+- [x] Redirect includes `client_id`, `redirect_uri`, `scope`, `state`, `code_challenge`
+- [x] Callback with valid code stores token
+- [x] Invalid code returns HTTP 400
 
 ---
 
