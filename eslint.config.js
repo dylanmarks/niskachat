@@ -96,4 +96,22 @@ export default config(
       },
     },
   },
+  {
+    files: ["backend/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        Buffer: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+      },
+    },
+    rules: {},
+  },
 );
