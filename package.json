@@ -1,5 +1,5 @@
 {
-  "name": "extreme-angular",
+  "name": "niskachat",
   "engines": {
     "node": "^22.0.0"
   },
@@ -7,10 +7,14 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:backend": "node backend/server.js",
+    "start:dev": "concurrently \"npm run start:backend\" \"npm run start\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadless",
+    "test:backend": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:backend:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "format:base": "prettier --log-level warn --ignore-path=./.gitignore  \"**/*.{js,ts,css,scss,sh,html,md,json,yaml,yml}\"",
     "format": "npm run format:base -- --write",
     "lint": "eslint -f mo \"**/*.{js,ts,html,json}\"",
@@ -33,6 +37,9 @@
     "@angular/forms": "^20.0.4",
     "@angular/platform-browser": "^20.0.4",
     "@angular/router": "^20.0.4",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -44,7 +51,10 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/jasmine": "~5.1.0",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
     "angular-eslint": "20.1.0",
+    "concurrently": "^8.2.2",
     "cspell": "^9.0.2",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
@@ -53,6 +63,7 @@
     "eslint-plugin-jsonc": "^2.20.1",
     "husky": "^9.1.7",
     "jasmine-core": "~5.7.0",
+    "jest": "^29.7.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
@@ -66,6 +77,7 @@
     "stylelint": "^16.20.0",
     "stylelint-config-standard": "^38.0.0",
     "stylelint-config-standard-scss": "^15.0.1",
+    "supertest": "^6.3.4",
     "tsc-files": "^1.1.4",
     "typescript": "~5.8.2",
     "typescript-eslint": "8.33.1"
