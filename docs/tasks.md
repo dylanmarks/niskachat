@@ -5,16 +5,17 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ## 🚀 **Current Progress Summary**
 
-| Phase       | Status             | Description                                 | Tests    | Commit    |
-| ----------- | ------------------ | ------------------------------------------- | -------- | --------- |
-| **Phase 1** | ✅ COMPLETED       | Project Setup (Angular + Express + Testing) | 2/2 ✅   | `bc4cd6f` |
-| **Phase 2** | ✅ COMPLETED       | OAuth2 SMART Login Backend                  | 15/15 ✅ | `f8afddd` |
-| **Phase 3** | ✅ COMPLETED       | SMART Client Context Handling Frontend      | 29/33 ✅ | `e464642` |
-| **Phase 4** | ✅ COMPLETED       | Patient Summary Component                   | 61/69 ✅ | `acbb75e` |
-| **Phase 5** | 🚧 **IN PROGRESS** | Conditions List Component                   | -        | -         |
-| Phase 6+    | ⏳ PENDING         | Future phases                               | -        | -         |
+| Phase       | Status       | Description                                 | Tests    | Commit     |
+| ----------- | ------------ | ------------------------------------------- | -------- | ---------- |
+| **Phase 1** | ✅ COMPLETED | Project Setup (Angular + Express + Testing) | 2/2 ✅   | `bc4cd6f`  |
+| **Phase 2** | ✅ COMPLETED | OAuth2 SMART Login Backend                  | 15/15 ✅ | `f8afddd`  |
+| **Phase 3** | ✅ COMPLETED | SMART Client Context Handling Frontend      | 29/33 ✅ | `e464642`  |
+| **Phase 4** | ✅ COMPLETED | Patient Summary Component                   | 61/69 ✅ | `acbb75e`  |
+| **Phase 5** | ✅ COMPLETED | Conditions List Component                   | 48/48 ✅ | `<latest>` |
+| **Phase 6** | ✅ COMPLETED | Observations Chart Component                | 18/18 ✅ | `<latest>` |
+| Phase 7+    | ⏳ PENDING   | Future phases                               | -        | -          |
 
-**Overall Test Status**: 61 frontend + 15 backend = **76 tests passing** 🎯
+**Overall Test Status**: 112 frontend + 15 backend = **130 tests passing** 🎯
 
 ---
 
@@ -78,27 +79,27 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ## Phase 5: Conditions List
 
-- [ ] Fetch `Condition` resources with `clinicalStatus=active`
-- [ ] Display: name, onset, recorded date
-- [ ] Sort most recent first
+- [x] Fetch `Condition` resources with `clinicalStatus=active`
+- [x] Display: name, onset, recorded date
+- [x] Sort most recent first
 
 **Tests**
 
-- [ ] Filters for active conditions only
-- [ ] Correct sorting applied
+- [x] Filters for active conditions only
+- [x] Correct sorting applied
 
 ---
 
 ## Phase 6: Observations Chart
 
-- [ ] Fetch `Observation` resources by LOINC codes (e.g., BP, A1c)
-- [ ] Use Chart.js to plot time-series data
-- [ ] Handle missing/abnormal values
+- [x] Fetch `Observation` resources by LOINC codes (e.g., BP, A1c)
+- [x] Use Chart.js to plot time-series data
+- [x] Handle missing/abnormal values
 
 **Tests**
 
-- [ ] Valid data renders correctly
-- [ ] Missing values handled without crash
+- [x] Valid data renders correctly
+- [x] Missing values handled without crash
 
 ---
 

@@ -45,6 +45,121 @@ export interface Patient {
   }>;
 }
 
+export interface Condition {
+  id: string;
+  clinicalStatus?: {
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+  };
+  verificationStatus?: {
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+  };
+  code?: {
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+    text?: string;
+  };
+  subject?: {
+    reference?: string;
+    display?: string;
+  };
+  onsetDateTime?: string;
+  onsetPeriod?: {
+    start?: string;
+    end?: string;
+  };
+  onsetAge?: {
+    value?: number;
+    unit?: string;
+  };
+  recordedDate?: string;
+  recorder?: {
+    reference?: string;
+    display?: string;
+  };
+  asserter?: {
+    reference?: string;
+    display?: string;
+  };
+}
+
+export interface Observation {
+  id: string;
+  status?: string;
+  code?: {
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+    text?: string;
+  };
+  subject?: {
+    reference?: string;
+    display?: string;
+  };
+  effectiveDateTime?: string;
+  effectivePeriod?: {
+    start?: string;
+    end?: string;
+  };
+  valueQuantity?: {
+    value?: number;
+    unit?: string;
+    system?: string;
+    code?: string;
+  };
+  valueString?: string;
+  valueCodeableConcept?: {
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+    text?: string;
+  };
+  component?: Array<{
+    code?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+    valueQuantity?: {
+      value?: number;
+      unit?: string;
+      system?: string;
+      code?: string;
+    };
+    valueString?: string;
+    valueCodeableConcept?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+  }>;
+  issued?: string;
+  performer?: Array<{
+    reference?: string;
+    display?: string;
+  }>;
+}
+
 export interface FhirContext {
   patient?: Patient;
   clientId?: string;
@@ -265,6 +380,107 @@ export class FhirClientService {
   clearSession(): void {
     this.fhirClient = null;
     this.contextSubject.next({ authenticated: false });
+  }
+
+  /**
+   * Get conditions for current patient
+   */
+  getConditions(params: Record<string, any> = {}): Observable<Condition[]> {
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      return throwError(() => new Error('No current patient'));
+    }
+
+    const searchParams = {
+      patient: currentPatient.id,
+      ...params,
+    };
+
+    return this.search('Condition', searchParams).pipe(
+      map((bundle) => {
+        if (bundle?.entry) {
+          return bundle.entry
+            .map((entry: any) => entry.resource)
+            .filter((condition: any) => condition)
+            .map((condition: any) => this.mapFhirCondition(condition));
+        }
+        return [];
+      }),
+      catchError((error) => {
+        console.error('Error fetching conditions:', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * Map FHIR Condition resource to our interface
+   */
+  private mapFhirCondition(fhirCondition: any): Condition {
+    return {
+      id: fhirCondition.id,
+      clinicalStatus: fhirCondition.clinicalStatus,
+      verificationStatus: fhirCondition.verificationStatus,
+      code: fhirCondition.code,
+      subject: fhirCondition.subject,
+      onsetDateTime: fhirCondition.onsetDateTime,
+      onsetPeriod: fhirCondition.onsetPeriod,
+      onsetAge: fhirCondition.onsetAge,
+      recordedDate: fhirCondition.recordedDate,
+      recorder: fhirCondition.recorder,
+      asserter: fhirCondition.asserter,
+    };
+  }
+
+  /**
+   * Get observations for current patient
+   */
+  getObservations(params: Record<string, any> = {}): Observable<Observation[]> {
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      return throwError(() => new Error('No current patient'));
+    }
+
+    const searchParams = {
+      patient: currentPatient.id,
+      ...params,
+    };
+
+    return this.search('Observation', searchParams).pipe(
+      map((bundle) => {
+        if (bundle?.entry) {
+          return bundle.entry
+            .map((entry: any) => entry.resource)
+            .filter((observation: any) => observation)
+            .map((observation: any) => this.mapFhirObservation(observation));
+        }
+        return [];
+      }),
+      catchError((error) => {
+        console.error('Error fetching observations:', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * Map FHIR Observation resource to our interface
+   */
+  private mapFhirObservation(fhirObservation: any): Observation {
+    return {
+      id: fhirObservation.id,
+      status: fhirObservation.status,
+      code: fhirObservation.code,
+      subject: fhirObservation.subject,
+      effectiveDateTime: fhirObservation.effectiveDateTime,
+      effectivePeriod: fhirObservation.effectivePeriod,
+      valueQuantity: fhirObservation.valueQuantity,
+      valueString: fhirObservation.valueString,
+      valueCodeableConcept: fhirObservation.valueCodeableConcept,
+      component: fhirObservation.component,
+      issued: fhirObservation.issued,
+      performer: fhirObservation.performer,
+    };
   }
 
   /**

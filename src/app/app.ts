@@ -1,12 +1,22 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ConditionsListComponent } from './components/conditions-list/conditions-list.component';
+import { ObservationsChartComponent } from './components/observations-chart/observations-chart.component';
+import { PatientSummaryComponent } from './components/patient-summary/patient-summary.component';
+import { SmartLaunchComponent } from './components/smart-launch/smart-launch.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [
+    RouterOutlet,
+    SmartLaunchComponent,
+    PatientSummaryComponent,
+    ConditionsListComponent,
+    ObservationsChartComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
-  protected title = 'extreme-angular';
+  protected title = 'NiskaChat';
 }
