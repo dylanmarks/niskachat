@@ -17,13 +17,13 @@ Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, w
 
 ## ⚙️ Tech Stack
 
-| Layer       | Tech                                  |
-|-------------|---------------------------------------|
-| Frontend    | Angular 16+, Chart.js, fhirclient.js  |
-| Backend     | Node.js + Express, Jest, Supertest    |
-| Hosting     | GitHub Pages, Netlify, Render, Heroku |
-| Auth        | SMART on FHIR (OAuth2 + PKCE)         |
-| AI Option   | Claude via Bedrock or local LLM       |
+| Layer     | Tech                                  |
+| --------- | ------------------------------------- |
+| Frontend  | Angular 16+, Chart.js, fhirclient.js  |
+| Backend   | Node.js + Express, Jest, Supertest    |
+| Hosting   | GitHub Pages, Netlify, Render, Heroku |
+| Auth      | SMART on FHIR (OAuth2 + PKCE)         |
+| AI Option | Claude via Bedrock or local LLM       |
 
 ---
 
@@ -41,13 +41,13 @@ Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, w
 
 ## ✅ Success Criteria
 
-| Metric                          | Target                     |
-|--------------------------------|----------------------------|
-| Time to patient view post-login| < 10 seconds               |
-| Resource parsing accuracy      | 100% by `resourceType`     |
-| Compatibility                  | SMART R4, GCP FHIR         |
-| Security                       | No client secrets exposed  |
-| LLM cost per summary (optional)| <$0.10                     |
+| Metric                          | Target                    |
+| ------------------------------- | ------------------------- |
+| Time to patient view post-login | < 10 seconds              |
+| Resource parsing accuracy       | 100% by `resourceType`    |
+| Compatibility                   | SMART R4, GCP FHIR        |
+| Security                        | No client secrets exposed |
+| LLM cost per summary (optional) | <$0.10                    |
 
 ---
 
@@ -101,3 +101,4 @@ npm run dev
 cd ../frontend
 npm install
 ng serve
+```
