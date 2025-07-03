@@ -587,13 +587,29 @@ export class FhirClientService {
    * Get observations for current patient
    */
   getObservations(params: Record<string, any> = {}): Observable<Observation[]> {
+    console.log(
+      'FhirClientService: getObservations called with params:',
+      params,
+    );
+
     const currentPatient = this.getCurrentPatient();
+    console.log('FhirClientService: Current patient:', currentPatient);
+
     if (!currentPatient) {
+      console.log('FhirClientService: No current patient, returning error');
       return throwError(() => new Error('No current patient'));
     }
 
     // If in offline mode, return offline data
     if (this.isOfflineMode() && this.offlineData) {
+      console.log(
+        'FhirClientService: In offline mode, returning offline observations',
+      );
+      console.log(
+        'FhirClientService: Number of offline observations:',
+        this.offlineData.observations.length,
+      );
+
       let observations = this.offlineData.observations;
 
       // Apply basic filtering based on code parameter (LOINC codes)
@@ -606,9 +622,16 @@ export class FhirClientService {
         });
       }
 
+      console.log(
+        'FhirClientService: Returning filtered observations:',
+        observations.length,
+      );
       return of(observations);
     }
 
+    console.log(
+      'FhirClientService: Not in offline mode, attempting online search',
+    );
     const searchParams = {
       patient: currentPatient.id,
       ...params,
@@ -739,12 +762,22 @@ export class FhirClientService {
    * Set offline mode with uploaded FHIR Bundle data
    */
   setOfflineMode(data: OfflineModeData): void {
+    console.log('FhirClientService: setOfflineMode called with data:', data);
+    console.log(
+      'FhirClientService: Number of observations in offline data:',
+      data.observations.length,
+    );
+
     this.offlineData = data;
-    this.contextSubject.next({
+    const newContext = {
       patient: data.patient,
       authenticated: true,
       isOfflineMode: true,
-    });
+    };
+
+    console.log('FhirClientService: Setting context to:', newContext);
+    this.contextSubject.next(newContext);
+    console.log('FhirClientService: Context updated successfully');
   }
 
   /**

@@ -10,6 +10,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 
 import {
   FhirClientService,
@@ -89,12 +90,77 @@ interface GroupedObservations {
           <div class="empty-icon">📊</div>
           <h4>No Observations Found</h4>
           <p>No clinical observations are available for this patient.</p>
+
+          <!-- Debug info -->
+          <div class="debug-info">
+            <p><strong>Debug Info:</strong></p>
+            <p>Loading: {{ loading }}</p>
+            <p>Error: {{ error || 'None' }}</p>
+            <p>Observations count: {{ observations.length }}</p>
+            <p>Current context: {{ getCurrentContextInfo() }}</p>
+          </div>
         </div>
 
+        <!-- Table view for all observations -->
         <div
-          *ngIf="!loading && !error && observations.length > 0"
+          *ngIf="
+            !loading &&
+            !error &&
+            observations.length > 0 &&
+            selectedCategory === 'all'
+          "
+          class="observations-table-container"
+        >
+          <div class="observations-summary">
+            <h4>Summary ({{ observations.length }} total observations)</h4>
+            <p>Select a specific type above to view chart visualization</p>
+          </div>
+
+          <div class="table-container">
+            <table class="observations-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Value</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let obs of sortedObservations;
+                    trackBy: trackByObservation
+                  "
+                >
+                  <td class="obs-type">{{ getObservationLabel(obs) }}</td>
+                  <td class="obs-value">{{ formatObservationValue(obs) }}</td>
+                  <td class="obs-date">{{ formatObservationDate(obs) }}</td>
+                  <td class="obs-status">
+                    <span [class]="'status-' + (obs.status || 'unknown')">
+                      {{ obs.status || 'Unknown' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Chart view for filtered observations -->
+        <div
+          *ngIf="
+            !loading &&
+            !error &&
+            observations.length > 0 &&
+            selectedCategory !== 'all'
+          "
           class="chart-container"
         >
+          <div class="chart-header">
+            <h4>{{ getCategoryDisplayName(selectedCategory) }} Trends</h4>
+            <p>{{ getFilteredObservations().length }} observations</p>
+          </div>
           <canvas #chartCanvas></canvas>
         </div>
       </div>
@@ -198,13 +264,6 @@ interface GroupedObservations {
         margin: 0 0 8px 0;
         color: #1f2937;
         font-weight: 600;
-        font-size: 1.25rem;
-      }
-
-      .error-state p,
-      .empty-state p {
-        margin: 0 0 16px 0;
-        color: #6b7280;
       }
 
       .retry-button {
@@ -212,46 +271,150 @@ interface GroupedObservations {
         cursor: pointer;
         border: none;
         border-radius: 6px;
-        background: #3b82f6;
-        padding: 10px 20px;
+        background-color: #3b82f6;
+        padding: 8px 16px;
         color: white;
         font-weight: 500;
         font-size: 0.875rem;
       }
 
       .retry-button:hover {
-        background: #2563eb;
+        background-color: #2563eb;
       }
 
+      /* Table styles */
+      .observations-table-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        min-height: 400px;
+      }
+
+      .observations-summary {
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      .observations-summary h4 {
+        margin: 0 0 8px 0;
+        color: #1f2937;
+        font-weight: 600;
+      }
+
+      .observations-summary p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
+
+      .table-container {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+
+      .observations-table {
+        border-collapse: collapse;
+        background: white;
+        width: 100%;
+      }
+
+      .observations-table th {
+        border-bottom: 1px solid #e5e7eb;
+        background-color: #f8fafc;
+        padding: 12px 16px;
+        color: #374151;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: left;
+      }
+
+      .observations-table td {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 12px 16px;
+        color: #1f2937;
+        font-size: 0.875rem;
+      }
+
+      .observations-table tr:hover {
+        background-color: #f8fafc;
+      }
+
+      .obs-type {
+        color: #1f2937;
+        font-weight: 500;
+      }
+
+      .obs-value {
+        color: #059669;
+        font-weight: 500;
+      }
+
+      .obs-date {
+        color: #6b7280;
+      }
+
+      .obs-status span {
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-weight: 500;
+        font-size: 0.75rem;
+        text-transform: capitalize;
+      }
+
+      .status-final {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+
+      .status-preliminary {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+
+      .status-unknown {
+        background-color: #f3f4f6;
+        color: #6b7280;
+      }
+
+      /* Chart styles */
       .chart-container {
         position: relative;
         width: 100%;
         height: 400px;
       }
 
-      canvas {
-        max-width: 100%;
-        height: 100%;
+      .chart-header {
+        margin-bottom: 16px;
+        text-align: center;
       }
 
-      @media (max-width: 768px) {
-        .observations-chart-container {
-          margin: 8px 0;
-          padding: 16px;
-        }
+      .chart-header h4 {
+        margin: 0 0 4px 0;
+        color: #1f2937;
+        font-weight: 600;
+      }
 
-        .observations-header {
-          flex-direction: column;
-          align-items: stretch;
-        }
+      .chart-header p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
 
-        .observations-controls {
-          justify-content: space-between;
-        }
+      /* Debug styles */
+      .debug-info {
+        margin-top: 16px;
+        border-radius: 6px;
+        background-color: #f3f4f6;
+        padding: 12px;
+        font-size: 0.75rem;
+        text-align: left;
+      }
 
-        .chart-container {
-          height: 300px;
-        }
+      .debug-info p {
+        margin: 4px 0;
+        color: #374151;
       }
     `,
   ],
@@ -267,6 +430,8 @@ export class ObservationsChartComponent
   chartData: ObservationChartData = {};
   selectedCategory = 'all';
   chart: Chart | null = null;
+
+  private destroy$ = new Subject<void>();
 
   // LOINC codes for common observations
   private readonly LOINC_CATEGORIES = {
@@ -296,7 +461,55 @@ export class ObservationsChartComponent
   constructor(private fhirService: FhirClientService) {}
 
   ngOnInit(): void {
-    this.loadObservations();
+    console.log('ObservationsChartComponent: ngOnInit called');
+
+    // Subscribe to context changes to reload observations when patient context is available
+    this.fhirService.context$
+      .pipe(
+        takeUntil(this.destroy$),
+        // Add distinctUntilChanged to prevent unnecessary reloads
+        distinctUntilChanged((prev, curr) => {
+          return (
+            prev.patient?.id === curr.patient?.id &&
+            prev.isOfflineMode === curr.isOfflineMode &&
+            prev.authenticated === curr.authenticated
+          );
+        }),
+      )
+      .subscribe({
+        next: (context) => {
+          console.log('ObservationsChartComponent: Context changed', context);
+
+          if (
+            context.patient &&
+            (context.authenticated || context.isOfflineMode)
+          ) {
+            console.log(
+              'ObservationsChartComponent: Loading observations for patient',
+              context.patient.id,
+            );
+            this.loadObservations();
+          } else {
+            console.log(
+              'ObservationsChartComponent: No patient context available',
+            );
+            // No patient context available, show empty state
+            this.observations = [];
+            this.error = '';
+            this.loading = false;
+            // Clear chart if no patient
+            if (this.chart) {
+              this.chart.destroy();
+              this.chart = null;
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Error subscribing to context changes:', error);
+          this.error = 'Failed to load patient context';
+          this.loading = false;
+        },
+      });
   }
 
   ngAfterViewInit(): void {
@@ -307,25 +520,41 @@ export class ObservationsChartComponent
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     if (this.chart) {
       this.chart.destroy();
     }
   }
 
   loadObservations(): void {
+    console.log('ObservationsChartComponent: loadObservations called');
     this.loading = true;
     this.error = '';
 
     this.fhirService.getObservations().subscribe({
       next: (observations) => {
+        console.log(
+          'ObservationsChartComponent: Received observations',
+          observations,
+        );
+        console.log(
+          'ObservationsChartComponent: Number of observations:',
+          observations.length,
+        );
+
         this.observations = observations;
         this.loading = false;
         this.prepareChartData();
         if (this.chartElement) {
-          this.renderChart();
+          this.safeRenderChart();
         }
       },
       error: (error) => {
+        console.error(
+          'ObservationsChartComponent: Error loading observations',
+          error,
+        );
         this.error = error.message || 'Failed to load observations';
         this.loading = false;
         this.observations = [];
@@ -334,9 +563,20 @@ export class ObservationsChartComponent
   }
 
   onCategoryChange(event: any): void {
-    this.selectedCategory = event.target?.value || event;
-    this.prepareChartData();
-    this.renderChart();
+    const newCategory = event.target?.value || event;
+
+    // Prevent unnecessary processing if category hasn't changed
+    if (this.selectedCategory === newCategory) {
+      return;
+    }
+
+    this.selectedCategory = newCategory;
+
+    // Only process if we have observations
+    if (this.observations.length > 0) {
+      this.prepareChartData();
+      this.safeRenderChart();
+    }
   }
 
   filterObservationsByCategory(
@@ -425,7 +665,7 @@ export class ObservationsChartComponent
     return grouped;
   }
 
-  private getObservationLabel(obs: Observation): string | null {
+  getObservationLabel(obs: Observation): string | null {
     if (obs.code?.text) {
       return obs.code.text;
     }
@@ -552,5 +792,72 @@ export class ObservationsChartComponent
       console.error('Error creating chart:', error);
       this.error = 'Failed to render chart';
     }
+  }
+
+  // Add a method to safely render chart with error handling
+  private safeRenderChart(): void {
+    try {
+      this.renderChart();
+    } catch (error) {
+      console.error('Error rendering chart:', error);
+      this.error = 'Failed to render chart';
+    }
+  }
+
+  // Getter for sorted observations
+  get sortedObservations(): Observation[] {
+    return this.sortObservationsByDate(this.observations);
+  }
+
+  // Track function for ngFor performance
+  trackByObservation(_index: number, obs: Observation): string {
+    return obs.id;
+  }
+
+  // Format observation value for display
+  formatObservationValue(obs: Observation): string {
+    const value = this.extractObservationValue(obs);
+    if (value === null) return 'N/A';
+
+    const unit = obs.valueQuantity?.unit || '';
+    return `${value} ${unit}`.trim();
+  }
+
+  // Format observation date for display
+  formatObservationDate(obs: Observation): string {
+    const date = this.extractObservationDate(obs);
+    if (!date) return 'N/A';
+
+    return new Date(date).toLocaleDateString();
+  }
+
+  // Get display name for category
+  getCategoryDisplayName(category: string): string {
+    const categoryNames: { [key: string]: string } = {
+      'blood-pressure': 'Blood Pressure',
+      a1c: 'Hemoglobin A1c',
+      glucose: 'Glucose',
+      weight: 'Weight',
+      height: 'Height',
+    };
+
+    return categoryNames[category] || 'Unknown';
+  }
+
+  // Get filtered observations for current category
+  getFilteredObservations(): Observation[] {
+    return this.filterObservationsByCategory(
+      this.observations,
+      this.selectedCategory,
+    );
+  }
+
+  // Get current context information
+  getCurrentContextInfo(): string {
+    const context = this.fhirService.getCurrentContext();
+    if (context.patient) {
+      return `Patient ID: ${context.patient.id}, Offline Mode: ${context.isOfflineMode}, Authenticated: ${context.authenticated}`;
+    }
+    return 'No patient context available';
   }
 }
