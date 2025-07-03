@@ -38,9 +38,7 @@ interface ObservationChartData {
   datasets?: ChartDataset[];
 }
 
-interface GroupedObservations {
-  [key: string]: Observation[];
-}
+type GroupedObservations = Record<string, Observation[]>;
 
 @Component({
   selector: 'app-observations-chart',
@@ -65,6 +63,15 @@ interface GroupedObservations {
             <option value="weight">Weight</option>
             <option value="height">Height</option>
           </select>
+
+          <!-- Back to table button when in chart view -->
+          <button
+            *ngIf="selectedCategory !== 'all'"
+            (click)="backToTable()"
+            class="back-button"
+          >
+            ← Back to Table
+          </button>
         </div>
       </div>
 
@@ -113,7 +120,7 @@ interface GroupedObservations {
         >
           <div class="observations-summary">
             <h4>Summary ({{ observations.length }} total observations)</h4>
-            <p>Select a specific type above to view chart visualization</p>
+            <p>Click on an observation type to view chart visualization</p>
           </div>
 
           <div class="table-container">
@@ -132,8 +139,15 @@ interface GroupedObservations {
                     let obs of sortedObservations;
                     trackBy: trackByObservation
                   "
+                  class="observation-row"
+                  (click)="onObservationClick(obs)"
+                  [title]="
+                    'Click to view chart for ' + getObservationLabel(obs)
+                  "
                 >
-                  <td class="obs-type">{{ getObservationLabel(obs) }}</td>
+                  <td class="obs-type clickable">
+                    {{ getObservationLabel(obs) }}
+                  </td>
                   <td class="obs-value">{{ formatObservationValue(obs) }}</td>
                   <td class="obs-date">{{ formatObservationDate(obs) }}</td>
                   <td class="obs-status">
@@ -161,7 +175,23 @@ interface GroupedObservations {
             <h4>{{ getCategoryDisplayName(selectedCategory) }} Trends</h4>
             <p>{{ getFilteredObservations().length }} observations</p>
           </div>
-          <div class="chart-wrapper">
+
+          <div
+            *ngIf="getFilteredObservations().length === 0"
+            class="no-chart-data"
+          >
+            <p>
+              No observations found for this category.
+              <button (click)="backToTable()" class="link-button">
+                Return to table view
+              </button>
+            </p>
+          </div>
+
+          <div
+            *ngIf="getFilteredObservations().length > 0"
+            class="chart-wrapper"
+          >
             <canvas #chartCanvas></canvas>
           </div>
         </div>
@@ -201,19 +231,17 @@ interface GroupedObservations {
       }
 
       .observations-controls label {
-        color: #6b7280;
+        color: #374151;
         font-weight: 500;
-        font-size: 0.875rem;
       }
 
       .category-select {
-        transition: border-color 0.2s;
-        cursor: pointer;
         border: 1px solid #d1d5db;
         border-radius: 6px;
         background-color: white;
         padding: 8px 12px;
-        font-size: 0.875rem;
+        min-width: 150px;
+        font-size: 14px;
       }
 
       .category-select:focus {
@@ -222,11 +250,23 @@ interface GroupedObservations {
         border-color: #3b82f6;
       }
 
+      .back-button {
+        transition: background-color 0.2s;
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        background-color: #6b7280;
+        padding: 8px 16px;
+        color: white;
+        font-size: 14px;
+      }
+
+      .back-button:hover {
+        background-color: #4b5563;
+      }
+
       .observations-content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 400px;
+        min-height: 300px;
       }
 
       .loading-state,
@@ -284,35 +324,27 @@ interface GroupedObservations {
         background-color: #2563eb;
       }
 
-      /* Table styles */
+      /* Table Styles */
       .observations-table-container {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        width: 100%;
-        min-height: 400px;
-      }
-
-      .observations-summary {
-        margin-bottom: 16px;
-        text-align: center;
+        border-radius: 8px;
+        background: #f9fafb;
+        padding: 16px;
       }
 
       .observations-summary h4 {
         margin: 0 0 8px 0;
         color: #1f2937;
-        font-weight: 600;
       }
 
       .observations-summary p {
-        margin: 0;
+        margin: 0 0 16px 0;
         color: #6b7280;
-        font-size: 0.875rem;
+        font-style: italic;
       }
 
       .table-container {
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
         overflow-x: auto;
       }
 
@@ -320,36 +352,47 @@ interface GroupedObservations {
         border-collapse: collapse;
         background: white;
         width: 100%;
+        font-size: 14px;
       }
 
       .observations-table th {
         border-bottom: 1px solid #e5e7eb;
-        background-color: #f8fafc;
-        padding: 12px 16px;
+        background: #f3f4f6;
+        padding: 12px;
         color: #374151;
         font-weight: 600;
-        font-size: 0.875rem;
         text-align: left;
+      }
+
+      .observation-row {
+        transition: background-color 0.2s;
+        cursor: pointer;
+      }
+
+      .observation-row:hover {
+        background-color: #f9fafb;
+      }
+
+      .observation-row:active {
+        background-color: #f3f4f6;
       }
 
       .observations-table td {
         border-bottom: 1px solid #f3f4f6;
-        padding: 12px 16px;
-        color: #1f2937;
-        font-size: 0.875rem;
+        padding: 12px;
       }
 
-      .observations-table tr:hover {
-        background-color: #f8fafc;
-      }
-
-      .obs-type {
-        color: #1f2937;
+      .obs-type.clickable {
+        color: #3b82f6;
         font-weight: 500;
       }
 
+      .obs-type.clickable:hover {
+        color: #2563eb;
+        text-decoration: underline;
+      }
+
       .obs-value {
-        color: #059669;
         font-weight: 500;
       }
 
@@ -357,65 +400,84 @@ interface GroupedObservations {
         color: #6b7280;
       }
 
-      .obs-status span {
-        border-radius: 12px;
-        padding: 2px 8px;
-        font-weight: 500;
-        font-size: 0.75rem;
-        text-transform: capitalize;
-      }
-
       .status-final {
-        background-color: #d1fae5;
-        color: #065f46;
+        border-radius: 12px;
+        background: #ecfdf5;
+        padding: 2px 8px;
+        color: #10b981;
+        font-weight: 500;
+        font-size: 12px;
       }
 
       .status-preliminary {
-        background-color: #fef3c7;
-        color: #92400e;
+        border-radius: 12px;
+        background: #fffbeb;
+        padding: 2px 8px;
+        color: #f59e0b;
+        font-weight: 500;
+        font-size: 12px;
       }
 
       .status-unknown {
-        background-color: #f3f4f6;
+        border-radius: 12px;
+        background: #f3f4f6;
+        padding: 2px 8px;
         color: #6b7280;
+        font-weight: 500;
+        font-size: 12px;
       }
 
-      /* Chart styles */
+      /* Chart Styles */
       .chart-container {
-        position: relative;
-        width: 100%;
-        min-height: 400px;
+        border-radius: 8px;
+        background: #f9fafb;
+        padding: 16px;
       }
 
       .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 16px;
-        text-align: center;
       }
 
       .chart-header h4 {
-        margin: 0 0 4px 0;
+        margin: 0;
         color: #1f2937;
-        font-weight: 600;
       }
 
       .chart-header p {
         margin: 0;
         color: #6b7280;
-        font-size: 0.875rem;
+        font-size: 14px;
       }
 
       .chart-wrapper {
         position: relative;
-        border-radius: 8px;
-        background-color: #fafafa;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        background: white;
         padding: 16px;
-        width: 100%;
         height: 400px;
       }
 
-      .chart-wrapper canvas {
-        width: 100% !important;
-        height: 100% !important;
+      .no-chart-data {
+        padding: 40px;
+        color: #6b7280;
+        text-align: center;
+      }
+
+      .no-chart-data .link-button {
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: #3b82f6;
+        font-size: inherit;
+        text-decoration: underline;
+      }
+
+      .no-chart-data .link-button:hover {
+        color: #2563eb;
       }
 
       /* Debug styles */
@@ -444,7 +506,7 @@ export class ObservationsChartComponent
   error = '';
   observations: Observation[] = [];
   chartData: ObservationChartData = {};
-  selectedCategory = 'a1c';
+  selectedCategory = 'all';
   chart: Chart | null = null;
 
   private destroy$ = new Subject<void>();
@@ -532,7 +594,9 @@ export class ObservationsChartComponent
     if (this.observations.length > 0) {
       this.prepareChartData();
       // Add small delay to ensure DOM is ready
-      setTimeout(() => this.renderChart(), 100);
+      setTimeout(() => {
+        this.renderChart();
+      }, 100);
     }
   }
 
@@ -564,7 +628,9 @@ export class ObservationsChartComponent
         this.loading = false;
         this.prepareChartData();
         if (this.chartElement) {
-          setTimeout(() => this.safeRenderChart(), 200);
+          setTimeout(() => {
+            this.safeRenderChart();
+          }, 200);
         }
       },
       error: (error) => {
@@ -589,11 +655,13 @@ export class ObservationsChartComponent
 
     this.selectedCategory = newCategory;
 
-    // Only process if we have observations
-    if (this.observations.length > 0) {
+    // Only process if we have observations and we're switching to a chart view
+    if (this.observations.length > 0 && this.selectedCategory !== 'all') {
       this.prepareChartData();
       // Add delay to ensure DOM is ready for chart rendering
-      setTimeout(() => this.safeRenderChart(), 150);
+      setTimeout(() => {
+        this.safeRenderChart();
+      }, 150);
     }
   }
 
@@ -865,7 +933,7 @@ export class ObservationsChartComponent
 
   // Get display name for category
   getCategoryDisplayName(category: string): string {
-    const categoryNames: { [key: string]: string } = {
+    const categoryNames: Record<string, string> = {
       'blood-pressure': 'Blood Pressure',
       a1c: 'Hemoglobin A1c',
       glucose: 'Glucose',
@@ -891,5 +959,46 @@ export class ObservationsChartComponent
       return `Patient ID: ${context.patient.id}, Offline Mode: ${context.isOfflineMode}, Authenticated: ${context.authenticated}`;
     }
     return 'No patient context available';
+  }
+
+  // Add a method to back to table view
+  backToTable(): void {
+    this.selectedCategory = 'all';
+  }
+
+  // Add a method to handle observation click
+  onObservationClick(obs: Observation): void {
+    const category = this.detectObservationCategory(obs);
+    if (category && category !== 'all') {
+      this.selectedCategory = category;
+      this.prepareChartData();
+      // Add delay to ensure DOM is ready for chart rendering
+      setTimeout(() => {
+        this.safeRenderChart();
+      }, 150);
+    }
+  }
+
+  // Method to detect which category an observation belongs to
+  private detectObservationCategory(obs: Observation): string | null {
+    if (!obs.code?.coding) {
+      return null;
+    }
+
+    for (const [category, loincCodes] of Object.entries(
+      this.LOINC_CATEGORIES,
+    )) {
+      const hasMatchingCode = obs.code.coding.some(
+        (coding) =>
+          coding.system === 'http://loinc.org' &&
+          loincCodes.includes(coding.code || ''),
+      );
+
+      if (hasMatchingCode) {
+        return category;
+      }
+    }
+
+    return null;
   }
 }
