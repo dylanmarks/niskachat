@@ -3,8 +3,7 @@ import express from "express";
 
 const router = express.Router();
 
-// In-memory storage for demo purposes (use Redis/database in production)
-const sessions = new Map();
+// Session data is stored per-user via express-session
 
 // SMART on FHIR configuration
 const SMART_CONFIG = {
@@ -48,13 +47,14 @@ router.post("/launch", (req, res) => {
     const state = crypto.randomBytes(16).toString("hex");
     const { codeVerifier, codeChallenge } = generatePKCE();
 
-    // Store session data
-    sessions.set(state, {
+    // Store session data using express-session
+    req.session.sessions = req.session.sessions || {};
+    req.session.sessions[state] = {
       codeVerifier,
       iss: iss || SMART_CONFIG.fhirBaseUrl,
       launch,
       timestamp: Date.now(),
-    });
+    };
 
     // Build authorization URL
     const authParams = new URLSearchParams({
@@ -107,8 +107,8 @@ router.get("/callback", async (req, res) => {
       });
     }
 
-    // Retrieve session data
-    const session = sessions.get(state);
+    // Retrieve session data from express-session
+    const session = req.session.sessions?.[state];
     if (!session) {
       return res.status(400).json({
         error: "Invalid or expired state parameter",
@@ -117,7 +117,7 @@ router.get("/callback", async (req, res) => {
 
     // Clean up expired sessions (older than 10 minutes)
     if (Date.now() - session.timestamp > 10 * 60 * 1000) {
-      sessions.delete(state);
+      delete req.session.sessions[state];
       return res.status(400).json({
         error: "Session expired. Please restart the authorization flow.",
       });
@@ -152,8 +152,8 @@ router.get("/callback", async (req, res) => {
 
     const tokenData = await tokenResponse.json();
 
-    // Store token data securely (extend session)
-    sessions.set(state, {
+    // Store token data securely in session
+    req.session.sessions[state] = {
       ...session,
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
@@ -162,7 +162,7 @@ router.get("/callback", async (req, res) => {
       patient: tokenData.patient,
       scope: tokenData.scope,
       tokenTimestamp: Date.now(),
-    });
+    };
 
     // Return success response
     res.json({
@@ -183,7 +183,7 @@ router.get("/callback", async (req, res) => {
  */
 router.get("/session/:sessionId", (req, res) => {
   const { sessionId } = req.params;
-  const session = sessions.get(sessionId);
+  const session = req.session.sessions?.[sessionId];
 
   if (!session || !session.accessToken) {
     return res
@@ -196,7 +196,7 @@ router.get("/session/:sessionId", (req, res) => {
   const isExpired = session.expiresIn && tokenAge > session.expiresIn * 1000;
 
   if (isExpired) {
-    sessions.delete(sessionId);
+    delete req.session.sessions[sessionId];
     return res.status(401).json({ error: "Token expired" });
   }
 
@@ -214,19 +214,22 @@ router.get("/session/:sessionId", (req, res) => {
  */
 router.delete("/session/:sessionId", (req, res) => {
   const { sessionId } = req.params;
-  const deleted = sessions.delete(sessionId);
+  const exists = req.session.sessions?.[sessionId];
+  if (exists) {
+    delete req.session.sessions[sessionId];
+  }
 
   res.json({
-    message: deleted ? "Session cleared successfully" : "Session not found",
-    cleared: deleted,
+    message: exists ? "Session cleared successfully" : "Session not found",
+    cleared: Boolean(exists),
   });
 });
 
 /**
  * Internal helper to get access token for API calls
  */
-export function getAccessToken(sessionId) {
-  const session = sessions.get(sessionId);
+export function getAccessToken(req, sessionId) {
+  const session = req.session.sessions?.[sessionId];
   if (!session || !session.accessToken) {
     return null;
   }
@@ -236,7 +239,7 @@ export function getAccessToken(sessionId) {
   const isExpired = session.expiresIn && tokenAge > session.expiresIn * 1000;
 
   if (isExpired) {
-    sessions.delete(sessionId);
+    delete req.session.sessions[sessionId];
     return null;
   }
 
