@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, from, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 // Import FHIR client
@@ -293,6 +293,14 @@ export interface FhirContext {
   serverUrl?: string;
   tokenResponse?: any;
   authenticated: boolean;
+  isOfflineMode?: boolean;
+}
+
+export interface OfflineModeData {
+  patient: Patient;
+  conditions: Condition[];
+  observations: Observation[];
+  medicationRequests: MedicationRequest[];
 }
 
 @Injectable({
@@ -303,6 +311,7 @@ export class FhirClientService {
     authenticated: false,
   });
   private fhirClient: any = null;
+  private offlineData: OfflineModeData | null = null;
 
   public context$ = this.contextSubject.asObservable();
 
@@ -517,6 +526,22 @@ export class FhirClientService {
       return throwError(() => new Error('No current patient'));
     }
 
+    // If in offline mode, return offline data
+    if (this.isOfflineMode() && this.offlineData) {
+      let conditions = this.offlineData.conditions;
+
+      // Apply basic filtering based on status parameter
+      if (params['status']) {
+        const statusFilter = params['status'].split(',');
+        conditions = conditions.filter((condition) => {
+          const clinicalStatus = condition.clinicalStatus?.coding?.[0]?.code;
+          return statusFilter.includes(clinicalStatus);
+        });
+      }
+
+      return of(conditions);
+    }
+
     const searchParams = {
       patient: currentPatient.id,
       ...params,
@@ -565,6 +590,23 @@ export class FhirClientService {
     const currentPatient = this.getCurrentPatient();
     if (!currentPatient) {
       return throwError(() => new Error('No current patient'));
+    }
+
+    // If in offline mode, return offline data
+    if (this.isOfflineMode() && this.offlineData) {
+      let observations = this.offlineData.observations;
+
+      // Apply basic filtering based on code parameter (LOINC codes)
+      if (params['code']) {
+        const codeFilter = params['code'].split(',');
+        observations = observations.filter((observation) => {
+          const codes =
+            observation.code?.coding?.map((coding) => coding.code) || [];
+          return codes.some((code) => codeFilter.includes(code));
+        });
+      }
+
+      return of(observations);
     }
 
     const searchParams = {
@@ -618,6 +660,21 @@ export class FhirClientService {
     const currentPatient = this.getCurrentPatient();
     if (!currentPatient) {
       return throwError(() => new Error('No current patient'));
+    }
+
+    // If in offline mode, return offline data
+    if (this.isOfflineMode() && this.offlineData) {
+      let medicationRequests = this.offlineData.medicationRequests;
+
+      // Apply basic filtering based on status parameter
+      if (params['status']) {
+        const statusFilter = params['status'].split(',');
+        medicationRequests = medicationRequests.filter((medRequest) => {
+          return statusFilter.includes(medRequest.status);
+        });
+      }
+
+      return of(medicationRequests);
     }
 
     const searchParams = {
@@ -676,5 +733,35 @@ export class FhirClientService {
    */
   isClientReady(): boolean {
     return !!window.FHIR && !!this.fhirClient;
+  }
+
+  /**
+   * Set offline mode with uploaded FHIR Bundle data
+   */
+  setOfflineMode(data: OfflineModeData): void {
+    this.offlineData = data;
+    this.contextSubject.next({
+      patient: data.patient,
+      authenticated: true,
+      isOfflineMode: true,
+    });
+  }
+
+  /**
+   * Clear offline mode and return to online mode
+   */
+  clearOfflineMode(): void {
+    this.offlineData = null;
+    this.contextSubject.next({
+      authenticated: false,
+      isOfflineMode: false,
+    });
+  }
+
+  /**
+   * Check if currently in offline mode
+   */
+  isOfflineMode(): boolean {
+    return this.contextSubject.value.isOfflineMode || false;
   }
 }
