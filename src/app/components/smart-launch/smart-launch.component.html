@@ -1,0 +1,59 @@
+<div class="smart-launch-container">
+  <div class="loading-card" *ngIf="isLoading">
+    <h2>🔐 Connecting to FHIR Server</h2>
+    <div class="spinner"></div>
+    <p>{{ statusMessage }}</p>
+  </div>
+
+  <div class="error-card" *ngIf="errorMessage">
+    <h2>❌ Authentication Failed</h2>
+    <p>{{ errorMessage }}</p>
+    <button class="retry-button" (click)="retry()">Try Again</button>
+  </div>
+
+  <div class="success-card" *ngIf="context?.authenticated">
+    <h2>✅ Authentication Successful</h2>
+    <p>Connected to FHIR server</p>
+    <div class="patient-info" *ngIf="context?.patient">
+      <h3>Patient: {{ getPatientName() }}</h3>
+      <p>ID: {{ context?.patient?.id }}</p>
+    </div>
+    <button class="continue-button" (click)="navigateToApp()">
+      Continue to App
+    </button>
+  </div>
+
+  <div
+    class="launch-options"
+    *ngIf="!isLoading && !context?.authenticated && !errorMessage"
+  >
+    <h2>🚀 SMART on FHIR Launch</h2>
+
+    <div class="launch-method">
+      <h3>EHR Launch</h3>
+      <p>
+        If you were redirected here from an EHR, we'll automatically detect
+        the launch context.
+      </p>
+      <button class="launch-button" (click)="handleEhrLaunch()">
+        Check for EHR Launch
+      </button>
+    </div>
+
+    <div class="launch-method">
+      <h3>Standalone Launch</h3>
+      <p>Connect directly to a FHIR server (SMART Health IT Sandbox)</p>
+      <button class="launch-button" (click)="handleStandaloneLaunch()">
+        Launch Standalone
+      </button>
+    </div>
+
+    <div class="test-mode">
+      <h3>Test Mode</h3>
+      <p>Upload a FHIR Bundle file for testing</p>
+      <button class="test-button" (click)="navigateToTestMode()">
+        Test Mode
+      </button>
+    </div>
+  </div>
+</div>
