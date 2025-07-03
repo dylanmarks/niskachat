@@ -215,16 +215,17 @@ Branch naming format: `feature/<phase-name>` (e.g. `feature/patient-summary`)
 
 ---
 
-### ✅ Phase 10: LLM Summary Integration (Optional)
+### ✅ Phase 10: LLM Summary Integration
 
 **Goal**: Summarize clinical data using Claude or local LLM
 
 **Deliverables**:
 
-- "Summarize" button with sparkle icon
-- Component sends structured summary to LLM
+- "Summarize" button with sparkle icon at the top of the page
+- Component sends structured summary to LLM with the full bundle payload
 - Plugin system for pluggable LLM providers
-- Prompt stored in external file
+- Store secret credentials for API properly 
+- Prompt stored in external file to allow refinement and evaluation
 - Logging of interactions
 
 **Test Cases**:

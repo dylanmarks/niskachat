@@ -14,23 +14,39 @@ import {
   template: `
     <div class="medications-container">
       <div class="medications-header">
-        <h2>Current Medications</h2>
-        <div class="medication-count" *ngIf="medications.length > 0">
-          <span class="count">{{ medications.length }}</span>
-          <span class="label">
-            {{ medications.length === 1 ? 'medication' : 'medications' }}
-          </span>
+        <h2>Medications</h2>
+        <div class="header-controls">
+          <div class="medication-count" *ngIf="activeMedications.length > 0">
+            <span class="count">{{ activeMedications.length }}</span>
+            <span class="label">
+              {{
+                activeMedications.length === 1
+                  ? 'active medication'
+                  : 'active medications'
+              }}
+            </span>
+          </div>
+          <button
+            *ngIf="inactiveMedications.length > 0"
+            class="toggle-inactive-btn"
+            (click)="toggleInactive()"
+            [class.active]="showInactive"
+          >
+            {{ showInactive ? 'Hide' : 'Show' }} Inactive Medications ({{
+              inactiveMedications.length
+            }})
+          </button>
         </div>
       </div>
 
       <!-- Loading State -->
-      <div *ngIf="isLoading" class="loading-card">
+      <div *ngIf="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>Loading medications...</p>
       </div>
 
       <!-- Error State -->
-      <div *ngIf="errorMessage" class="error-card">
+      <div *ngIf="errorMessage" class="error-state">
         <div class="error-icon">⚠️</div>
         <h3>Error Loading Medications</h3>
         <p>{{ errorMessage }}</p>
@@ -42,7 +58,7 @@ import {
       <!-- No Patient State -->
       <div
         *ngIf="!isLoading && !errorMessage && !context?.patient"
-        class="no-patient-card"
+        class="no-patient-state"
       >
         <div class="info-icon">👤</div>
         <h3>No Patient Selected</h3>
@@ -57,130 +73,277 @@ import {
           context?.patient &&
           medications.length === 0
         "
-        class="empty-card"
+        class="empty-state"
       >
         <div class="info-icon">💊</div>
         <h3>No Medications Found</h3>
-        <p>No active medications are available for this patient.</p>
+        <p>No medications are available for this patient.</p>
       </div>
 
-      <!-- Medications List -->
-      <div *ngIf="medications.length > 0" class="medications-list">
-        <div
-          *ngFor="let medication of medications; trackBy: trackMedication"
-          class="medication-card"
-        >
-          <div class="medication-header">
-            <h3 class="medication-name">{{ getMedicationName(medication) }}</h3>
-            <span
-              class="medication-status"
-              [class]="getStatusClass(medication.status)"
-            >
-              {{ getStatusDisplay(medication.status) }}
-            </span>
+      <!-- Active Medications Table -->
+      <div *ngIf="activeMedications.length > 0" class="medications-section">
+        <h3 class="section-title">Active Medications</h3>
+        <div class="medications-table-container">
+          <div class="table-wrapper">
+            <table class="medications-table">
+              <thead>
+                <tr>
+                  <th>Medication</th>
+                  <th>Status</th>
+                  <th>Prescribed Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let medication of activeMedications;
+                    trackBy: trackMedication
+                  "
+                  class="medication-row"
+                  (click)="selectMedication(medication)"
+                  [class.selected]="selectedMedicationId === medication.id"
+                >
+                  <td class="medication-name">
+                    {{ getMedicationName(medication) }}
+                  </td>
+                  <td class="medication-status">
+                    <span
+                      class="status-badge"
+                      [class]="getStatusClass(medication.status)"
+                    >
+                      {{ getMedicationStatus(medication) }}
+                    </span>
+                  </td>
+                  <td class="medication-date">
+                    {{ formatDate(medication.authoredOn) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <div class="medication-details">
-            <div class="detail-row" *ngIf="medication.authoredOn">
-              <span class="detail-label">Prescribed:</span>
-              <span class="detail-value">
-                {{ formatDate(medication.authoredOn) }}
-              </span>
-            </div>
-
-            <div class="detail-row" *ngIf="medication.requester?.display">
-              <span class="detail-label">Prescriber:</span>
-              <span class="detail-value">
-                {{ medication.requester?.display }}
-              </span>
-            </div>
-
-            <div class="detail-row" *ngIf="getDosageText(medication)">
-              <span class="detail-label">Dosage:</span>
-              <span class="detail-value">{{ getDosageText(medication) }}</span>
-            </div>
-
-            <div class="detail-row" *ngIf="getFrequencyText(medication)">
-              <span class="detail-label">Frequency:</span>
-              <span class="detail-value">
-                {{ getFrequencyText(medication) }}
-              </span>
-            </div>
-
-            <div class="detail-row" *ngIf="getRouteText(medication)">
-              <span class="detail-label">Route:</span>
-              <span class="detail-value">{{ getRouteText(medication) }}</span>
-            </div>
-
-            <div class="detail-row" *ngIf="getQuantityText(medication)">
-              <span class="detail-label">Quantity:</span>
-              <span class="detail-value">
-                {{ getQuantityText(medication) }}
-              </span>
-            </div>
-
-            <div class="detail-row" *ngIf="getReasonText(medication)">
-              <span class="detail-label">Reason:</span>
-              <span class="detail-value">{{ getReasonText(medication) }}</span>
-            </div>
-
-            <!-- Medication Codes -->
-            <div
-              class="codes-section"
-              *ngIf="getMedicationCodes(medication).length > 0"
-            >
+          <!-- Medication Details Panel -->
+          <div *ngIf="selectedMedication" class="medication-details-panel">
+            <div class="details-header">
+              <h3>Medication Details</h3>
               <button
-                class="codes-toggle"
-                (click)="toggleCodes(medication.id)"
-                [class.expanded]="expandedCodes[medication.id]"
+                class="close-button"
+                (click)="clearSelection()"
+                title="Close details"
               >
-                <span>Medication Codes</span>
-                <span class="toggle-icon">
-                  {{ expandedCodes[medication.id] ? '▼' : '▶' }}
-                </span>
+                ×
               </button>
-              <div class="codes-content" *ngIf="expandedCodes[medication.id]">
-                <div
-                  *ngFor="let code of getMedicationCodes(medication)"
-                  class="code-item"
-                >
-                  <span class="code-system">
-                    {{ getCodeSystem(code.system) }}
-                  </span>
-                  <span class="code-value">{{ code.code }}</span>
-                  <span class="code-display" *ngIf="code.display">
-                    {{ code.display }}
-                  </span>
+            </div>
+
+            <div class="details-content">
+              <div class="detail-section">
+                <h4>{{ getMedicationName(selectedMedication) }}</h4>
+                <div class="detail-grid">
+                  <div
+                    class="detail-item"
+                    *ngIf="selectedMedication.authoredOn"
+                  >
+                    <span class="detail-label">Prescribed:</span>
+                    <span class="detail-value">
+                      {{ formatDate(selectedMedication.authoredOn) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="detail-item"
+                    *ngIf="selectedMedication.requester?.display"
+                  >
+                    <span class="detail-label">Prescriber:</span>
+                    <span class="detail-value">
+                      {{ selectedMedication.requester?.display }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="detail-item"
+                    *ngIf="getDosageText(selectedMedication)"
+                  >
+                    <span class="detail-label">Dosage:</span>
+                    <span class="detail-value">
+                      {{ getDosageText(selectedMedication) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="detail-item"
+                    *ngIf="getFrequencyText(selectedMedication)"
+                  >
+                    <span class="detail-label">Frequency:</span>
+                    <span class="detail-value">
+                      {{ getFrequencyText(selectedMedication) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="detail-item"
+                    *ngIf="getRouteText(selectedMedication)"
+                  >
+                    <span class="detail-label">Route:</span>
+                    <span class="detail-value">
+                      {{ getRouteText(selectedMedication) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="detail-item"
+                    *ngIf="getQuantityText(selectedMedication)"
+                  >
+                    <span class="detail-label">Quantity:</span>
+                    <span class="detail-value">
+                      {{ getQuantityText(selectedMedication) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="detail-item"
+                    *ngIf="getReasonText(selectedMedication)"
+                  >
+                    <span class="detail-label">Reason:</span>
+                    <span class="detail-value">
+                      {{ getReasonText(selectedMedication) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Medication Codes -->
+              <div
+                class="detail-section"
+                *ngIf="getMedicationCodes(selectedMedication).length > 0"
+              >
+                <h4>Medication Codes</h4>
+                <div class="codes-list">
+                  <div
+                    *ngFor="let code of getMedicationCodes(selectedMedication)"
+                    class="code-item"
+                  >
+                    <span class="code-system">
+                      {{ getCodeSystem(code.system) }}
+                    </span>
+                    <span class="code-value">{{ code.code }}</span>
+                    <span class="code-display" *ngIf="code.display">
+                      {{ code.display }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Inactive Medications Table -->
+      <div
+        *ngIf="showInactive && inactiveMedications.length > 0"
+        class="medications-section inactive-section"
+      >
+        <h3 class="section-title">Inactive Medications</h3>
+        <div class="medications-table-container">
+          <div class="table-wrapper">
+            <table class="medications-table">
+              <thead>
+                <tr>
+                  <th>Medication</th>
+                  <th>Status</th>
+                  <th>Prescribed Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let medication of inactiveMedications;
+                    trackBy: trackMedication
+                  "
+                  class="medication-row"
+                  (click)="selectMedication(medication)"
+                  [class.selected]="selectedMedicationId === medication.id"
+                >
+                  <td class="medication-name">
+                    {{ getMedicationName(medication) }}
+                  </td>
+                  <td class="medication-status">
+                    <span
+                      class="status-badge"
+                      [class]="getStatusClass(medication.status)"
+                    >
+                      {{ getMedicationStatus(medication) }}
+                    </span>
+                  </td>
+                  <td class="medication-date">
+                    {{ formatDate(medication.authoredOn) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Active Medications Message -->
+      <div
+        *ngIf="
+          !isLoading &&
+          !errorMessage &&
+          context?.patient &&
+          medications.length > 0 &&
+          activeMedications.length === 0
+        "
+        class="no-active-state"
+      >
+        <div class="info-icon">💊</div>
+        <h3>No Active Medications</h3>
+        <p>All medications for this patient are inactive.</p>
+        <button
+          *ngIf="inactiveMedications.length > 0 && !showInactive"
+          class="show-inactive-btn"
+          (click)="toggleInactive()"
+        >
+          Show {{ inactiveMedications.length }} Inactive Medications
+        </button>
+      </div>
     </div>
   `,
   styles: [
     `
       .medications-container {
-        margin: 0 auto;
-        padding: 20px;
-        max-width: 1200px;
+        box-sizing: border-box;
+        margin: 16px 0 0 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        background: white;
+        padding: 16px;
+        width: 100%;
+        max-width: 100%;
       }
 
       .medications-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #e0e0e0;
-        padding-bottom: 15px;
+        box-sizing: border-box;
+        margin-bottom: 16px;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 12px;
+        width: 100%;
       }
 
       .medications-header h2 {
         margin: 0;
-        color: #333;
+        color: #1f2937;
         font-weight: 600;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+      }
+
+      .header-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
       }
 
       .medication-count {
@@ -188,7 +351,7 @@ import {
         align-items: center;
         gap: 8px;
         border-radius: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #10b981, #059669);
         padding: 8px 16px;
         color: white;
         font-weight: 500;
@@ -199,23 +362,61 @@ import {
         font-size: 1.2rem;
       }
 
-      .loading-card,
-      .error-card,
-      .no-patient-card,
-      .empty-card {
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        background: white;
+      .toggle-inactive-btn,
+      .show-inactive-btn {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        white-space: nowrap;
+      }
+
+      .toggle-inactive-btn {
+        background-color: #6b7280;
+        color: white;
+      }
+
+      .toggle-inactive-btn:hover {
+        background-color: #4b5563;
+      }
+
+      .toggle-inactive-btn.active {
+        background-color: #3b82f6;
+      }
+
+      .toggle-inactive-btn.active:hover {
+        background-color: #2563eb;
+      }
+
+      .show-inactive-btn {
+        margin-top: 16px;
+        background-color: #10b981;
+        color: white;
+      }
+
+      .show-inactive-btn:hover {
+        background-color: #059669;
+      }
+
+      /* Loading, Error, and Empty States */
+      .loading-state,
+      .error-state,
+      .no-patient-state,
+      .empty-state,
+      .no-active-state {
         padding: 40px 20px;
+        color: #6b7280;
         text-align: center;
       }
 
       .loading-spinner {
         animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
+        margin: 0 auto 16px;
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #10b981;
         border-radius: 50%;
         width: 40px;
         height: 40px;
@@ -230,232 +431,373 @@ import {
         }
       }
 
-      .error-card {
-        border-left: 4px solid #e74c3c;
-      }
-
       .error-icon,
       .info-icon {
-        margin-bottom: 10px;
+        margin-bottom: 16px;
         font-size: 3rem;
+      }
+
+      .error-state h3,
+      .no-patient-state h3,
+      .empty-state h3,
+      .no-active-state h3 {
+        margin: 0 0 8px 0;
+        color: #1f2937;
+        font-weight: 600;
       }
 
       .retry-button {
         transition: background-color 0.2s;
         cursor: pointer;
-        margin-top: 15px;
+        margin-top: 16px;
         border: none;
         border-radius: 6px;
-        background: #667eea;
-        padding: 10px 20px;
+        background-color: #10b981;
+        padding: 8px 16px;
         color: white;
         font-weight: 500;
+        font-size: 0.875rem;
       }
 
       .retry-button:hover {
-        background: #5a67d8;
+        background-color: #059669;
       }
 
-      .medications-list {
-        display: grid;
-        gap: 20px;
+      /* Medication Sections */
+      .medications-section {
+        box-sizing: border-box;
+        margin-bottom: 32px;
+        width: 100%;
       }
 
-      .medication-card {
-        transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        background: white;
-        padding: 20px;
+      .medications-section:last-child {
+        margin-bottom: 0;
       }
 
-      .medication-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      .section-title {
+        margin: 0 0 16px 0;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 8px;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 1.25rem;
       }
 
-      .medication-header {
+      .inactive-section .section-title {
+        border-bottom-color: #d1d5db;
+        color: #6b7280;
+      }
+
+      .inactive-section .medications-table {
+        opacity: 0.8;
+      }
+
+      /* Table Styles */
+      .medications-table-container {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
+        gap: 24px;
+        box-sizing: border-box;
+        width: 100%;
+      }
+
+      .table-wrapper {
+        flex: 1;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        min-width: 0;
+        height: fit-content;
+        overflow: hidden;
+      }
+
+      .medications-table {
+        border-collapse: collapse;
+        background: white;
+        width: 100%;
+        table-layout: fixed; /* Prevent table from growing too wide */
+        font-size: 14px;
+      }
+
+      .medications-table th {
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+        padding: 12px 8px;
+        color: #374151;
+        font-weight: 600;
+        text-align: left;
+      }
+
+      .medication-row {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      .medication-row:hover {
+        background-color: #f9fafb;
+      }
+
+      .medication-row.selected {
+        border-left: 4px solid #3b82f6;
+        background-color: #eff6ff;
+      }
+
+      .medications-table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+        word-wrap: break-word;
+        overflow: hidden;
       }
 
       .medication-name {
-        flex: 1;
-        margin: 0;
-        margin-right: 15px;
-        color: #2c3e50;
-        font-weight: 600;
-        font-size: 1.3rem;
+        width: 30%;
+        color: #1f2937;
+        font-weight: 500;
       }
 
       .medication-status {
-        border-radius: 20px;
-        padding: 4px 12px;
+        width: 15%;
+      }
+
+      .medication-date {
+        width: 20%;
+        color: #6b7280;
+      }
+
+      .status-badge {
+        display: inline-block;
+        border-radius: 12px;
+        padding: 4px 8px;
         font-weight: 500;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
+        font-size: 12px;
         text-transform: uppercase;
       }
 
-      .medication-status.active {
-        background: #d4edda;
-        color: #155724;
+      .status-badge.active {
+        background: #d1fae5;
+        color: #065f46;
       }
 
-      .medication-status.completed {
-        background: #cce5ff;
-        color: #004085;
+      .status-badge.completed {
+        background: #dbeafe;
+        color: #1e40af;
       }
 
-      .medication-status.cancelled {
-        background: #f8d7da;
-        color: #721c24;
+      .status-badge.cancelled,
+      .status-badge.stopped {
+        background: #fee2e2;
+        color: #991b1b;
       }
 
-      .medication-status.draft {
-        background: #fff3cd;
-        color: #856404;
+      .status-badge.draft {
+        background: #fef3c7;
+        color: #92400e;
       }
 
-      .medication-status.on-hold {
-        background: #e2e3e5;
-        color: #383d41;
+      .status-badge.on-hold {
+        background: #e0e7ff;
+        color: #3730a3;
       }
 
-      .medication-status.unknown {
-        background: #f8f9fa;
-        color: #6c757d;
+      .status-badge.unknown {
+        background: #f3f4f6;
+        color: #6b7280;
       }
 
-      .medication-details {
-        display: grid;
-        gap: 8px;
+      /* Details Panel */
+      .medication-details-panel {
+        flex: 0 0 350px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #f9fafb;
+        overflow: hidden;
       }
 
-      .detail-row {
-        display: grid;
-        grid-template-columns: 120px 1fr;
-        align-items: start;
-        gap: 10px;
-      }
-
-      .detail-label {
-        color: #666;
-        font-weight: 500;
-        font-size: 0.9rem;
-      }
-
-      .detail-value {
-        color: #2c3e50;
-        font-size: 0.95rem;
-      }
-
-      .codes-section {
-        margin-top: 15px;
-        border-top: 1px solid #eee;
-        padding-top: 15px;
-      }
-
-      .codes-toggle {
+      .details-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: all 0.2s;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f3f4f6;
+        padding: 16px 20px;
+      }
+
+      .details-header h3 {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .close-button {
+        transition: color 0.2s;
         cursor: pointer;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        background: #f8f9fa;
-        padding: 8px 12px;
-        width: 100%;
-        font-size: 0.9rem;
+        border: none;
+        background: none;
+        padding: 4px;
+        color: #6b7280;
+        font-size: 24px;
+        line-height: 1;
       }
 
-      .codes-toggle:hover {
-        background: #e9ecef;
+      .close-button:hover {
+        color: #374151;
       }
 
-      .codes-toggle.expanded {
-        border-bottom-color: transparent;
-        border-bottom-right-radius: 0;
-        border-bottom-left-radius: 0;
+      .details-content {
+        padding: 20px;
+        max-height: 500px;
+        overflow-y: auto;
       }
 
-      .codes-content {
-        border: 1px solid #dee2e6;
-        border-top: none;
-        border-bottom-right-radius: 6px;
-        border-bottom-left-radius: 6px;
-        background: #f8f9fa;
-        padding: 10px;
+      .detail-section {
+        margin-bottom: 24px;
+      }
+
+      .detail-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .detail-section h4 {
+        margin: 0 0 12px 0;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 1.1rem;
+        word-wrap: break-word;
+      }
+
+      .detail-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .detail-item {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        align-items: start;
+        gap: 8px;
+      }
+
+      .detail-label {
+        color: #374151;
+        font-weight: 500;
+        font-size: 13px;
+      }
+
+      .detail-value {
+        color: #1f2937;
+        font-size: 13px;
+        word-wrap: break-word;
+      }
+
+      .codes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
 
       .code-item {
         display: grid;
-        grid-template-columns: 100px 120px 1fr;
-        gap: 10px;
-        border-bottom: 1px solid #dee2e6;
-        padding: 5px 0;
-        font-size: 0.85rem;
-      }
-
-      .code-item:last-child {
-        border-bottom: none;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: white;
+        padding: 8px 12px;
+        font-size: 12px;
       }
 
       .code-system {
-        color: #667eea;
+        border-radius: 4px;
+        background: #f3f4f6;
+        padding: 2px 6px;
+        color: #6b7280;
         font-weight: 500;
+        white-space: nowrap;
       }
 
       .code-value {
-        border-radius: 3px;
-        background: white;
-        padding: 2px 6px;
-        color: #2c3e50;
+        color: #1f2937;
+        font-weight: 500;
         font-family: monospace;
+        word-break: break-all;
       }
 
       .code-display {
-        color: #666;
+        color: #6b7280;
+        font-style: italic;
+        word-wrap: break-word;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+        .medications-table-container {
+          flex-direction: column;
+        }
+
+        .medication-details-panel {
+          flex: none;
+        }
       }
 
       @media (max-width: 768px) {
         .medications-container {
-          padding: 15px;
+          margin: 8px 0;
+          padding: 16px;
         }
 
-        .medication-header {
+        .medications-header {
           flex-direction: column;
           align-items: flex-start;
-          gap: 10px;
+          gap: 12px;
         }
 
+        .header-controls {
+          justify-content: space-between;
+          width: 100%;
+        }
+
+        .medications-table {
+          font-size: 12px;
+        }
+
+        .medications-table th,
+        .medications-table td {
+          padding: 8px 4px;
+        }
+
+        /* Adjust column widths for mobile */
         .medication-name {
-          margin-right: 0;
-          font-size: 1.2rem;
+          width: 60%;
         }
 
-        .detail-row {
-          grid-template-columns: 1fr;
-          gap: 5px;
+        .medication-status {
+          width: 20%;
         }
 
-        .detail-label {
-          font-weight: 600;
+        .medication-date {
+          width: 20%;
         }
 
-        .code-item {
-          grid-template-columns: 1fr;
-          gap: 5px;
+        /* Hide status on very small screens */
+        @media (max-width: 480px) {
+          .medication-status {
+            display: none;
+          }
+
+          .medication-name {
+            width: 70%;
+          }
+
+          .medication-date {
+            width: 30%;
+          }
         }
       }
     `,
+  ],
+  animations: [
+    // You can add animation here if needed
   ],
 })
 export class MedicationsListComponent implements OnInit, OnDestroy {
@@ -463,7 +805,10 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
   context: FhirContext | null = null;
   isLoading = false;
   errorMessage: string | null = null;
-  expandedCodes: { [key: string]: boolean } = {};
+  selectedMedication: MedicationRequest | null = null;
+  selectedMedicationId: string | null = null;
+  showInactive = false;
+
   private destroy$ = new Subject<void>();
 
   constructor(private fhirClient: FhirClientService) {}
@@ -473,8 +818,13 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context.patient) {
+        if (
+          context.patient &&
+          (context.authenticated || context.isOfflineMode)
+        ) {
           this.loadMedications();
+        } else {
+          this.medications = [];
         }
       });
   }
@@ -486,6 +836,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
 
   async loadMedications(): Promise<void> {
     if (!this.context?.patient) {
+      this.errorMessage = 'No patient context available';
       return;
     }
 
@@ -494,10 +845,8 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
 
     try {
       const medications = await this.fhirClient
-        .getMedicationRequests({
-          status: 'active,completed',
-          _sort: '-authored',
-        })
+        .getMedicationRequests()
+        .pipe(takeUntil(this.destroy$))
         .toPromise();
 
       this.medications = this.sortMedicationsByDate(medications || []);
@@ -515,8 +864,23 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
     return medications.sort((a, b) => {
       const dateA = a.authoredOn ? new Date(a.authoredOn).getTime() : 0;
       const dateB = b.authoredOn ? new Date(b.authoredOn).getTime() : 0;
-      return dateB - dateA;
+      return dateB - dateA; // Most recent first
     });
+  }
+
+  selectMedication(medication: MedicationRequest): void {
+    if (this.selectedMedicationId === medication.id) {
+      // Toggle off if clicking the same medication
+      this.clearSelection();
+    } else {
+      this.selectedMedication = medication;
+      this.selectedMedicationId = medication.id;
+    }
+  }
+
+  clearSelection(): void {
+    this.selectedMedication = null;
+    this.selectedMedicationId = null;
   }
 
   getMedicationName(medication: MedicationRequest): string {
@@ -544,8 +908,8 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
     return 'Unknown Medication';
   }
 
-  getStatusDisplay(status?: string): string {
-    switch (status) {
+  getMedicationStatus(medication: MedicationRequest): string {
+    switch (medication.status) {
       case 'active':
         return 'Active';
       case 'completed':
@@ -561,7 +925,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       case 'unknown':
         return 'Unknown';
       default:
-        return status || 'Unknown';
+        return medication.status || 'Unknown';
     }
   }
 
@@ -583,16 +947,20 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatDate(dateString: string): string {
+  formatDate(dateString?: string): string {
+    if (!dateString) return 'N/A';
+
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
       });
     } catch (error) {
-      return dateString;
+      return 'N/A';
     }
   }
 
@@ -741,7 +1109,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
   getCodeSystem(systemUrl?: string): string {
     if (!systemUrl) return 'Unknown';
 
-    const knownSystems: { [key: string]: string } = {
+    const knownSystems: Record<string, string> = {
       'http://www.nlm.nih.gov/research/umls/rxnorm': 'RxNorm',
       'http://hl7.org/fhir/sid/ndc': 'NDC',
       'http://snomed.info/sct': 'SNOMED CT',
@@ -752,11 +1120,23 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
     return knownSystems[systemUrl] || systemUrl;
   }
 
-  toggleCodes(medicationId: string): void {
-    this.expandedCodes[medicationId] = !this.expandedCodes[medicationId];
-  }
-
   trackMedication(_index: number, medication: MedicationRequest): string {
     return medication.id;
+  }
+
+  toggleInactive(): void {
+    this.showInactive = !this.showInactive;
+  }
+
+  get activeMedications(): MedicationRequest[] {
+    return this.medications.filter(
+      (m) => this.getStatusClass(m.status) === 'active',
+    );
+  }
+
+  get inactiveMedications(): MedicationRequest[] {
+    return this.medications.filter(
+      (m) => this.getStatusClass(m.status) !== 'active',
+    );
   }
 }

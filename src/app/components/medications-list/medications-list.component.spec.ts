@@ -81,13 +81,16 @@ describe('MedicationsListComponent', () => {
 
   it('should get medication name correctly', () => {
     const medication = mockMedications[0];
+
     expect(medication).toBeDefined();
     const name = component.getMedicationName(medication!);
+
     expect(name).toBe('Atorvastatin 20 MG Oral Tablet');
   });
 
   it('should format dates correctly', () => {
     const formatted = component.formatDate('2023-01-15T09:30:00Z');
+
     expect(formatted).toBe('Jan 15, 2023');
   });
 

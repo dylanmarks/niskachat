@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   FhirClientService,
@@ -23,7 +24,17 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   patient: Patient | null = null;
   context: FhirContext | null = null;
 
-  constructor(private fhirClient: FhirClientService) {}
+  // Summary-related properties
+  isSummarizing = false;
+  summary: string | null = null;
+  summaryError: string | null = null;
+  summaryUsedLLM = false;
+  summaryTimestamp: Date | null = null;
+
+  constructor(
+    private fhirClient: FhirClientService,
+    private http: HttpClient,
+  ) {}
 
   ngOnInit(): void {
     // Subscribe to FHIR context changes
@@ -59,10 +70,10 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     try {
-      const patient = await this.fhirClient.getPatient().toPromise();
+      const patient = await firstValueFrom(this.fhirClient.getPatient());
       this.patient = patient ?? null;
     } catch (error) {
-      this.errorMessage = `Failed to load patient: ${error}`;
+      this.errorMessage = `Failed to load patient: ${String(error)}`;
       console.error('Error loading patient:', error);
     } finally {
       this.isLoading = false;
@@ -118,7 +129,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
         month: 'long',
         day: 'numeric',
       });
-    } catch (error) {
+    } catch {
       return dateString;
     }
   }
@@ -160,7 +171,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   /**
    * Get formatted contact information
    */
-  getContactInfo(): Array<{ type: string; value: string }> {
+  getContactInfo(): { type: string; value: string }[] {
     if (!this.patient?.telecom) {
       return [];
     }
@@ -181,7 +192,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   /**
    * Get formatted addresses
    */
-  getAddresses(): Array<{ type: string; text: string }> {
+  getAddresses(): { type: string; text: string }[] {
     if (!this.patient?.address) {
       return [];
     }
@@ -219,5 +230,86 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   navigateToAuth(): void {
     // In a real app, this would navigate to the auth component
     window.location.href = '/smart-launch';
+  }
+
+  /**
+   * Generate AI-powered summary of patient's medical history
+   */
+  async generateSummary(): Promise<void> {
+    if (!this.patient) {
+      this.summaryError = 'No patient data available to summarize';
+      return;
+    }
+
+    this.isSummarizing = true;
+    this.summaryError = null;
+    this.summary = null;
+
+    try {
+      // Create a basic FHIR Bundle with patient data
+      const bundle = {
+        resourceType: 'Bundle',
+        id: `bundle-${this.patient.id || 'unknown'}`,
+        type: 'collection',
+        entry: [
+          {
+            resource: this.patient,
+          },
+        ],
+      };
+
+      // If we have a FHIR client, try to fetch additional resources
+      if (this.fhirClient.isAuthenticated()) {
+        try {
+          // Try to get conditions
+          const conditions = await firstValueFrom(
+            this.fhirClient.getConditions(),
+          );
+          if (conditions) {
+            conditions.forEach((condition) => {
+              bundle.entry.push({ resource: condition });
+            });
+          }
+
+          // Try to get observations
+          const observations = await firstValueFrom(
+            this.fhirClient.getObservations(),
+          );
+          if (observations) {
+            observations.forEach((observation) => {
+              bundle.entry.push({ resource: observation });
+            });
+          }
+
+          // Try to get medications
+          const medications = await firstValueFrom(
+            this.fhirClient.getMedicationRequests(),
+          );
+          if (medications) {
+            medications.forEach((medication: any) => {
+              bundle.entry.push({ resource: medication });
+            });
+          }
+        } catch (fetchError) {
+          console.warn('Could not fetch additional resources:', fetchError);
+          // Continue with just patient data
+        }
+      }
+
+      // Call the backend summarization API
+      const response = await firstValueFrom(
+        this.http.post<any>('/api/summarize', bundle),
+      );
+
+      this.summary = response.summary;
+      this.summaryUsedLLM = response.llm_used || false;
+      this.summaryTimestamp = new Date();
+    } catch (error: any) {
+      console.error('Error generating summary:', error);
+      this.summaryError =
+        error.error?.error || error.message || 'Failed to generate summary';
+    } finally {
+      this.isSummarizing = false;
+    }
   }
 }

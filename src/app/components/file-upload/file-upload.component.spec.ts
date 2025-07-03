@@ -110,6 +110,7 @@ describe('FileUploadComponent', () => {
       expect(component.uploadStatus.error).toBe(
         'Please select a valid JSON file.',
       );
+
       expect(component.selectedFile).toBeNull();
     });
 
@@ -125,38 +126,42 @@ describe('FileUploadComponent', () => {
       expect(component.uploadStatus.error).toBe(
         'File size must be less than 10MB.',
       );
+
       expect(component.selectedFile).toBeNull();
     });
   });
 
   describe('Bundle Validation', () => {
     it('should validate correct FHIR Bundle', () => {
-      expect(() => component.validateBundle(mockBundle)).not.toThrow();
+      expect(() => { component.validateBundle(mockBundle); }).not.toThrow();
     });
 
     it('should reject invalid JSON', () => {
-      expect(() => component.validateBundle(null as any)).toThrowError(
+      expect(() => { component.validateBundle(null as any); }).toThrowError(
         'Invalid JSON format',
       );
     });
 
     it('should reject non-Bundle resource', () => {
       const invalidBundle = { resourceType: 'Patient', id: 'test' };
-      expect(() => component.validateBundle(invalidBundle)).toThrowError(
+
+      expect(() => { component.validateBundle(invalidBundle); }).toThrowError(
         'File is not a FHIR Bundle resource',
       );
     });
 
     it('should reject bundle without entries', () => {
       const emptyBundle = { resourceType: 'Bundle', id: 'test' };
-      expect(() => component.validateBundle(emptyBundle)).toThrowError(
+
+      expect(() => { component.validateBundle(emptyBundle); }).toThrowError(
         'Bundle must contain an entry array',
       );
     });
 
     it('should reject bundle with empty entries', () => {
       const emptyBundle = { resourceType: 'Bundle', id: 'test', entry: [] };
-      expect(() => component.validateBundle(emptyBundle)).toThrowError(
+
+      expect(() => { component.validateBundle(emptyBundle); }).toThrowError(
         'Bundle is empty - no resources found',
       );
     });
@@ -230,6 +235,7 @@ describe('FileUploadComponent', () => {
       expect(component.uploadStatus.error).toContain(
         'Failed to process bundle:',
       );
+
       expect(component.uploadStatus.isUploading).toBe(false);
       expect(component.uploadStatus.success).toBe(false);
     });

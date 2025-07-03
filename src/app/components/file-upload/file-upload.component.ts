@@ -15,10 +15,10 @@ interface FhirBundle {
   id?: string;
   type?: string;
   total?: number;
-  entry?: Array<{
+  entry?: {
     fullUrl?: string;
     resource?: any;
-  }>;
+  }[];
 }
 
 interface UploadStatus {
@@ -171,8 +171,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
   private readFile(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onload = () => { resolve(reader.result as string); };
+      reader.onerror = () => { reject(new Error('Failed to read file')); };
       reader.readAsText(file);
     });
   }
@@ -210,7 +210,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
 
     for (const entry of bundle.entry || []) {
       const resource = entry.resource;
-      if (!resource || !resource.resourceType) {
+      if (!resource?.resourceType) {
         continue;
       }
 
