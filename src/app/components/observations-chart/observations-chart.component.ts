@@ -591,11 +591,11 @@ export class ObservationsChartComponent
   }
 
   ngAfterViewInit(): void {
-    if (this.observations.length > 0) {
+    if (this.observations.length > 0 && this.selectedCategory !== 'all') {
       this.prepareChartData();
       // Add small delay to ensure DOM is ready
       setTimeout(() => {
-        this.renderChart();
+        this.safeRenderChart();
       }, 100);
     }
   }
@@ -603,9 +603,8 @@ export class ObservationsChartComponent
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.chart) {
-      this.chart.destroy();
-    }
+    // Use the safer destroy method
+    this.destroyChart();
   }
 
   loadObservations(): void {
@@ -626,11 +625,15 @@ export class ObservationsChartComponent
 
         this.observations = observations;
         this.loading = false;
-        this.prepareChartData();
-        if (this.chartElement) {
-          setTimeout(() => {
-            this.safeRenderChart();
-          }, 200);
+
+        // Only prepare chart data if we're not in table view
+        if (this.selectedCategory !== 'all') {
+          this.prepareChartData();
+          if (this.chartElement) {
+            setTimeout(() => {
+              this.safeRenderChart();
+            }, 200);
+          }
         }
       },
       error: (error) => {
@@ -655,13 +658,16 @@ export class ObservationsChartComponent
 
     this.selectedCategory = newCategory;
 
+    // Clear existing chart when switching categories
+    this.destroyChart();
+
     // Only process if we have observations and we're switching to a chart view
     if (this.observations.length > 0 && this.selectedCategory !== 'all') {
       this.prepareChartData();
-      // Add delay to ensure DOM is ready for chart rendering
+      // Use setTimeout to ensure DOM is ready
       setTimeout(() => {
         this.safeRenderChart();
-      }, 150);
+      }, 100);
     }
   }
 
@@ -823,9 +829,16 @@ export class ObservationsChartComponent
       return;
     }
 
-    // Destroy existing chart
+    // Prevent rendering if we're already in the process
     if (this.chart) {
-      this.chart.destroy();
+      console.log('Chart already exists, destroying first');
+      this.destroyChart();
+    }
+
+    // Validate chart data
+    if (!this.chartData.datasets || this.chartData.datasets.length === 0) {
+      console.log('No chart data available');
+      return;
     }
 
     const ctx = this.chartElement.nativeElement.getContext('2d');
@@ -888,6 +901,7 @@ export class ObservationsChartComponent
 
     try {
       this.chart = new Chart(ctx, config);
+      console.log('Chart created successfully');
     } catch (error) {
       console.error('Error creating chart:', error);
       this.error = 'Failed to render chart';
@@ -897,7 +911,12 @@ export class ObservationsChartComponent
   // Add a method to safely render chart with error handling
   private safeRenderChart(): void {
     try {
-      this.renderChart();
+      // Only render if we have valid data and DOM element
+      if (this.chartElement?.nativeElement && this.chartData.datasets?.length) {
+        this.renderChart();
+      } else {
+        console.log('Cannot render chart: missing element or data');
+      }
     } catch (error) {
       console.error('Error rendering chart:', error);
       this.error = 'Failed to render chart';
@@ -971,11 +990,13 @@ export class ObservationsChartComponent
     const category = this.detectObservationCategory(obs);
     if (category && category !== 'all') {
       this.selectedCategory = category;
+      // Clear any existing chart first
+      this.destroyChart();
       this.prepareChartData();
-      // Add delay to ensure DOM is ready for chart rendering
+      // Use setTimeout to ensure DOM is ready
       setTimeout(() => {
         this.safeRenderChart();
-      }, 150);
+      }, 100);
     }
   }
 
@@ -1000,5 +1021,17 @@ export class ObservationsChartComponent
     }
 
     return null;
+  }
+
+  // Add a dedicated method to safely destroy the chart
+  private destroyChart(): void {
+    if (this.chart) {
+      try {
+        this.chart.destroy();
+      } catch (error) {
+        console.warn('Error destroying chart:', error);
+      }
+      this.chart = null;
+    }
   }
 }
