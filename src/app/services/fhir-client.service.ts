@@ -160,6 +160,132 @@ export interface Observation {
   }>;
 }
 
+export interface MedicationRequest {
+  id: string;
+  status?: string;
+  intent?: string;
+  category?: Array<{
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+    text?: string;
+  }>;
+  priority?: string;
+  medicationCodeableConcept?: {
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+    text?: string;
+  };
+  medicationReference?: {
+    reference?: string;
+    display?: string;
+  };
+  subject?: {
+    reference?: string;
+    display?: string;
+  };
+  encounter?: {
+    reference?: string;
+    display?: string;
+  };
+  authoredOn?: string;
+  requester?: {
+    reference?: string;
+    display?: string;
+  };
+  reasonCode?: Array<{
+    coding?: Array<{
+      system?: string;
+      code?: string;
+      display?: string;
+    }>;
+    text?: string;
+  }>;
+  reasonReference?: Array<{
+    reference?: string;
+    display?: string;
+  }>;
+  dosageInstruction?: Array<{
+    text?: string;
+    timing?: {
+      repeat?: {
+        frequency?: number;
+        period?: number;
+        periodUnit?: string;
+      };
+    };
+    route?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+    doseAndRate?: Array<{
+      doseQuantity?: {
+        value?: number;
+        unit?: string;
+        system?: string;
+        code?: string;
+      };
+      doseRange?: {
+        low?: {
+          value?: number;
+          unit?: string;
+          system?: string;
+          code?: string;
+        };
+        high?: {
+          value?: number;
+          unit?: string;
+          system?: string;
+          code?: string;
+        };
+      };
+    }>;
+  }>;
+  dispenseRequest?: {
+    numberOfRepeatsAllowed?: number;
+    quantity?: {
+      value?: number;
+      unit?: string;
+      system?: string;
+      code?: string;
+    };
+    expectedSupplyDuration?: {
+      value?: number;
+      unit?: string;
+      system?: string;
+      code?: string;
+    };
+  };
+  substitution?: {
+    allowedBoolean?: boolean;
+    allowedCodeableConcept?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+    reason?: {
+      coding?: Array<{
+        system?: string;
+        code?: string;
+        display?: string;
+      }>;
+      text?: string;
+    };
+  };
+}
+
 export interface FhirContext {
   patient?: Patient;
   clientId?: string;
@@ -480,6 +606,68 @@ export class FhirClientService {
       component: fhirObservation.component,
       issued: fhirObservation.issued,
       performer: fhirObservation.performer,
+    };
+  }
+
+  /**
+   * Get medication requests for current patient
+   */
+  getMedicationRequests(
+    params: Record<string, any> = {},
+  ): Observable<MedicationRequest[]> {
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      return throwError(() => new Error('No current patient'));
+    }
+
+    const searchParams = {
+      patient: currentPatient.id,
+      ...params,
+    };
+
+    return this.search('MedicationRequest', searchParams).pipe(
+      map((bundle) => {
+        if (bundle?.entry) {
+          return bundle.entry
+            .map((entry: any) => entry.resource)
+            .filter((medicationRequest: any) => medicationRequest)
+            .map((medicationRequest: any) =>
+              this.mapFhirMedicationRequest(medicationRequest),
+            );
+        }
+        return [];
+      }),
+      catchError((error) => {
+        console.error('Error fetching medication requests:', error);
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  /**
+   * Map FHIR MedicationRequest resource to our interface
+   */
+  private mapFhirMedicationRequest(
+    fhirMedicationRequest: any,
+  ): MedicationRequest {
+    return {
+      id: fhirMedicationRequest.id,
+      status: fhirMedicationRequest.status,
+      intent: fhirMedicationRequest.intent,
+      category: fhirMedicationRequest.category,
+      priority: fhirMedicationRequest.priority,
+      medicationCodeableConcept:
+        fhirMedicationRequest.medicationCodeableConcept,
+      medicationReference: fhirMedicationRequest.medicationReference,
+      subject: fhirMedicationRequest.subject,
+      encounter: fhirMedicationRequest.encounter,
+      authoredOn: fhirMedicationRequest.authoredOn,
+      requester: fhirMedicationRequest.requester,
+      reasonCode: fhirMedicationRequest.reasonCode,
+      reasonReference: fhirMedicationRequest.reasonReference,
+      dosageInstruction: fhirMedicationRequest.dosageInstruction,
+      dispenseRequest: fhirMedicationRequest.dispenseRequest,
+      substitution: fhirMedicationRequest.substitution,
     };
   }
 
