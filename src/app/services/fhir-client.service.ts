@@ -3,11 +3,7 @@ import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 // Import FHIR client
-declare global {
-  interface Window {
-    FHIR: any;
-  }
-}
+import { oauth2 } from 'fhirclient';
 
 export interface Patient {
   id: string;
@@ -323,29 +319,8 @@ export class FhirClientService {
    * Load FHIR client library dynamically
    */
   private async loadFhirClient(): Promise<void> {
-    try {
-      // Load fhirclient from CDN if not already loaded
-      if (!window.FHIR) {
-        await this.loadScript(
-          'https://cdn.jsdelivr.net/npm/fhirclient@2.5.3/build/lib.min.js',
-        );
-      }
-    } catch (error) {
-      console.error('Failed to load FHIR client library:', error);
-    }
-  }
-
-  /**
-   * Helper to load external scripts
-   */
-  private loadScript(src: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-      document.head.appendChild(script);
-    });
+    // FHIR client is already available as an import
+    // No need to load from CDN
   }
 
   /**
@@ -353,11 +328,7 @@ export class FhirClientService {
    */
   async initializeSmartLaunch(iss?: string, clientId?: string): Promise<void> {
     try {
-      if (!window.FHIR) {
-        throw new Error('FHIR client library not loaded');
-      }
-
-      const client = await window.FHIR.oauth2.init({
+      const client = await oauth2.init({
         iss: iss || 'https://launch.smarthealthit.org/v/r4/fhir',
         clientId: clientId || 'your-client-id',
         scope: 'openid profile patient/*.read',
@@ -377,11 +348,7 @@ export class FhirClientService {
    */
   async handleOAuth2Ready(): Promise<void> {
     try {
-      if (!window.FHIR) {
-        throw new Error('FHIR client library not loaded');
-      }
-
-      const client = await window.FHIR.oauth2.ready();
+      const client = await oauth2.ready();
       this.fhirClient = client;
       await this.loadPatientContext();
     } catch (error) {
@@ -755,7 +722,7 @@ export class FhirClientService {
    * Check if FHIR client is ready
    */
   isClientReady(): boolean {
-    return !!window.FHIR && !!this.fhirClient;
+    return this.fhirClient !== null;
   }
 
   /**
