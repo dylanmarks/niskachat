@@ -161,7 +161,9 @@ interface GroupedObservations {
             <h4>{{ getCategoryDisplayName(selectedCategory) }} Trends</h4>
             <p>{{ getFilteredObservations().length }} observations</p>
           </div>
-          <canvas #chartCanvas></canvas>
+          <div class="chart-wrapper">
+            <canvas #chartCanvas></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -382,7 +384,7 @@ interface GroupedObservations {
       .chart-container {
         position: relative;
         width: 100%;
-        height: 400px;
+        min-height: 400px;
       }
 
       .chart-header {
@@ -400,6 +402,20 @@ interface GroupedObservations {
         margin: 0;
         color: #6b7280;
         font-size: 0.875rem;
+      }
+
+      .chart-wrapper {
+        position: relative;
+        border-radius: 8px;
+        background-color: #fafafa;
+        padding: 16px;
+        width: 100%;
+        height: 400px;
+      }
+
+      .chart-wrapper canvas {
+        width: 100% !important;
+        height: 100% !important;
       }
 
       /* Debug styles */
@@ -428,7 +444,7 @@ export class ObservationsChartComponent
   error = '';
   observations: Observation[] = [];
   chartData: ObservationChartData = {};
-  selectedCategory = 'all';
+  selectedCategory = 'blood-pressure';
   chart: Chart | null = null;
 
   private destroy$ = new Subject<void>();
