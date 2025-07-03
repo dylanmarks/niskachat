@@ -25,6 +25,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "examples",
+                "output": "/examples"
               }
             ],
             "styles": ["src/styles.scss"]
@@ -78,6 +83,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "examples",
+                "output": "/examples"
               }
             ],
             "styles": ["src/styles.scss"]

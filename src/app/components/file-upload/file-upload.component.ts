@@ -189,6 +189,27 @@ interface UploadStatus {
           Upload a FHIR Bundle to view patient data without connecting to a FHIR
           server.
         </p>
+
+        <!-- Example Data Buttons -->
+        <div class="example-data-section">
+          <h4>Or try example data:</h4>
+          <div class="example-buttons">
+            <button
+              class="example-button"
+              (click)="loadExampleData('johnsmith')"
+              [disabled]="uploadStatus.isUploading"
+            >
+              📊 Load John Smith Data
+            </button>
+            <button
+              class="example-button"
+              (click)="loadExampleData('maria')"
+              [disabled]="uploadStatus.isUploading"
+            >
+              📊 Load Maria Johnson Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -441,6 +462,31 @@ interface UploadStatus {
         margin: 0;
         color: #1565c0;
         font-size: 0.9rem;
+      }
+
+      .example-data-section {
+        margin-top: 20px;
+      }
+
+      .example-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .example-button {
+        transition: background-color 0.2s;
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        background: #667eea;
+        padding: 12px 24px;
+        color: white;
+        font-weight: 500;
+      }
+
+      .example-button:hover {
+        background: #5a67d8;
       }
 
       @media (max-width: 768px) {
@@ -777,5 +823,58 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         medicationRequests: [],
       },
     };
+  }
+
+  async loadExampleData(patientId: string): Promise<void> {
+    try {
+      this.uploadStatus.isUploading = true;
+      this.uploadStatus.progress = 0;
+      this.uploadStatus.error = null;
+
+      // Determine which example file to load
+      let fileName: string;
+      if (patientId === 'johnsmith') {
+        fileName = '/examples/fhir-bundles/patients/fhir_bundle_johnsmith.json';
+      } else if (patientId === 'maria') {
+        fileName =
+          '/examples/fhir-bundles/patients/fhir_bundle_maria_johnson.json';
+      } else {
+        throw new Error('Unknown patient ID');
+      }
+
+      this.uploadStatus.progress = 25;
+
+      // Fetch the example bundle
+      const response = await fetch(fileName);
+      if (!response.ok) {
+        throw new Error(`Failed to load example data: ${response.statusText}`);
+      }
+
+      this.uploadStatus.progress = 50;
+
+      const bundleText = await response.text();
+      const bundle: FhirBundle = JSON.parse(bundleText);
+
+      this.uploadStatus.progress = 75;
+
+      // Validate and process the bundle
+      this.validateBundle(bundle);
+      const extractedResources = this.extractResources(bundle);
+
+      // Load into service
+      await this.loadResourcesIntoService(extractedResources);
+
+      this.uploadStatus.progress = 100;
+      this.uploadStatus.isUploading = false;
+      this.uploadStatus.success = true;
+      this.uploadStatus.fileName = `${patientId}_example_data.json`;
+      this.uploadStatus.extractedResources = extractedResources;
+
+      console.log(`Successfully loaded example data for patient: ${patientId}`);
+    } catch (error) {
+      console.error('Error loading example data:', error);
+      this.uploadStatus.isUploading = false;
+      this.uploadStatus.error = `Failed to load example data: ${error}`;
+    }
   }
 }
