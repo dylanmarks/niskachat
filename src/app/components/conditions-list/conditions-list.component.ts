@@ -14,166 +14,260 @@ import {
   imports: [CommonModule],
   template: `
     <div class="conditions-container">
-      <div class="loading-card" *ngIf="isLoading">
-        <div class="spinner"></div>
+      <div class="conditions-header">
+        <h2>Medical Conditions</h2>
+        <div class="condition-count" *ngIf="conditions.length > 0">
+          <span class="count">{{ conditions.length }}</span>
+          <span class="label">
+            {{ conditions.length === 1 ? 'condition' : 'conditions' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
         <p>Loading conditions...</p>
       </div>
 
-      <div class="error-card" *ngIf="errorMessage">
-        <h3>❌ Unable to Load Conditions</h3>
+      <!-- Error State -->
+      <div *ngIf="errorMessage" class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h3>Error Loading Conditions</h3>
         <p>{{ errorMessage }}</p>
-        <button class="retry-button" (click)="loadConditions()">Retry</button>
+        <button (click)="loadConditions()" class="retry-button">
+          Try Again
+        </button>
       </div>
 
-      <div class="conditions-card" *ngIf="!isLoading && !errorMessage">
-        <div class="conditions-header">
-          <h2>📋 Active Conditions</h2>
-          <div class="conditions-count" *ngIf="conditions.length > 0">
-            <span class="count">{{ conditions.length }}</span>
-            <span class="label">
-              {{ conditions.length === 1 ? 'condition' : 'conditions' }}
-            </span>
-          </div>
-        </div>
+      <!-- No Patient State -->
+      <div
+        *ngIf="
+          !context?.authenticated &&
+          !context?.isOfflineMode &&
+          !isLoading &&
+          !errorMessage
+        "
+        class="no-patient-state"
+      >
+        <div class="info-icon">👤</div>
+        <h3>No Patient Selected</h3>
+        <p>Please authenticate and select a patient to view conditions.</p>
+      </div>
 
-        <div class="conditions-content">
-          <div class="no-conditions" *ngIf="conditions.length === 0">
-            <h3>✅ No Active Conditions</h3>
-            <p>No active conditions found for this patient.</p>
-          </div>
+      <!-- Empty State -->
+      <div
+        *ngIf="
+          !isLoading &&
+          !errorMessage &&
+          (context?.authenticated || context?.isOfflineMode) &&
+          conditions.length === 0
+        "
+        class="empty-state"
+      >
+        <div class="info-icon">📋</div>
+        <h3>No Active Conditions</h3>
+        <p>No active conditions found for this patient.</p>
+      </div>
 
-          <div class="conditions-list" *ngIf="conditions.length > 0">
-            <div
-              class="condition-item"
-              *ngFor="let condition of conditions; let i = index"
-            >
-              <div class="condition-main">
-                <div class="condition-name">
-                  <h4>{{ getConditionName(condition) }}</h4>
+      <!-- Conditions Table -->
+      <div *ngIf="conditions.length > 0" class="conditions-table-container">
+        <div class="table-wrapper">
+          <table class="conditions-table">
+            <thead>
+              <tr>
+                <th>Condition</th>
+                <th>Status</th>
+                <th>Onset Date</th>
+                <th>Recorded Date</th>
+                <th>Verification</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let condition of conditions; trackBy: trackCondition"
+                class="condition-row"
+                (click)="selectCondition(condition)"
+                [class.selected]="selectedConditionId === condition.id"
+              >
+                <td class="condition-name">
+                  {{ getConditionName(condition) }}
+                </td>
+                <td class="condition-status">
                   <span
-                    class="condition-status"
+                    class="status-badge"
                     [class]="getStatusClass(condition)"
                   >
                     {{ getConditionStatus(condition) }}
                   </span>
+                </td>
+                <td class="condition-onset">
+                  {{ getOnsetDate(condition) || 'N/A' }}
+                </td>
+                <td class="condition-recorded">
+                  {{ formatDate(condition.recordedDate) || 'N/A' }}
+                </td>
+                <td class="condition-verification">
+                  {{ getVerificationStatus(condition) || 'N/A' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Condition Details Panel -->
+        <div *ngIf="selectedCondition" class="condition-details-panel">
+          <div class="details-header">
+            <h3>Condition Details</h3>
+            <button
+              class="close-button"
+              (click)="clearSelection()"
+              title="Close details"
+            >
+              ×
+            </button>
+          </div>
+
+          <div class="details-content">
+            <div class="detail-section">
+              <h4>{{ getConditionName(selectedCondition) }}</h4>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Status:</span>
+                  <span class="detail-value">
+                    {{ getConditionStatus(selectedCondition) }}
+                  </span>
                 </div>
 
-                <div class="condition-details">
-                  <div class="detail-item" *ngIf="getOnsetDate(condition)">
-                    <span class="label">Onset:</span>
-                    <span class="value">{{ getOnsetDate(condition) }}</span>
-                  </div>
-
-                  <div class="detail-item" *ngIf="condition.recordedDate">
-                    <span class="label">Recorded:</span>
-                    <span class="value">
-                      {{ formatDate(condition.recordedDate) }}
-                    </span>
-                  </div>
-
-                  <div
-                    class="detail-item"
-                    *ngIf="getVerificationStatus(condition)"
-                  >
-                    <span class="label">Verification:</span>
-                    <span class="value">
-                      {{ getVerificationStatus(condition) }}
-                    </span>
-                  </div>
+                <div
+                  class="detail-item"
+                  *ngIf="getVerificationStatus(selectedCondition)"
+                >
+                  <span class="detail-label">Verification:</span>
+                  <span class="detail-value">
+                    {{ getVerificationStatus(selectedCondition) }}
+                  </span>
                 </div>
 
-                <div class="condition-codes" *ngIf="hasCodings(condition)">
-                  <div class="codes-label">Clinical Codes:</div>
-                  <div class="code-items">
-                    <span
-                      class="code-item"
-                      *ngFor="let coding of getCodings(condition)"
-                    >
-                      {{ coding.system | slice: -3 }}: {{ coding.code }}
-                    </span>
-                  </div>
+                <div
+                  class="detail-item"
+                  *ngIf="getOnsetDate(selectedCondition)"
+                >
+                  <span class="detail-label">Onset:</span>
+                  <span class="detail-value">
+                    {{ getOnsetDate(selectedCondition) }}
+                  </span>
+                </div>
+
+                <div class="detail-item" *ngIf="selectedCondition.recordedDate">
+                  <span class="detail-label">Recorded:</span>
+                  <span class="detail-value">
+                    {{ formatDate(selectedCondition.recordedDate) }}
+                  </span>
+                </div>
+
+                <div class="detail-item" *ngIf="selectedCondition.id">
+                  <span class="detail-label">Condition ID:</span>
+                  <span class="detail-value">
+                    {{ selectedCondition.id }}
+                  </span>
+                </div>
+
+                <div class="detail-item" *ngIf="selectedCondition.subject">
+                  <span class="detail-label">Subject:</span>
+                  <span class="detail-value">
+                    {{
+                      selectedCondition.subject.reference ||
+                        selectedCondition.subject.display
+                    }}
+                  </span>
                 </div>
               </div>
+            </div>
 
-              <div class="condition-metadata" *ngIf="hasMetadata(condition)">
-                <details class="metadata-details">
-                  <summary>Technical Details</summary>
-                  <div class="metadata-content">
-                    <div class="metadata-item">
-                      <span class="label">Condition ID:</span>
-                      <span class="value">{{ condition.id }}</span>
-                    </div>
-                    <div class="metadata-item" *ngIf="condition.subject">
-                      <span class="label">Subject:</span>
-                      <span class="value">
-                        {{
-                          condition.subject.reference ||
-                            condition.subject.display
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                </details>
+            <!-- Clinical Codes -->
+            <div class="detail-section" *ngIf="hasCodings(selectedCondition)">
+              <h4>Clinical Codes</h4>
+              <div class="codes-list">
+                <div
+                  *ngFor="let coding of getCodings(selectedCondition)"
+                  class="code-item"
+                >
+                  <span class="code-system">
+                    {{ getSystemName(coding.system) }}
+                  </span>
+                  <span class="code-value">{{ coding.code }}</span>
+                  <span class="code-display" *ngIf="coding.display">
+                    {{ coding.display }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div
-        class="no-patient-card"
-        *ngIf="!context?.authenticated && !isLoading && !errorMessage"
-      >
-        <h3>👤 No Patient Selected</h3>
-        <p>
-          Please complete SMART on FHIR authentication to view patient
-          conditions.
-        </p>
-        <button class="auth-button" (click)="navigateToAuth()">
-          Start Authentication
-        </button>
       </div>
     </div>
   `,
   styles: [
     `
       .conditions-container {
-        margin: 2rem auto;
-        padding: 1rem;
-        max-width: 800px;
-        font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        box-sizing: border-box;
+        margin: 16px 0 0 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        background: white;
+        padding: 16px;
+        width: 100%;
+        max-width: 100%;
       }
 
-      .loading-card,
-      .error-card,
-      .no-patient-card {
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        padding: 2rem;
+      .conditions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 12px;
+      }
+
+      .conditions-header h2 {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 1.5rem;
+      }
+
+      .condition-count {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        padding: 8px 16px;
+        color: white;
+        font-weight: 500;
+      }
+
+      .count {
+        font-weight: 700;
+        font-size: 1.2rem;
+      }
+
+      /* Loading, Error, and Empty States */
+      .loading-state,
+      .error-state,
+      .no-patient-state,
+      .empty-state {
+        padding: 40px 20px;
+        color: #6b7280;
         text-align: center;
       }
 
-      .loading-card {
-        background: #f8f9fa;
-      }
-
-      .error-card {
-        border: 1px solid #fcc;
-        background: #fee;
-      }
-
-      .no-patient-card {
-        border: 1px solid #bee5eb;
-        background: #f0f8ff;
-      }
-
-      .spinner {
+      .loading-spinner {
         animation: spin 1s linear infinite;
-        margin: 1rem auto;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #007bff;
+        margin: 0 auto 16px;
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #8b5cf6;
         border-radius: 50%;
         width: 40px;
         height: 40px;
@@ -188,256 +282,314 @@ import {
         }
       }
 
-      .conditions-card {
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        background: white;
-        overflow: hidden;
+      .error-icon,
+      .info-icon {
+        margin-bottom: 16px;
+        font-size: 3rem;
       }
 
-      .conditions-header {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        padding: 1.5rem;
-        color: white;
-      }
-
-      .conditions-header h2 {
-        margin: 0;
-        font-size: 1.5rem;
-      }
-
-      .conditions-count {
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-      }
-
-      .count {
-        margin-right: 0.25rem;
-        font-weight: bold;
-      }
-
-      .conditions-content {
-        padding: 1.5rem;
-      }
-
-      .no-conditions {
-        padding: 2rem;
-        color: #6c757d;
-        text-align: center;
-      }
-
-      .conditions-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .condition-item {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        background: #f8f9fa;
-        overflow: hidden;
-      }
-
-      .condition-main {
-        padding: 1.5rem;
-      }
-
-      .condition-name {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .condition-name h4 {
-        flex: 1;
-        margin: 0;
-        color: #212529;
-        font-size: 1.1rem;
-      }
-
-      .condition-status {
-        border-radius: 12px;
-        padding: 0.25rem 0.75rem;
-        font-weight: 500;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        white-space: nowrap;
-      }
-
-      .status-active {
-        background: #d4edda;
-        color: #155724;
-      }
-
-      .status-inactive {
-        background: #f8d7da;
-        color: #721c24;
-      }
-
-      .status-resolved {
-        background: #cce5ff;
-        color: #004085;
-      }
-
-      .status-unknown {
-        background: #e2e3e5;
-        color: #383d41;
-      }
-
-      .condition-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-      }
-
-      .detail-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #dee2e6;
-        padding: 0.5rem 0;
-      }
-
-      .detail-item:last-child {
-        border-bottom: none;
-      }
-
-      .label {
-        min-width: 80px;
-        color: #6c757d;
-        font-weight: 500;
-      }
-
-      .value {
-        color: #212529;
-        font-weight: 400;
-        text-align: right;
-      }
-
-      .condition-codes {
-        border-top: 1px solid #dee2e6;
-        padding-top: 1rem;
-      }
-
-      .codes-label {
-        margin-bottom: 0.5rem;
-        color: #6c757d;
-        font-weight: 500;
-        font-size: 0.9rem;
-      }
-
-      .code-items {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-
-      .code-item {
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        background: white;
-        padding: 0.25rem 0.5rem;
-        color: #495057;
-        font-size: 0.8rem;
-        font-family: monospace;
-      }
-
-      .condition-metadata {
-        border-top: 1px solid #e9ecef;
-        background: #ffffff;
-        padding: 1rem 1.5rem;
-      }
-
-      .metadata-details summary {
-        cursor: pointer;
-        padding: 0.5rem 0;
-        color: #6c757d;
-        font-weight: 500;
-      }
-
-      .metadata-content {
-        margin-top: 1rem;
-      }
-
-      .metadata-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.5rem 0;
-        font-size: 0.9rem;
-      }
-
-      .retry-button,
-      .auth-button {
-        transition: background-color 0.2s;
-        cursor: pointer;
-        margin-top: 1rem;
-        border: none;
-        border-radius: 4px;
-        padding: 0.75rem 1.5rem;
-        font-size: 1rem;
+      .error-state h3,
+      .no-patient-state h3,
+      .empty-state h3 {
+        margin: 0 0 8px 0;
+        color: #1f2937;
+        font-weight: 600;
       }
 
       .retry-button {
-        background: #dc3545;
+        transition: background-color 0.2s;
+        cursor: pointer;
+        margin-top: 16px;
+        border: none;
+        border-radius: 6px;
+        background-color: #8b5cf6;
+        padding: 8px 16px;
         color: white;
+        font-weight: 500;
+        font-size: 0.875rem;
       }
 
       .retry-button:hover {
-        background: #c82333;
+        background-color: #7c3aed;
       }
 
-      .auth-button {
-        background: #007bff;
-        color: white;
+      /* Table Styles */
+      .conditions-table-container {
+        display: flex;
+        gap: 24px;
+        box-sizing: border-box;
+        width: 100%;
       }
 
-      .auth-button:hover {
-        background: #0056b3;
+      .table-wrapper {
+        flex: 1;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        min-width: 0;
+        height: fit-content;
+        overflow: hidden;
+      }
+
+      .conditions-table {
+        border-collapse: collapse;
+        background: white;
+        width: 100%;
+        table-layout: fixed;
+        font-size: 14px;
+      }
+
+      .conditions-table th {
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+        padding: 12px 8px;
+        color: #374151;
+        font-weight: 600;
+        text-align: left;
+      }
+
+      .condition-row {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      .condition-row:hover {
+        background-color: #f9fafb;
+      }
+
+      .condition-row.selected {
+        border-left: 4px solid #8b5cf6;
+        background-color: #eff6ff;
+      }
+
+      .conditions-table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+        word-wrap: break-word;
+        overflow: hidden;
+      }
+
+      .condition-name {
+        width: 30%;
+        color: #1f2937;
+        font-weight: 500;
+      }
+
+      .condition-status {
+        width: 15%;
+      }
+
+      .condition-onset,
+      .condition-recorded,
+      .condition-verification {
+        width: 18%;
+        color: #6b7280;
+      }
+
+      .status-badge {
+        display: inline-block;
+        border-radius: 12px;
+        padding: 4px 8px;
+        font-weight: 500;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      .status-badge.active {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .status-badge.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .status-badge.resolved {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .status-badge.unknown {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      /* Details Panel */
+      .condition-details-panel {
+        flex: 0 0 350px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #f9fafb;
+        overflow: hidden;
+      }
+
+      .details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f3f4f6;
+        padding: 16px 20px;
+      }
+
+      .details-header h3 {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .close-button {
+        transition: color 0.2s;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 4px;
+        color: #6b7280;
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .close-button:hover {
+        color: #374151;
+      }
+
+      .details-content {
+        padding: 20px;
+        max-height: 500px;
+        overflow-y: auto;
+      }
+
+      .detail-section {
+        margin-bottom: 24px;
+      }
+
+      .detail-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .detail-section h4 {
+        margin: 0 0 12px 0;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 1.1rem;
+        word-wrap: break-word;
+      }
+
+      .detail-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .detail-item {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        align-items: start;
+        gap: 8px;
+      }
+
+      .detail-label {
+        color: #374151;
+        font-weight: 500;
+        font-size: 13px;
+      }
+
+      .detail-value {
+        color: #1f2937;
+        font-size: 13px;
+        word-wrap: break-word;
+      }
+
+      .codes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .code-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: white;
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+
+      .code-system {
+        border-radius: 4px;
+        background: #f3f4f6;
+        padding: 2px 6px;
+        color: #6b7280;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .code-value {
+        color: #1f2937;
+        font-weight: 500;
+        font-family: monospace;
+        word-break: break-all;
+      }
+
+      .code-display {
+        color: #6b7280;
+        font-style: italic;
+        word-wrap: break-word;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+        .conditions-table-container {
+          flex-direction: column;
+        }
+
+        .condition-details-panel {
+          flex: none;
+        }
       }
 
       @media (max-width: 768px) {
         .conditions-container {
-          margin: 1rem;
-          padding: 0.5rem;
+          margin: 8px 0;
+          padding: 16px;
         }
 
         .conditions-header {
           flex-direction: column;
           align-items: flex-start;
-          gap: 1rem;
+          gap: 12px;
         }
 
+        .conditions-table {
+          font-size: 12px;
+        }
+
+        .conditions-table th,
+        .conditions-table td {
+          padding: 8px 4px;
+        }
+
+        /* Adjust column widths for mobile */
         .condition-name {
-          flex-direction: column;
-          align-items: flex-start;
+          width: 50%;
         }
 
-        .condition-details {
-          grid-template-columns: 1fr;
+        .condition-status {
+          width: 25%;
         }
 
-        .detail-item {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 0.25rem;
+        .condition-onset {
+          width: 25%;
         }
 
-        .value {
-          text-align: left;
-        }
-
-        .code-items {
-          justify-content: flex-start;
+        /* Hide less important columns on mobile */
+        .condition-recorded,
+        .condition-verification {
+          display: none;
         }
       }
     `,
@@ -450,6 +602,8 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
   errorMessage = '';
   conditions: Condition[] = [];
   context: FhirContext | null = null;
+  selectedConditionId: string | null = null;
+  selectedCondition: Condition | null = null;
 
   constructor(private fhirClient: FhirClientService) {}
 
@@ -616,16 +770,20 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
   /**
    * Format date for display
    */
-  formatDate(dateString: string): string {
+  formatDate(dateString?: string): string {
+    if (!dateString) return 'N/A';
+
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
       });
     } catch (error) {
-      return dateString;
+      return 'N/A';
     }
   }
 
@@ -637,33 +795,65 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get coding information for display
+   * Get condition codings for display
    */
-  getCodings(condition: Condition): Array<{ system: string; code: string }> {
-    if (!condition.code?.coding) {
-      return [];
+  getCodings(
+    condition: Condition,
+  ): { system: string; code: string; display?: string }[] {
+    const codings: { system: string; code: string; display?: string }[] = [];
+
+    if (condition.code?.coding) {
+      condition.code.coding.forEach((coding) => {
+        if (coding.system && coding.code) {
+          const codingEntry: {
+            system: string;
+            code: string;
+            display?: string;
+          } = {
+            system: coding.system,
+            code: coding.code,
+          };
+
+          if (coding.display) {
+            codingEntry.display = coding.display;
+          }
+
+          codings.push(codingEntry);
+        }
+      });
     }
 
-    return condition.code.coding
-      .filter((coding) => coding.system && coding.code)
-      .map((coding) => ({
-        system: coding.system!,
-        code: coding.code!,
-      }));
+    return codings;
   }
 
   /**
-   * Check if condition has metadata worth showing
+   * Get system name for coding system
    */
-  hasMetadata(condition: Condition): boolean {
-    return !!(condition.id || condition.subject);
+  getSystemName(system: string): string {
+    // Implement your logic to map system to a readable name
+    return system;
   }
 
   /**
-   * Navigate to authentication
+   * Select a condition
    */
-  navigateToAuth(): void {
-    // In a real app, this would navigate to the auth component
-    window.location.href = '/smart-launch';
+  selectCondition(condition: Condition): void {
+    this.selectedConditionId = condition.id;
+    this.selectedCondition = condition;
+  }
+
+  /**
+   * Clear selection
+   */
+  clearSelection(): void {
+    this.selectedConditionId = null;
+    this.selectedCondition = null;
+  }
+
+  /**
+   * Track condition by ID
+   */
+  trackCondition(index: number, condition: Condition): string {
+    return condition.id || index.toString();
   }
 }

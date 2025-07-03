@@ -7,30 +7,30 @@ import { oauth2 } from 'fhirclient';
 
 export interface Patient {
   id: string;
-  name?: Array<{
+  name?: {
     family?: string;
     given?: string[];
     use?: string;
-  }>;
+  }[];
   birthDate?: string;
   gender?: string;
-  identifier?: Array<{
+  identifier?: {
     system?: string;
     value?: string;
     type?: {
-      coding?: Array<{
+      coding?: {
         system?: string;
         code?: string;
         display?: string;
-      }>;
+      }[];
     };
-  }>;
-  telecom?: Array<{
+  }[];
+  telecom?: {
     system?: string;
     value?: string;
     use?: string;
-  }>;
-  address?: Array<{
+  }[];
+  address?: {
     use?: string;
     text?: string;
     line?: string[];
@@ -38,31 +38,31 @@ export interface Patient {
     state?: string;
     postalCode?: string;
     country?: string;
-  }>;
+  }[];
 }
 
 export interface Condition {
   id: string;
   clinicalStatus?: {
-    coding?: Array<{
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
   };
   verificationStatus?: {
-    coding?: Array<{
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
   };
   code?: {
-    coding?: Array<{
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
     text?: string;
   };
   subject?: {
@@ -93,11 +93,11 @@ export interface Observation {
   id: string;
   status?: string;
   code?: {
-    coding?: Array<{
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
     text?: string;
   };
   subject?: {
@@ -117,20 +117,20 @@ export interface Observation {
   };
   valueString?: string;
   valueCodeableConcept?: {
-    coding?: Array<{
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
     text?: string;
   };
-  component?: Array<{
+  component?: {
     code?: {
-      coding?: Array<{
+      coding?: {
         system?: string;
         code?: string;
         display?: string;
-      }>;
+      }[];
       text?: string;
     };
     valueQuantity?: {
@@ -141,40 +141,40 @@ export interface Observation {
     };
     valueString?: string;
     valueCodeableConcept?: {
-      coding?: Array<{
+      coding?: {
         system?: string;
         code?: string;
         display?: string;
-      }>;
+      }[];
       text?: string;
     };
-  }>;
+  }[];
   issued?: string;
-  performer?: Array<{
+  performer?: {
     reference?: string;
     display?: string;
-  }>;
+  }[];
 }
 
 export interface MedicationRequest {
   id: string;
   status?: string;
   intent?: string;
-  category?: Array<{
-    coding?: Array<{
+  category?: {
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
     text?: string;
-  }>;
+  }[];
   priority?: string;
   medicationCodeableConcept?: {
-    coding?: Array<{
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
     text?: string;
   };
   medicationReference?: {
@@ -194,19 +194,19 @@ export interface MedicationRequest {
     reference?: string;
     display?: string;
   };
-  reasonCode?: Array<{
-    coding?: Array<{
+  reasonCode?: {
+    coding?: {
       system?: string;
       code?: string;
       display?: string;
-    }>;
+    }[];
     text?: string;
-  }>;
-  reasonReference?: Array<{
+  }[];
+  reasonReference?: {
     reference?: string;
     display?: string;
-  }>;
-  dosageInstruction?: Array<{
+  }[];
+  dosageInstruction?: {
     text?: string;
     timing?: {
       repeat?: {
@@ -216,14 +216,14 @@ export interface MedicationRequest {
       };
     };
     route?: {
-      coding?: Array<{
+      coding?: {
         system?: string;
         code?: string;
         display?: string;
-      }>;
+      }[];
       text?: string;
     };
-    doseAndRate?: Array<{
+    doseAndRate?: {
       doseQuantity?: {
         value?: number;
         unit?: string;
@@ -244,8 +244,8 @@ export interface MedicationRequest {
           code?: string;
         };
       };
-    }>;
-  }>;
+    }[];
+  }[];
   dispenseRequest?: {
     numberOfRepeatsAllowed?: number;
     quantity?: {
@@ -264,19 +264,19 @@ export interface MedicationRequest {
   substitution?: {
     allowedBoolean?: boolean;
     allowedCodeableConcept?: {
-      coding?: Array<{
+      coding?: {
         system?: string;
         code?: string;
         display?: string;
-      }>;
+      }[];
       text?: string;
     };
     reason?: {
-      coding?: Array<{
+      coding?: {
         system?: string;
         code?: string;
         display?: string;
-      }>;
+      }[];
       text?: string;
     };
   };

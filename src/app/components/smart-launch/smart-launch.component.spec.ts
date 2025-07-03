@@ -76,7 +76,7 @@ describe('SmartLaunchComponent', () => {
 
   describe('handleCallback', () => {
     it('should handle successful callback', async () => {
-      mockFhirClient.handleOAuth2Ready.and.returnValue(Promise.resolve());
+      mockFhirClient.handleOAuth2Ready.and.resolveTo();
 
       await component.handleCallback();
 
@@ -87,7 +87,7 @@ describe('SmartLaunchComponent', () => {
 
     it('should handle callback failure', async () => {
       const error = new Error('Auth failed');
-      mockFhirClient.handleOAuth2Ready.and.returnValue(Promise.reject(error));
+      mockFhirClient.handleOAuth2Ready.and.rejectWith(error);
 
       await component.handleCallback();
 
@@ -98,7 +98,7 @@ describe('SmartLaunchComponent', () => {
 
   describe('handleStandaloneLaunch', () => {
     it('should handle successful standalone launch', async () => {
-      mockFhirClient.initializeSmartLaunch.and.returnValue(Promise.resolve());
+      mockFhirClient.initializeSmartLaunch.and.resolveTo();
 
       await component.handleStandaloneLaunch();
 
@@ -108,8 +108,8 @@ describe('SmartLaunchComponent', () => {
 
     it('should handle standalone launch failure', async () => {
       const error = new Error('Launch failed');
-      mockFhirClient.initializeSmartLaunch.and.returnValue(
-        Promise.reject(error),
+      mockFhirClient.initializeSmartLaunch.and.rejectWith(
+        error,
       );
 
       await component.handleStandaloneLaunch();
@@ -156,11 +156,13 @@ describe('SmartLaunchComponent', () => {
   describe('Navigation', () => {
     it('should navigate to app', () => {
       component.navigateToApp();
+
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard']);
     });
 
     it('should navigate to test mode', () => {
       component.navigateToTestMode();
+
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/test-mode']);
     });
   });

@@ -147,6 +147,7 @@ describe('ConditionsListComponent', () => {
       expect(mockFhirClientService.getConditions).toHaveBeenCalledWith({
         'clinical-status': 'active',
       });
+
       expect(component.conditions).toEqual(conditions);
       expect(component.isLoading).toBeFalse();
       expect(component.errorMessage).toBe('');
@@ -238,6 +239,7 @@ describe('ConditionsListComponent', () => {
   describe('Condition Name Display', () => {
     it('should display condition text when available', () => {
       const name = component.getConditionName(mockActiveCondition);
+
       expect(name).toBe('Type 2 Diabetes');
     });
 
@@ -256,6 +258,7 @@ describe('ConditionsListComponent', () => {
       } as Condition;
 
       const name = component.getConditionName(conditionWithoutText);
+
       expect(name).toBe('Diabetes mellitus');
     });
 
@@ -273,6 +276,7 @@ describe('ConditionsListComponent', () => {
       } as Condition;
 
       const name = component.getConditionName(conditionWithCode);
+
       expect(name).toBe('Code: 73211009');
     });
 
@@ -283,6 +287,7 @@ describe('ConditionsListComponent', () => {
       delete (conditionWithoutName as any).code;
 
       const name = component.getConditionName(conditionWithoutName);
+
       expect(name).toBe('Unknown Condition');
     });
   });
@@ -290,6 +295,7 @@ describe('ConditionsListComponent', () => {
   describe('Status Display', () => {
     it('should display clinical status', () => {
       const status = component.getConditionStatus(mockActiveCondition);
+
       expect(status).toBe('Active');
     });
 
@@ -308,6 +314,7 @@ describe('ConditionsListComponent', () => {
       } as Condition;
 
       const status = component.getConditionStatus(conditionWithCodeOnly);
+
       expect(status).toBe('active');
     });
 
@@ -318,6 +325,7 @@ describe('ConditionsListComponent', () => {
       delete (conditionWithoutStatus as any).clinicalStatus;
 
       const status = component.getConditionStatus(conditionWithoutStatus);
+
       expect(status).toBe('Unknown');
     });
   });
@@ -325,11 +333,13 @@ describe('ConditionsListComponent', () => {
   describe('Status CSS Classes', () => {
     it('should return correct CSS class for active status', () => {
       const cssClass = component.getStatusClass(mockActiveCondition);
+
       expect(cssClass).toBe('status-active');
     });
 
     it('should return correct CSS class for resolved status', () => {
       const cssClass = component.getStatusClass(mockResolvedCondition);
+
       expect(cssClass).toBe('status-resolved');
     });
 
@@ -342,6 +352,7 @@ describe('ConditionsListComponent', () => {
       } as Condition;
 
       const cssClass = component.getStatusClass(conditionWithUnknownStatus);
+
       expect(cssClass).toBe('status-unknown');
     });
   });
@@ -349,11 +360,13 @@ describe('ConditionsListComponent', () => {
   describe('Onset Date Display', () => {
     it('should format onset datetime', () => {
       const onset = component.getOnsetDate(mockActiveCondition);
+
       expect(onset).toBe('Jan 15, 2020');
     });
 
     it('should format onset period', () => {
       const onset = component.getOnsetDate(mockResolvedCondition);
+
       expect(onset).toBe('Jun 1, 2019 - Aug 1, 2019');
     });
 
@@ -367,6 +380,7 @@ describe('ConditionsListComponent', () => {
       delete (conditionWithOngoingPeriod as any).onsetDateTime;
 
       const onset = component.getOnsetDate(conditionWithOngoingPeriod);
+
       expect(onset).toBe('Jan 1, 2020 - ongoing');
     });
 
@@ -377,6 +391,7 @@ describe('ConditionsListComponent', () => {
       delete (conditionWithoutOnset as any).onsetDateTime;
 
       const onset = component.getOnsetDate(conditionWithoutOnset);
+
       expect(onset).toBeNull();
     });
   });
@@ -384,11 +399,13 @@ describe('ConditionsListComponent', () => {
   describe('Date Formatting', () => {
     it('should format valid date', () => {
       const formatted = component.formatDate('2020-01-15T10:30:00Z');
+
       expect(formatted).toBe('Jan 15, 2020');
     });
 
     it('should handle invalid date gracefully', () => {
       const formatted = component.formatDate('invalid-date');
+
       expect(formatted).toBe('invalid-date');
     });
   });
@@ -396,6 +413,7 @@ describe('ConditionsListComponent', () => {
   describe('Verification Status', () => {
     it('should return verification status display', () => {
       const status = component.getVerificationStatus(mockActiveCondition);
+
       expect(status).toBe('Confirmed');
     });
 
@@ -408,6 +426,7 @@ describe('ConditionsListComponent', () => {
       const status = component.getVerificationStatus(
         conditionWithoutVerification,
       );
+
       expect(status).toBeNull();
     });
   });
@@ -415,6 +434,7 @@ describe('ConditionsListComponent', () => {
   describe('Coding Information', () => {
     it('should detect when condition has codings', () => {
       const hasCoding = component.hasCodings(mockActiveCondition);
+
       expect(hasCoding).toBeTrue();
     });
 
@@ -425,11 +445,13 @@ describe('ConditionsListComponent', () => {
       delete (conditionWithoutCoding as any).code;
 
       const hasCoding = component.hasCodings(conditionWithoutCoding);
+
       expect(hasCoding).toBeFalse();
     });
 
     it('should return coding information', () => {
       const codings = component.getCodings(mockActiveCondition);
+
       expect(codings).toEqual([
         {
           system: 'http://snomed.info/sct',
@@ -460,6 +482,7 @@ describe('ConditionsListComponent', () => {
       } as Condition;
 
       const codings = component.getCodings(conditionWithIncompleteCodings);
+
       expect(codings).toEqual([
         {
           system: 'http://snomed.info/sct',
@@ -472,6 +495,7 @@ describe('ConditionsListComponent', () => {
   describe('Metadata', () => {
     it('should detect when condition has metadata', () => {
       const hasMetadata = component.hasMetadata(mockActiveCondition);
+
       expect(hasMetadata).toBeTrue();
     });
 
@@ -481,6 +505,7 @@ describe('ConditionsListComponent', () => {
       } as Condition;
 
       const hasMetadata = component.hasMetadata(conditionWithoutMetadata);
+
       expect(hasMetadata).toBeFalse();
     });
   });
@@ -506,6 +531,7 @@ describe('ConditionsListComponent', () => {
       const conditionCards = fixture.debugElement.queryAll(
         By.css('.condition-card'),
       );
+
       expect(conditionCards.length).toBe(3);
 
       // Click on first condition card
@@ -530,6 +556,7 @@ describe('ConditionsListComponent', () => {
 
       const loadingElement =
         fixture.nativeElement.querySelector('.loading-card');
+
       expect(loadingElement).toBeTruthy();
       expect(loadingElement.textContent).toContain('Loading conditions');
     });
@@ -540,6 +567,7 @@ describe('ConditionsListComponent', () => {
       fixture.detectChanges();
 
       const errorElement = fixture.nativeElement.querySelector('.error-card');
+
       expect(errorElement).toBeTruthy();
       expect(errorElement.textContent).toContain('Test error message');
     });
@@ -552,6 +580,7 @@ describe('ConditionsListComponent', () => {
 
       const noConditionsElement =
         fixture.nativeElement.querySelector('.no-conditions');
+
       expect(noConditionsElement).toBeTruthy();
       expect(noConditionsElement.textContent).toContain('No Active Conditions');
     });
@@ -564,10 +593,12 @@ describe('ConditionsListComponent', () => {
 
       const conditionsElement =
         fixture.nativeElement.querySelector('.conditions-list');
+
       expect(conditionsElement).toBeTruthy();
 
       const conditionItems =
         fixture.nativeElement.querySelectorAll('.condition-item');
+
       expect(conditionItems.length).toBe(1);
     });
 
@@ -580,11 +611,13 @@ describe('ConditionsListComponent', () => {
       const countElement = fixture.nativeElement.querySelector(
         '.conditions-count .count',
       );
+
       expect(countElement.textContent).toBe('2');
 
       const labelElement = fixture.nativeElement.querySelector(
         '.conditions-count .label',
       );
+
       expect(labelElement.textContent).toContain('conditions');
     });
 
@@ -597,6 +630,7 @@ describe('ConditionsListComponent', () => {
       const labelElement = fixture.nativeElement.querySelector(
         '.conditions-count .label',
       );
+
       expect(labelElement.textContent).toContain('condition');
     });
 
@@ -608,6 +642,7 @@ describe('ConditionsListComponent', () => {
 
       const noPatientElement =
         fixture.nativeElement.querySelector('.no-patient-card');
+
       expect(noPatientElement).toBeTruthy();
       expect(noPatientElement.textContent).toContain('No Patient Selected');
     });
@@ -615,13 +650,13 @@ describe('ConditionsListComponent', () => {
 
   describe('Component Lifecycle', () => {
     it('should unsubscribe on destroy', () => {
-      spyOn(component['destroy$'], 'next');
-      spyOn(component['destroy$'], 'complete');
+      spyOn(component.destroy$, 'next');
+      spyOn(component.destroy$, 'complete');
 
       component.ngOnDestroy();
 
-      expect(component['destroy$'].next).toHaveBeenCalled();
-      expect(component['destroy$'].complete).toHaveBeenCalled();
+      expect(component.destroy$.next).toHaveBeenCalled();
+      expect(component.destroy$.complete).toHaveBeenCalled();
     });
   });
 });

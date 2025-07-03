@@ -3,6 +3,8 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  inject,
+  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -201,11 +203,14 @@ type GroupedObservations = Record<string, Observation[]>;
   styles: [
     `
       .observations-chart-container {
+        box-sizing: border-box;
         margin: 16px 0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         border-radius: 12px;
         background: white;
         padding: 24px;
+        width: 100%;
+        max-width: 100%;
       }
 
       .observations-header {
@@ -511,6 +516,10 @@ export class ObservationsChartComponent
 
   private destroy$ = new Subject<void>();
 
+  // Use Angular's inject() for DI to avoid triggering linter warnings
+  private readonly fhirService = inject(FhirClientService);
+  private readonly ngZone = inject(NgZone);
+
   // LOINC codes for common observations
   private readonly LOINC_CATEGORIES = {
     'blood-pressure': [
@@ -535,8 +544,6 @@ export class ObservationsChartComponent
       '3137-7', // Body height Measured
     ],
   };
-
-  constructor(private fhirService: FhirClientService) {}
 
   ngOnInit(): void {
     console.log('ObservationsChartComponent: ngOnInit called');
@@ -649,13 +656,19 @@ export class ObservationsChartComponent
   }
 
   onCategoryChange(event: any): void {
-    const newCategory = event.target?.value || event;
+    const newCategory = event.target?.value ?? event;
 
     // Prevent unnecessary processing if category hasn't changed
     if (this.selectedCategory === newCategory) {
       return;
     }
 
+    console.log(
+      'Category changed from',
+      this.selectedCategory,
+      'to',
+      newCategory,
+    );
     this.selectedCategory = newCategory;
 
     // Clear existing chart when switching categories
@@ -663,11 +676,7 @@ export class ObservationsChartComponent
 
     // Only process if we have observations and we're switching to a chart view
     if (this.observations.length > 0 && this.selectedCategory !== 'all') {
-      this.prepareChartData();
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
-        this.safeRenderChart();
-      }, 100);
+      this.renderChartForCategory();
     }
   }
 
@@ -709,8 +718,15 @@ export class ObservationsChartComponent
 
     console.log('filtered observations:', filteredObservations.length);
 
+    if (filteredObservations.length === 0) {
+      console.log('No observations to chart');
+      this.chartData = { datasets: [] };
+      return;
+    }
+
     const grouped = this.groupObservationsByType(filteredObservations);
     console.log('grouped observations:', Object.keys(grouped));
+
     const datasets: ChartDataset[] = [];
     const colors = [
       '#3b82f6', // Blue
@@ -728,12 +744,25 @@ export class ObservationsChartComponent
         .map((obs) => {
           const date = this.extractObservationDate(obs);
           const value = this.extractObservationValue(obs);
-          return date && value !== null ? { x: date, y: value } : null;
+
+          // Validate both date and value are present and valid
+          if (!date || value === null || isNaN(value)) {
+            return null;
+          }
+
+          // Validate date is a valid date
+          const dateObj = new Date(date);
+          if (isNaN(dateObj.getTime())) {
+            console.warn('Invalid date:', date);
+            return null;
+          }
+
+          return { x: date, y: value };
         })
         .filter((point): point is ChartDataPoint => point !== null);
 
       if (data.length > 0) {
-        const color = colors[colorIndex % colors.length] || '#3b82f6';
+        const color = colors[colorIndex % colors.length] ?? '#3b82f6';
         datasets.push({
           label,
           data,
@@ -742,26 +771,84 @@ export class ObservationsChartComponent
           tension: 0.1,
         });
         colorIndex++;
+        console.log(`Created dataset for ${label} with ${data.length} points`);
+      } else {
+        console.log(`No valid data points for ${label}`);
       }
     }
 
     this.chartData = { datasets };
+    console.log('Final chart data prepared with', datasets.length, 'datasets');
   }
 
   groupObservationsByType(observations: Observation[]): GroupedObservations {
     const grouped: GroupedObservations = {};
 
     observations.forEach((obs) => {
-      const label = this.getObservationLabel(obs);
-      if (label) {
-        if (!grouped[label]) {
-          grouped[label] = [];
+      // Special handling for blood pressure panel observations (component-based)
+      if (this.isBloodPressurePanel(obs)) {
+        this.processBloodPressureComponents(obs, grouped);
+      } else {
+        // Standard observation processing
+        const label = this.getObservationLabel(obs);
+        if (label) {
+          if (!grouped[label]) {
+            grouped[label] = [];
+          }
+          grouped[label].push(obs);
         }
-        grouped[label].push(obs);
       }
     });
 
     return grouped;
+  }
+
+  // Check if observation is a blood pressure panel
+  private isBloodPressurePanel(obs: Observation): boolean {
+    return (
+      obs.code?.coding?.some(
+        (coding) =>
+          coding.system === 'http://loinc.org' && coding.code === '85354-9',
+      ) ?? false
+    );
+  }
+
+  // Process blood pressure panel components into separate groups
+  private processBloodPressureComponents(
+    obs: Observation,
+    grouped: GroupedObservations,
+  ): void {
+    if (!obs.component) return;
+
+    obs.component.forEach((component) => {
+      const componentCoding = component.code?.coding?.[0];
+      if (!componentCoding) return;
+
+      let label: string | null = null;
+
+      // Map LOINC codes to readable labels
+      if (componentCoding.code === '8480-6') {
+        label = 'Systolic Blood Pressure';
+      } else if (componentCoding.code === '8462-4') {
+        label = 'Diastolic Blood Pressure';
+      }
+
+      if (label && component.valueQuantity?.value !== undefined) {
+        if (!grouped[label]) {
+          grouped[label] = [];
+        }
+
+        // Create a synthetic observation for the component
+        const { component: _, ...baseObs } = obs;
+        const componentObs: Observation = {
+          ...baseObs,
+          code: component.code || { coding: [] },
+          valueQuantity: component.valueQuantity,
+        };
+
+        grouped[label]!.push(componentObs);
+      }
+    });
   }
 
   getObservationLabel(obs: Observation): string | null {
@@ -775,8 +862,9 @@ export class ObservationsChartComponent
     return null;
   }
 
-  sortObservationsByDate(observations: Observation[]): Observation[] {
-    return [...observations].sort((a, b) => {
+  // Sort observations by effective date (newest first)
+  private sortObservationsByDate(observations: Observation[]): Observation[] {
+    return observations.sort((a, b) => {
       const dateA = this.extractObservationDate(a);
       const dateB = this.extractObservationDate(b);
 
@@ -784,7 +872,8 @@ export class ObservationsChartComponent
       if (!dateA) return 1;
       if (!dateB) return -1;
 
-      return new Date(dateA).getTime() - new Date(dateB).getTime();
+      // Sort in descending order (newest first)
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
   }
 
@@ -822,24 +911,31 @@ export class ObservationsChartComponent
 
   renderChart(): void {
     console.log('renderChart called, chartData:', this.chartData);
-    console.log('datasets:', this.chartData.datasets?.length || 0);
+    console.log('datasets:', this.chartData.datasets?.length ?? 0);
 
+    // Basic validation checks
     if (!this.chartElement?.nativeElement) {
       console.log('No chart element available');
       return;
     }
 
-    // Prevent rendering if we're already in the process
-    if (this.chart) {
-      console.log('Chart already exists, destroying first');
-      this.destroyChart();
-    }
-
-    // Validate chart data
     if (!this.chartData.datasets || this.chartData.datasets.length === 0) {
       console.log('No chart data available');
       return;
     }
+
+    // Validate that datasets have data points
+    const hasValidData = this.chartData.datasets.some(
+      (dataset) => dataset.data && dataset.data.length > 0,
+    );
+
+    if (!hasValidData) {
+      console.log('No valid data points in datasets');
+      return;
+    }
+
+    // Make sure any existing chart is destroyed
+    this.destroyChart();
 
     const ctx = this.chartElement.nativeElement.getContext('2d');
     if (!ctx) {
@@ -847,25 +943,31 @@ export class ObservationsChartComponent
       return;
     }
 
-    const config: ChartConfiguration = {
+    // Simplified chart configuration to prevent freezing
+    const config: ChartConfiguration<'line'> = {
       type: 'line',
-      data: this.chartData as any,
+      data: {
+        datasets: this.chartData.datasets.map((dataset) => ({
+          label: dataset.label,
+          data: dataset.data.map((point) => ({
+            x: new Date(point.x).getTime(),
+            y: point.y,
+          })),
+          borderColor: dataset.borderColor ?? '#3b82f6',
+          backgroundColor: dataset.backgroundColor ?? '#3b82f620',
+          tension: 0.1,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        })),
+      },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
         scales: {
           x: {
             type: 'time',
             time: {
               unit: 'day',
-              displayFormats: {
-                day: 'MMM dd',
-                month: 'MMM yyyy',
-              },
             },
             title: {
               display: true,
@@ -890,36 +992,59 @@ export class ObservationsChartComponent
             intersect: false,
           },
         },
-        elements: {
-          point: {
-            radius: 4,
-            hoverRadius: 6,
-          },
-        },
       },
     };
 
     try {
-      this.chart = new Chart(ctx, config);
+      // Render the chart outside Angular's zone to avoid triggering change detection
+      this.ngZone.runOutsideAngular(() => {
+        this.chart = new Chart(ctx, config);
+      });
       console.log('Chart created successfully');
     } catch (error) {
       console.error('Error creating chart:', error);
       this.error = 'Failed to render chart';
+      this.chart = null;
     }
   }
 
   // Add a method to safely render chart with error handling
   private safeRenderChart(): void {
     try {
-      // Only render if we have valid data and DOM element
-      if (this.chartElement?.nativeElement && this.chartData.datasets?.length) {
-        this.renderChart();
-      } else {
-        console.log('Cannot render chart: missing element or data');
+      console.log('safeRenderChart called');
+
+      // Double-check we have everything we need
+      if (!this.chartElement?.nativeElement) {
+        console.log('Chart element not available');
+        return;
       }
+
+      if (!this.chartData.datasets || this.chartData.datasets.length === 0) {
+        console.log('No chart datasets available');
+        this.error = 'No data available for chart';
+        return;
+      }
+
+      // Check if datasets have valid data
+      const totalDataPoints = this.chartData.datasets.reduce(
+        (total, dataset) => total + (dataset.data?.length ?? 0),
+        0,
+      );
+
+      if (totalDataPoints === 0) {
+        console.log('No data points in datasets');
+        this.error = 'No data points available for chart';
+        return;
+      }
+
+      console.log(
+        `Rendering chart with ${this.chartData.datasets.length} datasets and ${totalDataPoints} total points`,
+      );
+      this.renderChart();
     } catch (error) {
-      console.error('Error rendering chart:', error);
+      console.error('Error in safeRenderChart:', error);
       this.error = 'Failed to render chart';
+      this.destroyChart(); // Clean up on error
     }
   }
 
@@ -935,11 +1060,49 @@ export class ObservationsChartComponent
 
   // Format observation value for display
   formatObservationValue(obs: Observation): string {
+    // Special handling for blood pressure panels
+    if (this.isBloodPressurePanel(obs)) {
+      return this.formatBloodPressureValue(obs);
+    }
+
     const value = this.extractObservationValue(obs);
     if (value === null) return 'N/A';
 
-    const unit = obs.valueQuantity?.unit || '';
+    const unit = obs.valueQuantity?.unit ?? '';
     return `${value} ${unit}`.trim();
+  }
+
+  // Format blood pressure panel values as "systolic/diastolic unit"
+  private formatBloodPressureValue(obs: Observation): string {
+    if (!obs.component) return 'N/A';
+
+    let systolic: number | null = null;
+    let diastolic: number | null = null;
+    let unit = '';
+
+    obs.component.forEach((component) => {
+      const componentCoding = component.code?.coding?.[0];
+      if (!componentCoding) return;
+
+      if (componentCoding.code === '8480-6') {
+        // Systolic blood pressure
+        systolic = component.valueQuantity?.value ?? null;
+        unit = component.valueQuantity?.unit ?? '';
+      } else if (componentCoding.code === '8462-4') {
+        // Diastolic blood pressure
+        diastolic = component.valueQuantity?.value ?? null;
+      }
+    });
+
+    if (systolic !== null && diastolic !== null) {
+      return `${systolic}/${diastolic} ${unit}`.trim();
+    } else if (systolic !== null) {
+      return `${systolic}/- ${unit}`.trim();
+    } else if (diastolic !== null) {
+      return `-/${diastolic} ${unit}`.trim();
+    }
+
+    return 'N/A';
   }
 
   // Format observation date for display
@@ -982,21 +1145,22 @@ export class ObservationsChartComponent
 
   // Add a method to back to table view
   backToTable(): void {
+    console.log('Switching back to table view');
+    this.destroyChart();
     this.selectedCategory = 'all';
+    this.error = ''; // Clear any chart errors
   }
 
   // Add a method to handle observation click
   onObservationClick(obs: Observation): void {
+    console.log('Observation clicked:', obs);
     const category = this.detectObservationCategory(obs);
+    console.log('Detected category:', category);
+
     if (category && category !== 'all') {
       this.selectedCategory = category;
-      // Clear any existing chart first
-      this.destroyChart();
-      this.prepareChartData();
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
-        this.safeRenderChart();
-      }, 100);
+      // Only render chart if we have a valid canvas element
+      this.renderChartForCategory();
     }
   }
 
@@ -1012,7 +1176,7 @@ export class ObservationsChartComponent
       const hasMatchingCode = obs.code.coding.some(
         (coding) =>
           coding.system === 'http://loinc.org' &&
-          loincCodes.includes(coding.code || ''),
+          loincCodes.includes(coding.code ?? ''),
       );
 
       if (hasMatchingCode) {
@@ -1023,14 +1187,41 @@ export class ObservationsChartComponent
     return null;
   }
 
+  // Simplified chart rendering method
+  private renderChartForCategory(): void {
+    console.log('renderChartForCategory called for:', this.selectedCategory);
+
+    // Clear any existing chart first
+    this.destroyChart();
+
+    // Prepare chart data
+    this.prepareChartData();
+
+    // Only render if we have data and DOM element is ready
+    if (this.chartData.datasets && this.chartData.datasets.length > 0) {
+      // Use shorter timeout for better responsiveness
+      setTimeout(() => {
+        this.safeRenderChart();
+      }, 50);
+    } else {
+      console.log(
+        'No chart data available for category:',
+        this.selectedCategory,
+      );
+    }
+  }
+
   // Add a dedicated method to safely destroy the chart
   private destroyChart(): void {
     if (this.chart) {
-      try {
-        this.chart.destroy();
-      } catch (error) {
-        console.warn('Error destroying chart:', error);
-      }
+      // Destroy the chart outside Angular's zone as well
+      this.ngZone.runOutsideAngular(() => {
+        try {
+          this.chart!.destroy();
+        } catch (error) {
+          console.warn('Error destroying chart:', error);
+        }
+      });
       this.chart = null;
     }
   }

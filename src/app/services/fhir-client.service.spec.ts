@@ -4,8 +4,8 @@ import { FhirClientService, FhirContext } from './fhir-client.service';
 // Mock FHIR client
 const mockFhirClient = {
   patient: {
-    read: jasmine.createSpy('read').and.returnValue(
-      Promise.resolve({
+    read: jasmine.createSpy('read').and.resolveTo(
+      {
         id: 'test-patient-123',
         name: [
           {
@@ -31,10 +31,10 @@ const mockFhirClient = {
             },
           },
         ],
-      }),
+      },
     ),
   },
-  request: jasmine.createSpy('request').and.returnValue(Promise.resolve({})),
+  request: jasmine.createSpy('request').and.resolveTo({}),
   getClientId: jasmine
     .createSpy('getClientId')
     .and.returnValue('test-client-id'),
@@ -52,10 +52,10 @@ const mockWindow = {
     oauth2: {
       init: jasmine
         .createSpy('init')
-        .and.returnValue(Promise.resolve(mockFhirClient)),
+        .and.resolveTo(mockFhirClient),
       ready: jasmine
         .createSpy('ready')
-        .and.returnValue(Promise.resolve(mockFhirClient)),
+        .and.resolveTo(mockFhirClient),
     },
   },
 };
@@ -83,6 +83,7 @@ describe('FhirClientService', () => {
 
   it('should start with unauthenticated state', () => {
     const context = service.getCurrentContext();
+
     expect(context.authenticated).toBeFalse();
     expect(service.isAuthenticated()).toBeFalse();
   });
@@ -96,14 +97,15 @@ describe('FhirClientService', () => {
       expect(service.isAuthenticated()).toBeTrue();
 
       const context = service.getCurrentContext();
+
       expect(context.authenticated).toBeTrue();
       expect(context.patient).toBeDefined();
       expect(context.patient?.id).toBe('test-patient-123');
     });
 
     it('should handle OAuth2 ready failure gracefully', async () => {
-      mockWindow.FHIR.oauth2.ready.and.returnValue(
-        Promise.reject(new Error('Auth failed')),
+      mockWindow.FHIR.oauth2.ready.and.rejectWith(
+        new Error('Auth failed'),
       );
 
       try {
@@ -167,6 +169,7 @@ describe('FhirClientService', () => {
 
     it('should get current patient', () => {
       const patient = service.getCurrentPatient();
+
       expect(patient).toBeDefined();
       expect(patient?.id).toBe('test-patient-123');
       expect(patient?.name?.[0]?.family).toBe('Doe');
@@ -175,11 +178,11 @@ describe('FhirClientService', () => {
 
     it('should get patient by ID', (done) => {
       const patientId = 'specific-patient-456';
-      mockFhirClient.request.and.returnValue(
-        Promise.resolve({
+      mockFhirClient.request.and.resolveTo(
+        {
           id: patientId,
           name: [{ family: 'Smith', given: ['Jane'] }],
-        }),
+        },
       );
 
       service.getPatient(patientId).subscribe({
@@ -198,8 +201,8 @@ describe('FhirClientService', () => {
     });
 
     it('should handle patient fetch error', (done) => {
-      mockFhirClient.request.and.returnValue(
-        Promise.reject(new Error('Patient not found')),
+      mockFhirClient.request.and.rejectWith(
+        new Error('Patient not found'),
       );
 
       service.getPatient('non-existent').subscribe({
@@ -223,7 +226,7 @@ describe('FhirClientService', () => {
 
     it('should search for resources without parameters', (done) => {
       const mockBundle = { resourceType: 'Bundle', entry: [] };
-      mockFhirClient.request.and.returnValue(Promise.resolve(mockBundle));
+      mockFhirClient.request.and.resolveTo(mockBundle);
 
       service.search('Observation').subscribe({
         next: (result) => {
@@ -240,7 +243,7 @@ describe('FhirClientService', () => {
 
     it('should search for resources with parameters', (done) => {
       const mockBundle = { resourceType: 'Bundle', entry: [] };
-      mockFhirClient.request.and.returnValue(Promise.resolve(mockBundle));
+      mockFhirClient.request.and.resolveTo(mockBundle);
 
       const params = { patient: 'test-patient-123', category: 'vital-signs' };
 
@@ -260,8 +263,8 @@ describe('FhirClientService', () => {
     });
 
     it('should handle search errors', (done) => {
-      mockFhirClient.request.and.returnValue(
-        Promise.reject(new Error('Search failed')),
+      mockFhirClient.request.and.rejectWith(
+        new Error('Search failed'),
       );
 
       service.search('InvalidResource').subscribe({
@@ -281,10 +284,12 @@ describe('FhirClientService', () => {
     it('should clear session correctly', async () => {
       // First authenticate
       await service.handleOAuth2Ready();
+
       expect(service.isAuthenticated()).toBeTrue();
 
       // Then clear session
       service.clearSession();
+
       expect(service.isAuthenticated()).toBeFalse();
       expect(service.getCurrentPatient()).toBeUndefined();
     });
@@ -293,6 +298,7 @@ describe('FhirClientService', () => {
       expect(service.isClientReady()).toBeFalse();
 
       await service.handleOAuth2Ready();
+
       expect(service.isClientReady()).toBeTrue();
     });
   });

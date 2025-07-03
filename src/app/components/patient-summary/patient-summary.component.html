@@ -13,9 +13,44 @@
   <div class="patient-card" *ngIf="patient && !isLoading && !errorMessage">
     <div class="patient-header">
       <h2>👤 Patient Summary</h2>
-      <div class="patient-id" *ngIf="patient.id">
-        <span class="label">Patient ID:</span>
-        <span class="value">{{ patient.id }}</span>
+      <div class="header-actions">
+        <button
+          class="summarize-button"
+          *ngIf="patient"
+          (click)="generateSummary()"
+          [disabled]="isSummarizing"
+        >
+          <span *ngIf="!isSummarizing">✨ Summarize</span>
+          <span *ngIf="isSummarizing">⏳ Generating...</span>
+        </button>
+        <div class="patient-id" *ngIf="patient.id">
+          <span class="label">Patient ID:</span>
+          <span class="value">{{ patient.id }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="summary-section" *ngIf="summary || summaryError">
+      <div class="summary-card" *ngIf="summary">
+        <h3>📋 Clinical Summary</h3>
+        <div class="summary-content">
+          <pre>{{ summary }}</pre>
+        </div>
+        <div class="summary-meta">
+          <span class="summary-type" [class.llm-used]="summaryUsedLLM">
+            {{ summaryUsedLLM ? "🤖 AI Generated" : "📊 Structured Summary" }}
+          </span>
+          <span class="summary-timestamp">
+            {{ summaryTimestamp | date: "short" }}
+          </span>
+        </div>
+      </div>
+
+      <div class="summary-error" *ngIf="summaryError">
+        <h3>❌ Summary Error</h3>
+        <p>{{ summaryError }}</p>
+        <button class="retry-button" (click)="generateSummary()">Retry</button>
       </div>
     </div>
 
@@ -56,10 +91,7 @@
         <h3>Contact Information</h3>
 
         <div class="contact-list">
-          <div
-            class="contact-item"
-            *ngFor="let contact of getContactInfo()"
-          >
+          <div class="contact-item" *ngFor="let contact of getContactInfo()">
             <span class="contact-type">{{ contact.type }}:</span>
             <span class="contact-value">{{ contact.value }}</span>
           </div>
@@ -98,14 +130,10 @@
     </div>
   </div>
 
-  <div
-    class="no-patient-card"
-    *ngIf="!patient && !isLoading && !errorMessage"
-  >
+  <div class="no-patient-card" *ngIf="!patient && !isLoading && !errorMessage">
     <h3>👤 No Patient Selected</h3>
     <p>
-      Please complete SMART on FHIR authentication to view patient
-      information.
+      Please complete SMART on FHIR authentication to view patient information.
     </p>
     <button class="auth-button" (click)="navigateToAuth()">
       Start Authentication

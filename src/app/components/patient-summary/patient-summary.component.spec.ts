@@ -380,6 +380,7 @@ describe('PatientSummaryComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
+
       expect(compiled.querySelector('.patient-card')).toBeTruthy();
       expect(compiled.textContent).toContain('John William Doe');
     });
@@ -392,6 +393,7 @@ describe('PatientSummaryComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
+
       expect(compiled.querySelector('.patient-card')).toBeTruthy();
       expect(compiled.textContent).toContain('Unknown Patient');
     });
@@ -402,6 +404,7 @@ describe('PatientSummaryComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
+
       expect(compiled.querySelector('.loading-card')).toBeTruthy();
       expect(compiled.textContent).toContain('Loading patient information');
     });
@@ -412,6 +415,7 @@ describe('PatientSummaryComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
+
       expect(compiled.querySelector('.error-card')).toBeTruthy();
       expect(compiled.textContent).toContain('Test error message');
     });
@@ -424,6 +428,7 @@ describe('PatientSummaryComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
+
       expect(compiled.querySelector('.no-patient-card')).toBeTruthy();
       expect(compiled.textContent).toContain('No Patient Selected');
     });
