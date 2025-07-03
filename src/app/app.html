@@ -1,8 +1,17 @@
 <div class="niska-chat-app">
   <header class="app-header">
     <div class="header-content">
-      <h1 class="app-title">🏥 NiskaChat</h1>
-      <p class="app-subtitle">SMART on FHIR Clinical Data Viewer</p>
+      <div class="brand-container">
+        <img
+          src="assets/niska-logo.svg"
+          alt="Niska Chat Logo"
+          class="app-logo"
+        />
+        <div class="brand-text">
+          <h1 class="app-title">Niska Chat</h1>
+          <p class="app-subtitle">SMART on FHIR Clinical Data Viewer</p>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -29,7 +38,7 @@
   </main>
 
   <footer class="app-footer">
-    <p>&copy; 2024 NiskaChat - SMART on FHIR Healthcare Data Platform</p>
+    <p>&copy; 2024 Niska Chat - SMART on FHIR Healthcare Data Platform</p>
   </footer>
 </div>
 
@@ -54,6 +63,23 @@
   .header-content {
     margin: 0 auto;
     max-width: 1200px;
+  }
+
+  .brand-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .app-logo {
+    filter: brightness(0) invert(1);
+    width: auto;
+    height: 60px;
+  }
+
+  .brand-text {
+    text-align: left;
   }
 
   .app-title {
@@ -98,6 +124,19 @@
   }
 
   @media (max-width: 768px) {
+    .brand-container {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .app-logo {
+      height: 50px;
+    }
+
+    .brand-text {
+      text-align: center;
+    }
+
     .app-title {
       font-size: 2rem;
     }
@@ -108,6 +147,20 @@
 
     .app-main {
       padding: 1rem 0.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .app-logo {
+      height: 40px;
+    }
+
+    .app-title {
+      font-size: 1.8rem;
+    }
+
+    .brand-container {
+      gap: 0.8rem;
     }
   }
 </style>
