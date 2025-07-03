@@ -88,7 +88,10 @@ interface UploadStatus {
           <div class="file-icon">📄</div>
           <h3>{{ uploadStatus.fileName }}</h3>
           <p>Ready to process</p>
-          <button class="process-button" (click)="processFile()">
+          <button
+            class="process-button"
+            (click)="processFile(); $event.stopPropagation()"
+          >
             Process Bundle
           </button>
         </div>
@@ -112,7 +115,12 @@ interface UploadStatus {
         <div class="error-icon">⚠️</div>
         <h3>Upload Error</h3>
         <p>{{ uploadStatus.error }}</p>
-        <button class="retry-button" (click)="resetUpload()">Try Again</button>
+        <button
+          class="retry-button"
+          (click)="resetUpload(); $event.stopPropagation()"
+        >
+          Try Again
+        </button>
       </div>
 
       <!-- Success State -->
@@ -165,7 +173,10 @@ interface UploadStatus {
           </div>
         </div>
 
-        <button class="new-upload-button" (click)="resetUpload()">
+        <button
+          class="new-upload-button"
+          (click)="resetUpload(); $event.stopPropagation()"
+        >
           Upload Another Bundle
         </button>
       </div>
@@ -720,9 +731,22 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     observations: Observation[];
     medicationRequests: MedicationRequest[];
   }): Promise<void> {
+    console.log(
+      'FileUploadComponent: loadResourcesIntoService called with resources:',
+      resources,
+    );
+    console.log(
+      'FileUploadComponent: Number of observations:',
+      resources.observations.length,
+    );
+
     // For now, we'll focus on the first patient if available
     if (resources.patients.length > 0) {
       const patient: Patient = resources.patients[0]!;
+      console.log(
+        'FileUploadComponent: Setting offline mode for patient:',
+        patient,
+      );
 
       // Update the FHIR client context with the uploaded patient and resources
       this.fhirClient.setOfflineMode({
@@ -731,6 +755,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         observations: resources.observations,
         medicationRequests: resources.medicationRequests,
       });
+
+      console.log('FileUploadComponent: Offline mode set successfully');
     } else {
       throw new Error('No Patient resources found in the bundle');
     }

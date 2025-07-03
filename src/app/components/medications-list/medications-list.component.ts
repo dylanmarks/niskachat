@@ -91,7 +91,7 @@ import {
             <div class="detail-row" *ngIf="medication.requester?.display">
               <span class="detail-label">Prescriber:</span>
               <span class="detail-value">
-                {{ medication.requester.display }}
+                {{ medication.requester?.display }}
               </span>
             </div>
 
