@@ -444,7 +444,7 @@ export class ObservationsChartComponent
   error = '';
   observations: Observation[] = [];
   chartData: ObservationChartData = {};
-  selectedCategory = 'blood-pressure';
+  selectedCategory = 'a1c';
   chart: Chart | null = null;
 
   private destroy$ = new Subject<void>();
@@ -531,7 +531,8 @@ export class ObservationsChartComponent
   ngAfterViewInit(): void {
     if (this.observations.length > 0) {
       this.prepareChartData();
-      this.renderChart();
+      // Add small delay to ensure DOM is ready
+      setTimeout(() => this.renderChart(), 100);
     }
   }
 
@@ -563,7 +564,7 @@ export class ObservationsChartComponent
         this.loading = false;
         this.prepareChartData();
         if (this.chartElement) {
-          this.safeRenderChart();
+          setTimeout(() => this.safeRenderChart(), 200);
         }
       },
       error: (error) => {
@@ -591,7 +592,8 @@ export class ObservationsChartComponent
     // Only process if we have observations
     if (this.observations.length > 0) {
       this.prepareChartData();
-      this.safeRenderChart();
+      // Add delay to ensure DOM is ready for chart rendering
+      setTimeout(() => this.safeRenderChart(), 150);
     }
   }
 
@@ -622,12 +624,19 @@ export class ObservationsChartComponent
   }
 
   prepareChartData(): void {
+    console.log('prepareChartData called');
+    console.log('selectedCategory:', this.selectedCategory);
+    console.log('total observations:', this.observations.length);
+
     const filteredObservations = this.filterObservationsByCategory(
       this.observations,
       this.selectedCategory,
     );
 
+    console.log('filtered observations:', filteredObservations.length);
+
     const grouped = this.groupObservationsByType(filteredObservations);
+    console.log('grouped observations:', Object.keys(grouped));
     const datasets: ChartDataset[] = [];
     const colors = [
       '#3b82f6', // Blue
@@ -738,7 +747,11 @@ export class ObservationsChartComponent
   }
 
   renderChart(): void {
+    console.log('renderChart called, chartData:', this.chartData);
+    console.log('datasets:', this.chartData.datasets?.length || 0);
+
     if (!this.chartElement?.nativeElement) {
+      console.log('No chart element available');
       return;
     }
 
@@ -748,7 +761,10 @@ export class ObservationsChartComponent
     }
 
     const ctx = this.chartElement.nativeElement.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('Could not get canvas context');
+      return;
+    }
 
     const config: ChartConfiguration = {
       type: 'line',
