@@ -1,16 +1,11 @@
 import express from "express";
 import { getFormattedPrompt } from "../utils/promptLoader.js";
+import { getLLMProviderFactory } from "../providers/providerFactory.js";
 
 const router = express.Router();
 
-// LLM server configuration - optimized for MacBook Air
-const LLM_CONFIG = {
-  url: process.env.LLM_URL || "http://127.0.0.1:8081",
-  timeout: parseInt(process.env.LLM_TIMEOUT) || 15000, // Reduced timeout for MacBook Air
-  maxTokens: parseInt(process.env.LLM_MAX_TOKENS) || 300, // Reduced tokens for lighter models
-  temperature: parseFloat(process.env.LLM_TEMPERATURE) || 0.3,
-  enabled: process.env.LLM_ENABLED !== "false", // Allow disabling LLM for MacBook Air
-};
+// Get the LLM provider factory instance
+const llmFactory = getLLMProviderFactory();
 
 // Context types for different interactions
 const CONTEXT_TYPES = {
@@ -162,38 +157,18 @@ function generatePrompt(context, data, userQuery = null) {
 }
 
 /**
- * Call local LLM for summarization
+ * Call LLM provider for summarization
+ * @param {string} prompt - The prompt to send to the LLM
+ * @param {Object} options - Options for the LLM call
+ * @returns {Promise<{response: string, provider: string}>}
  */
-async function callLLM(prompt) {
+async function callLLM(prompt, options = {}) {
   try {
-    const response = await fetch(`${LLM_CONFIG.url}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "biomistral",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        max_tokens: LLM_CONFIG.maxTokens,
-        temperature: LLM_CONFIG.temperature,
-        stream: false,
-      }),
-      signal: AbortSignal.timeout(LLM_CONFIG.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `LLM API error: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const result = await response.json();
-    return result.choices?.[0]?.message?.content || "No summary generated";
+    const result = await llmFactory.generateResponse(prompt, options);
+    return {
+      response: result.response || "No summary generated",
+      provider: result.provider,
+    };
   } catch (error) {
     console.error("LLM call failed:", error);
     throw error;
@@ -364,17 +339,22 @@ router.post("/", async (req, res) => {
 
     let summary;
     let llmUsed = false;
+    let provider = null;
 
-    // Only attempt LLM if enabled and we have the service
-    if (LLM_CONFIG.enabled) {
+    // Check if any LLM provider is available
+    const hasProvider = await llmFactory.hasAvailableProvider();
+    
+    if (hasProvider) {
       try {
         // Generate appropriate prompt based on context
         const prompt = generatePrompt(context, clinicalData, query);
-        summary = await callLLM(prompt);
+        const llmResult = await callLLM(prompt);
+        summary = llmResult.response;
+        provider = llmResult.provider;
         llmUsed = true;
       } catch (llmError) {
         console.log(
-          `LLM unavailable for ${context} context, using fallback:`,
+          `LLM providers unavailable for ${context} context, using fallback:`,
           llmError.message,
         );
         
@@ -386,10 +366,10 @@ router.post("/", async (req, res) => {
         }
       }
     } else {
-      console.log(`LLM disabled for ${context} context, using fallback`);
+      console.log(`No LLM providers available for ${context} context, using fallback`);
       
       if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
-        summary = "The AI assistant is currently disabled. Please contact your system administrator for assistance with clinical data analysis.";
+        summary = "The AI assistant is currently unavailable. Please contact your system administrator for assistance with clinical data analysis.";
       } else {
         summary = generateFallbackSummary(clinicalData);
       }
@@ -400,6 +380,7 @@ router.post("/", async (req, res) => {
       success: true,
       summary,
       llmUsed,
+      provider,
       context,
       timestamp: new Date().toISOString(),
     };
@@ -429,31 +410,24 @@ router.post("/", async (req, res) => {
 });
 
 /**
- * GET /status - Check LLM server status
+ * GET /status - Check LLM providers status
  */
 router.get("/status", async (req, res) => {
   try {
-    const response = await fetch(`${LLM_CONFIG.url}/v1/models`, {
-      signal: AbortSignal.timeout(5000),
+    const providersStatus = await llmFactory.getProvidersStatus();
+    const hasAvailable = await llmFactory.hasAvailableProvider();
+    
+    res.json({
+      llmAvailable: hasAvailable,
+      ...providersStatus,
+      timestamp: new Date().toISOString(),
     });
-
-    if (response.ok) {
-      const models = await response.json();
-      res.json({
-        llmAvailable: true,
-        url: LLM_CONFIG.url,
-        models: models.data || [],
-      });
-    } else {
-      res.json({
-        llmAvailable: false,
-        error: `LLM server responded with ${response.status}`,
-      });
-    }
   } catch (error) {
+    console.error("Status check error:", error);
     res.json({
       llmAvailable: false,
       error: error.message,
+      timestamp: new Date().toISOString(),
     });
   }
 });
