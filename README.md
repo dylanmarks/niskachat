@@ -46,7 +46,7 @@ Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, w
 | Time to patient view post-login | < 10 seconds              |
 | Resource parsing accuracy       | 100% by `resourceType`    |
 | Compatibility                   | SMART R4, GCP FHIR        |
-| Security                        | No client secrets exposed |
+| Security                        | Server-side session storage |
 | LLM cost per summary (optional) | <$0.10                    |
 
 ---
@@ -96,6 +96,10 @@ npm install
 cd backend
 npm install
 npm run dev
+
+# Set environment variables (update values for production)
+export SESSION_SECRET="replace-this"
+export CORS_ORIGINS="http://localhost:4200"
 
 # Run frontend
 cd ../frontend
