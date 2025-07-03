@@ -1,4 +1,5 @@
 import express from "express";
+import { getFormattedPrompt } from "../utils/promptLoader.js";
 
 const router = express.Router();
 
@@ -11,21 +12,11 @@ const LLM_CONFIG = {
   enabled: process.env.LLM_ENABLED !== "false", // Allow disabling LLM for MacBook Air
 };
 
-// Medical summarization prompt template
-const MEDICAL_SUMMARY_PROMPT = `You are a clinical AI assistant. Please provide a concise clinical summary of the following FHIR patient data. Focus on:
-
-1. **Patient Demographics**: Age, gender, key identifiers
-2. **Active Conditions**: Current diagnosed conditions with dates
-3. **Recent Observations**: Key vital signs, lab results, diagnostic findings
-4. **Current Medications**: Active prescriptions with dosages
-5. **Clinical Highlights**: Most important medical information for provider review
-
-Keep the summary professional, clinical, and under 300 words. Use medical terminology appropriately.
-
-FHIR Data:
-{fhirData}
-
-Clinical Summary:`;
+// Context types for different interactions
+const CONTEXT_TYPES = {
+  SUMMARY: 'summary',
+  CLINICAL_CHAT: 'clinical_chat'
+};
 
 /**
  * Extract relevant clinical data from FHIR Bundle
@@ -145,6 +136,29 @@ function formatClinicalData(data) {
   }
 
   return formatted;
+}
+
+/**
+ * Generate appropriate prompt based on context type
+ */
+function generatePrompt(context, data, userQuery = null) {
+  switch (context) {
+    case CONTEXT_TYPES.CLINICAL_CHAT:
+      // For chat interactions, format patient data and include user query
+      const patientData = formatClinicalData(data);
+      return getFormattedPrompt('clinical-chat', {
+        patientData,
+        userQuery: userQuery || 'Please provide an overview of this patient.'
+      });
+    
+    case CONTEXT_TYPES.SUMMARY:
+    default:
+      // For summaries, use the traditional formatted data
+      const formattedData = formatClinicalData(data);
+      return getFormattedPrompt('clinical-summary', {
+        fhirData: formattedData
+      });
+  }
 }
 
 /**
@@ -316,31 +330,37 @@ function generateFallbackSummary(data) {
 }
 
 /**
- * POST /summarize - Generate clinical summary from FHIR Bundle
+ * POST /summarize - Generate clinical summary or chat response from FHIR Bundle
  */
 router.post("/", async (req, res) => {
   try {
-    const { bundle } = req.body;
+    const { bundle, context = CONTEXT_TYPES.SUMMARY, query, patientData } = req.body;
 
-    if (!bundle) {
+    // For chat context, we can accept either bundle or patientData
+    if (!bundle && !patientData) {
       return res.status(400).json({
-        error: "Missing FHIR Bundle data",
-        message: "Please provide a FHIR Bundle in the request body",
+        error: "Missing patient data",
+        message: "Please provide either a FHIR Bundle or patient data in the request body",
       });
     }
 
-    // Extract clinical data from bundle
-    const clinicalData = extractClinicalData(bundle);
+    let clinicalData;
 
-    if (clinicalData === "No clinical data available") {
-      return res.status(400).json({
-        error: "Invalid FHIR Bundle",
-        message: "Bundle contains no extractable clinical data",
-      });
+    // Handle different input types
+    if (bundle) {
+      // Extract clinical data from bundle
+      clinicalData = extractClinicalData(bundle);
+
+      if (clinicalData === "No clinical data available") {
+        return res.status(400).json({
+          error: "Invalid FHIR Bundle",
+          message: "Bundle contains no extractable clinical data",
+        });
+      }
+    } else if (patientData) {
+      // Use provided patient data directly (for chat context)
+      clinicalData = patientData;
     }
-
-    // Format data for LLM
-    const formattedData = formatClinicalData(clinicalData);
 
     let summary;
     let llmUsed = false;
@@ -348,37 +368,57 @@ router.post("/", async (req, res) => {
     // Only attempt LLM if enabled and we have the service
     if (LLM_CONFIG.enabled) {
       try {
-        // Attempt to use LLM for summarization
-        const prompt = MEDICAL_SUMMARY_PROMPT.replace(
-          "{fhirData}",
-          formattedData,
-        );
+        // Generate appropriate prompt based on context
+        const prompt = generatePrompt(context, clinicalData, query);
         summary = await callLLM(prompt);
         llmUsed = true;
       } catch (llmError) {
         console.log(
-          "LLM unavailable, using enhanced fallback summary:",
+          `LLM unavailable for ${context} context, using fallback:`,
           llmError.message,
         );
-        // Fall back to enhanced summary
-        summary = generateFallbackSummary(clinicalData);
+        
+        // Fall back based on context
+        if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
+          summary = "I apologize, but I'm currently unable to process your request due to a technical issue. Please try again in a moment, or rephrase your question.";
+        } else {
+          summary = generateFallbackSummary(clinicalData);
+        }
       }
     } else {
-      console.log("LLM disabled, using enhanced fallback summary");
-      summary = generateFallbackSummary(clinicalData);
+      console.log(`LLM disabled for ${context} context, using fallback`);
+      
+      if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
+        summary = "The AI assistant is currently disabled. Please contact your system administrator for assistance with clinical data analysis.";
+      } else {
+        summary = generateFallbackSummary(clinicalData);
+      }
     }
 
-    res.json({
+    // Prepare response based on context
+    const response = {
       success: true,
       summary,
       llmUsed,
-      stats: {
-        conditions: clinicalData.conditions.length,
-        observations: clinicalData.observations.length,
-        medications: clinicalData.medications.length,
-      },
+      context,
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    // Add stats for summary context or when we have structured clinical data
+    if (context === CONTEXT_TYPES.SUMMARY || (clinicalData.conditions && clinicalData.observations)) {
+      response.stats = {
+        conditions: clinicalData.conditions?.length || 0,
+        observations: clinicalData.observations?.length || 0,
+        medications: clinicalData.medications?.length || 0,
+      };
+    }
+
+    // Add query echo for chat context
+    if (context === CONTEXT_TYPES.CLINICAL_CHAT && query) {
+      response.query = query;
+    }
+
+    res.json(response);
   } catch (error) {
     console.error("Summarization error:", error);
     res.status(500).json({
