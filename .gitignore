@@ -42,3 +42,8 @@ testem.log
 .DS_Store
 Thumbs.db
 llama.cpp/
+
+# Environment variables (security)
+.env
+.env.local
+.env.*.local
