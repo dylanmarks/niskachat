@@ -1,0 +1,114 @@
+<div class="patient-summary-container">
+  <div class="loading-card" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading patient information...</p>
+  </div>
+
+  <div class="error-card" *ngIf="errorMessage">
+    <h3>❌ Unable to Load Patient</h3>
+    <p>{{ errorMessage }}</p>
+    <button class="retry-button" (click)="loadPatient()">Retry</button>
+  </div>
+
+  <div class="patient-card" *ngIf="patient && !isLoading && !errorMessage">
+    <div class="patient-header">
+      <h2>👤 Patient Summary</h2>
+      <div class="patient-id" *ngIf="patient.id">
+        <span class="label">Patient ID:</span>
+        <span class="value">{{ patient.id }}</span>
+      </div>
+    </div>
+
+    <div class="patient-info">
+      <div class="info-section">
+        <h3>Demographics</h3>
+
+        <div class="info-item">
+          <span class="label">Name:</span>
+          <span class="value">{{ getPatientName() }}</span>
+        </div>
+
+        <div class="info-item" *ngIf="patient.birthDate">
+          <span class="label">Date of Birth:</span>
+          <span class="value">{{ formatDate(patient.birthDate) }}</span>
+        </div>
+
+        <div class="info-item" *ngIf="getAge()">
+          <span class="label">Age:</span>
+          <span class="value">{{ getAge() }} years old</span>
+        </div>
+
+        <div class="info-item" *ngIf="patient.gender">
+          <span class="label">Gender:</span>
+          <span class="value">{{ formatGender(patient.gender) }}</span>
+        </div>
+      </div>
+
+      <div class="info-section" *ngIf="getMedicalRecordNumber()">
+        <h3>Medical Record</h3>
+        <div class="info-item">
+          <span class="label">MRN:</span>
+          <span class="value">{{ getMedicalRecordNumber() }}</span>
+        </div>
+      </div>
+
+      <div class="info-section" *ngIf="hasContactInfo()">
+        <h3>Contact Information</h3>
+
+        <div class="contact-list">
+          <div
+            class="contact-item"
+            *ngFor="let contact of getContactInfo()"
+          >
+            <span class="contact-type">{{ contact.type }}:</span>
+            <span class="contact-value">{{ contact.value }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section" *ngIf="hasAddresses()">
+        <h3>Address</h3>
+        <div class="address-list">
+          <div class="address-item" *ngFor="let address of getAddresses()">
+            <div class="address-type">{{ address.type }}</div>
+            <div class="address-text">{{ address.text }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="patient-metadata" *ngIf="hasMetadata()">
+      <details class="metadata-details">
+        <summary>Technical Details</summary>
+        <div class="metadata-content">
+          <div class="metadata-item" *ngIf="context?.clientId">
+            <span class="label">FHIR Client ID:</span>
+            <span class="value">{{ context?.clientId }}</span>
+          </div>
+          <div class="metadata-item" *ngIf="context?.serverUrl">
+            <span class="label">FHIR Server:</span>
+            <span class="value">{{ context?.serverUrl }}</span>
+          </div>
+          <div class="metadata-item" *ngIf="context?.scope">
+            <span class="label">OAuth Scope:</span>
+            <span class="value">{{ context?.scope }}</span>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div
+    class="no-patient-card"
+    *ngIf="!patient && !isLoading && !errorMessage"
+  >
+    <h3>👤 No Patient Selected</h3>
+    <p>
+      Please complete SMART on FHIR authentication to view patient
+      information.
+    </p>
+    <button class="auth-button" (click)="navigateToAuth()">
+      Start Authentication
+    </button>
+  </div>
+</div>
