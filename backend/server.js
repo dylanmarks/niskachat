@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import session from "express-session";
 import authRouter from "./routes/auth.js";
 
 const app = express();
@@ -9,13 +10,29 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 
+// Session middleware - uses in-memory store for development
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change-this-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    },
+  }),
+);
+
 // CORS configuration
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",")
+  : process.env.NODE_ENV === "production"
+    ? ["https://yourdomain.com"] // Replace with your production frontend URL
+    : ["http://localhost:4200"]; // Angular dev server
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"] // Replace with your production frontend URL
-        : ["http://localhost:4200"], // Angular dev server
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -46,7 +63,7 @@ app.use("*", (req, res) => {
 });
 
 // Error handler
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
