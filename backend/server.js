@@ -25,12 +25,15 @@ app.use(
 );
 
 // CORS configuration
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",")
+  : process.env.NODE_ENV === "production"
+    ? ["https://yourdomain.com"] // Replace with your production frontend URL
+    : ["http://localhost:4200"]; // Angular dev server
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"] // Replace with your production frontend URL
-        : ["http://localhost:4200"], // Angular dev server
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -64,7 +67,7 @@ app.use("*", (req, res) => {
 });
 
 // Error handler
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
