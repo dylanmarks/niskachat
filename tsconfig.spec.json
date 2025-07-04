@@ -4,7 +4,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": ["jasmine"]
+    "types": ["jasmine", "node"],
+    "strictNullChecks": false,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitAny": false
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
 }

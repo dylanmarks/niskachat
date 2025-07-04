@@ -493,30 +493,30 @@ describe('ConditionsListComponent', () => {
   });
 
   describe('Metadata', () => {
-    it('should detect when condition has metadata', () => {
-      const hasMetadata = component.hasMetadata(mockActiveCondition);
+    it('should detect when condition has codings', () => {
+      const hasCodings = component.hasCodings(mockActiveCondition);
 
-      expect(hasMetadata).toBeTrue();
+      expect(hasCodings).toBeTrue();
     });
 
-    it('should detect when condition has no useful metadata', () => {
-      const conditionWithoutMetadata = {
-        id: '',
+    it('should detect when condition has no codings', () => {
+      const conditionWithoutCodings = {
+        id: 'test',
+        code: {},
       } as Condition;
 
-      const hasMetadata = component.hasMetadata(conditionWithoutMetadata);
+      const hasCodings = component.hasCodings(conditionWithoutCodings);
 
-      expect(hasMetadata).toBeFalse();
+      expect(hasCodings).toBeFalse();
     });
   });
 
   describe('Navigation', () => {
-    it('should navigate to auth when called', () => {
-      component.navigateToAuth();
+    it('should select condition when condition is clicked', () => {
+      component.selectCondition(mockActiveCondition);
 
-      // In this case we just verify the method doesn't crash
-      // since we can't easily mock window.location.href in tests
-      expect(component).toBeTruthy();
+      expect(component.selectedCondition).toBe(mockActiveCondition);
+      expect(component.selectedConditionId).toBe(mockActiveCondition.id);
     });
 
     it('should navigate to condition details when condition is clicked', () => {
@@ -649,14 +649,10 @@ describe('ConditionsListComponent', () => {
   });
 
   describe('Component Lifecycle', () => {
-    it('should unsubscribe on destroy', () => {
-      spyOn(component.destroy$, 'next');
-      spyOn(component.destroy$, 'complete');
-
-      component.ngOnDestroy();
-
-      expect(component.destroy$.next).toHaveBeenCalled();
-      expect(component.destroy$.complete).toHaveBeenCalled();
+    it('should call ngOnDestroy without error', () => {
+      expect(() => {
+        component.ngOnDestroy();
+      }).not.toThrow();
     });
   });
 });

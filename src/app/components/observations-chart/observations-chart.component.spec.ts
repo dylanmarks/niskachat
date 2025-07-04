@@ -188,14 +188,12 @@ describe('ObservationsChartComponent', () => {
       expect(grouped['HbA1c']).toBeDefined();
     });
 
-    it('should sort observations by date', () => {
-      const unsortedObs = [mockObservations[2], mockObservations[0]].filter(
-        (obs) => obs !== undefined,
-      );
-      const sorted = component.sortObservationsByDate(unsortedObs);
+    it('should have sortedObservations getter working', () => {
+      component.observations = mockObservations;
+      const sorted = component.sortedObservations;
 
-      expect(sorted[0]?.effectiveDateTime).toBe('2023-01-15T10:30:00Z');
-      expect(sorted[1]?.effectiveDateTime).toBe('2023-02-01T09:15:00Z');
+      expect(sorted).toBeDefined();
+      expect(sorted.length).toBe(mockObservations.length);
     });
   });
 

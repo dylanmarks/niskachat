@@ -95,8 +95,15 @@ describe('MedicationsListComponent', () => {
   });
 
   it('should return correct status display', () => {
-    expect(component.getStatusDisplay('active')).toBe('Active');
-    expect(component.getStatusDisplay('completed')).toBe('Completed');
+    const mockActiveMedication = { status: 'active' } as MedicationRequest;
+    const mockCompletedMedication = {
+      status: 'completed',
+    } as MedicationRequest;
+
+    expect(component.getMedicationStatus(mockActiveMedication)).toBe('Active');
+    expect(component.getMedicationStatus(mockCompletedMedication)).toBe(
+      'Completed',
+    );
   });
 
   it('should return correct status class', () => {
