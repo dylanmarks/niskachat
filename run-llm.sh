@@ -11,7 +11,8 @@ fi
 
 # Use llama-cli with TinyLlama and safe settings for MacBook Air
 llama-cli \
-  --hf-repo TheBloke/TinyLlama-1.1B-Chat-GGUF:tinyllama-1.1b-chat.q4_0.gguf \
+  --hf-repo TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --hf-file tinyllama-1.1b-chat-v1.0.q4_0.gguf \
   --threads 2 \
   --ctx-size 512 \
   --batch-size 1 \

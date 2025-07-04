@@ -1,4 +1,4 @@
-<div class="file-upload-container">
+<div class="file-upload-container" *ngIf="!context?.patient">
   <div class="upload-header">
     <h2>📁 Upload FHIR Bundle</h2>
     <p class="upload-subtitle">
@@ -6,67 +6,7 @@
     </p>
   </div>
 
-  <!-- Upload Area -->
-  <div
-    class="upload-zone"
-    [class.drag-over]="isDragOver"
-    [class.has-file]="uploadStatus.fileName"
-    (click)="fileInput.click()"
-    (dragover)="onDragOver($event)"
-    (dragleave)="onDragLeave($event)"
-    (drop)="onDrop($event)"
-  >
-    <input
-      #fileInput
-      type="file"
-      accept=".json"
-      (change)="onFileSelected($event)"
-      style="display: none"
-    />
-
-    <!-- Default State -->
-    <div
-      *ngIf="!uploadStatus.fileName && !uploadStatus.isUploading"
-      class="upload-prompt"
-    >
-      <div class="upload-icon">📁</div>
-      <h3>Drag & Drop FHIR Bundle Here</h3>
-      <p>
-        or
-        <span class="browse-link">browse files</span>
-      </p>
-      <small>Supports .json files up to 10MB</small>
-    </div>
-
-    <!-- File Selected -->
-    <div
-      *ngIf="uploadStatus.fileName && !uploadStatus.isUploading"
-      class="file-info"
-    >
-      <div class="file-icon">📄</div>
-      <h3>{{ uploadStatus.fileName }}</h3>
-      <p>Ready to process</p>
-      <button
-        class="process-button"
-        (click)="processFile(); $event.stopPropagation()"
-      >
-        Process Bundle
-      </button>
-    </div>
-
-    <!-- Processing -->
-    <div *ngIf="uploadStatus.isUploading" class="processing-state">
-      <div class="spinner"></div>
-      <h3>Processing FHIR Bundle...</h3>
-      <div class="progress-bar">
-        <div
-          class="progress-fill"
-          [style.width.%]="uploadStatus.progress"
-        ></div>
-      </div>
-      <p>{{ uploadStatus.progress }}% complete</p>
-    </div>
-  </div>
+  <!-- Upload Area removed per new design -->
 
   <!-- Error State -->
   <div *ngIf="uploadStatus.error" class="error-card">
@@ -81,12 +21,8 @@
     </button>
   </div>
 
-  <!-- Success State -->
-  <div *ngIf="uploadStatus.success" class="success-card">
-    <div class="success-icon">✅</div>
-    <h3>Bundle Processed Successfully!</h3>
-    <p>{{ uploadStatus.fileName }} has been processed.</p>
-
+  <!-- Success State hidden per new design -->
+  <div *ngIf="false" class="success-card">
     <div class="extracted-resources">
       <h4>Extracted Resources:</h4>
       <div class="resource-counts">
@@ -119,9 +55,7 @@
         </div>
         <div
           class="resource-count"
-          *ngIf="
-            uploadStatus.extractedResources.medicationRequests.length > 0
-          "
+          *ngIf="uploadStatus.extractedResources.medicationRequests.length > 0"
         >
           <span class="count">
             {{ uploadStatus.extractedResources.medicationRequests.length }}
@@ -152,6 +86,21 @@
     <div class="example-data-section">
       <h4>Or try example data:</h4>
       <div class="example-buttons">
+        <!-- Simple Upload Bundle button -->
+        <input
+          #fileInput
+          type="file"
+          accept=".json"
+          (change)="onFileSelected($event)"
+          style="display: none"
+        />
+        <button
+          class="example-button"
+          (click)="fileInput.click()"
+          [disabled]="uploadStatus.isUploading"
+        >
+          📁 Upload Bundle
+        </button>
         <button
           class="example-button"
           (click)="loadExampleData('johnsmith')"
@@ -167,6 +116,13 @@
           📊 Load Maria Johnson Data
         </button>
       </div>
+    </div>
+
+    <!-- Authentication Button -->
+    <div class="auth-section">
+      <button class="auth-button" (click)="navigateToAuth()">
+        Start Authentication
+      </button>
     </div>
   </div>
 </div>
