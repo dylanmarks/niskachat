@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 import { FhirClientService } from '../../services/fhir-client.service';
 
 export interface ChatMessage {
@@ -45,12 +44,12 @@ export class ChatComponent {
 
   constructor(
     private http: HttpClient,
-    private fhirClientService: FhirClientService
+    private fhirClientService: FhirClientService,
   ) {
     // Add a welcome message
     this.addMessage(
-      'Hello! I\'m your clinical AI assistant. I can help analyze patient data and answer questions about the current patient\'s conditions, medications, and observations. What would you like to know?',
-      false
+      "Hello! I'm your clinical AI assistant. I can help analyze patient data and answer questions about the current patient's conditions, medications, and observations. What would you like to know?",
+      false,
     );
   }
 
@@ -101,23 +100,24 @@ export class ChatComponent {
       // Replace loading message with response
       this.updateLoadingMessage(
         loadingMessageId,
-        response?.summary || 'No response received'
+        response?.summary || 'No response received',
       );
-              } catch (error: unknown) {
-       console.error('Chat error:', error);
-       
-       // Handle different types of errors
-       let errorMessage = 'Sorry, I encountered an error. Please try again.';
-       
-       if (error instanceof HttpErrorResponse) {
-         if (error.status === 0) {
-           errorMessage = 'Unable to connect to the server. Please check your connection.';
-         } else if (error.status >= 500) {
-           errorMessage = 'Server error occurred. Please try again later.';
-         } else if (error.error?.message) {
-           errorMessage = `Error: ${error.error.message}`;
-         }
-       }
+    } catch (error: unknown) {
+      console.error('Chat error:', error);
+
+      // Handle different types of errors
+      let errorMessage = 'Sorry, I encountered an error. Please try again.';
+
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 0) {
+          errorMessage =
+            'Unable to connect to the server. Please check your connection.';
+        } else if (error.status >= 500) {
+          errorMessage = 'Server error occurred. Please try again later.';
+        } else if (error.error?.message) {
+          errorMessage = `Error: ${error.error.message}`;
+        }
+      }
 
       this.updateLoadingMessage(loadingMessageId, errorMessage);
     } finally {
@@ -134,7 +134,7 @@ export class ChatComponent {
     // Add welcome message back
     this.addMessage(
       'Chat cleared. How can I help you analyze the patient data?',
-      false
+      false,
     );
   }
 
@@ -151,7 +151,9 @@ export class ChatComponent {
     };
 
     this.messages.push(message);
-    setTimeout(() => this.scrollToBottom(), 100);
+    setTimeout(() => {
+      this.scrollToBottom();
+    }, 100);
     return message.id;
   }
 
@@ -168,7 +170,9 @@ export class ChatComponent {
     };
 
     this.messages.push(message);
-    setTimeout(() => this.scrollToBottom(), 100);
+    setTimeout(() => {
+      this.scrollToBottom();
+    }, 100);
     return message.id;
   }
 
@@ -215,7 +219,7 @@ export class ChatComponent {
    */
   private gatherPatientContext(): any {
     const context = this.fhirClientService.getCurrentContext();
-    
+
     if (!context.authenticated || !context.patient) {
       return null;
     }
