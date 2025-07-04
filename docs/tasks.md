@@ -15,7 +15,7 @@ Follow test-driven development: write tests first, then implement, then validate
 | **Phase 6**  | ✅ COMPLETED | Observations Chart Component                | 18/18 ✅ | `8542225` |
 | **Phase 7**  | ✅ COMPLETED | Medications List Component                  | 8/8 ✅   | `b8d7e9a` |
 | **Phase 8**  | ✅ COMPLETED | Static FHIR Bundle Upload                   | 8/8 ✅   | `de2cd1f` |
-| **Phase 9**  | ⏳ PENDING   | Optional Backend FHIR Proxy                 | 0/0 ⏳   | -         |
+| **Phase 9**  | ✅ COMPLETED | Optional Backend FHIR Proxy                 | 17/17 ✅ | `current` |
 | **Phase 10** | ✅ COMPLETED | LLM Summary Integration (MacBook Air Safe)  | 8/8 ✅   | `current` |
 | **Phase 11** | ⏳ PENDING   | Deployment & Integration Testing            | 0/0 ⏳   | -         |
 | **Phase 12** | ✅ COMPLETED | Custom Chat UI (Provider-Facing)            | 10/10 ✅ | `current` |
@@ -25,7 +25,7 @@ Follow test-driven development: write tests first, then implement, then validate
 | **Phase 16** | ⏳ PENDING   | Advanced Features                           | 0/0 ⏳   | -         |
 | **Phase 17** | ⏳ PENDING   | UI & Design System Improvements             | 0/0 ⏳   | -         |
 
-**Overall Test Status**: 138 frontend + 23 backend = **161 tests passing** 🎯
+**Overall Test Status**: 138 frontend + 40 backend = **178 tests passing** 🎯
 
 ---
 
@@ -202,22 +202,22 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ## Phase 9: Optional Backend FHIR Proxy
 
-- [ ] Create `/proxy/fhir/:path` route
-- [ ] Forward token securely in backend
-- [ ] Handle CORS and token expiry
-- [ ] Implement request/response logging
-- [ ] Support different FHIR endpoints
-- [ ] Handle authentication refresh
-- [ ] Implement rate limiting
-- [ ] Add request validation
+- [x] Create `/proxy/fhir/:path` route
+- [x] Forward token securely in backend
+- [x] Handle CORS and token expiry
+- [x] Implement request/response logging
+- [x] Support different FHIR endpoints
+- [x] Handle authentication refresh
+- [x] Implement rate limiting
+- [x] Add request validation
 
 **Tests**
 
-- [ ] Proxies requests like `/Patient`, `/Observation`
-- [ ] Handles 401/expired token cases
-- [ ] CORS headers set correctly
-- [ ] Rate limiting works
-- [ ] Request logging functions
+- [x] Proxies requests like `/Patient`, `/Observation`
+- [x] Handles 401/expired token cases
+- [x] CORS headers set correctly
+- [x] Rate limiting works
+- [x] Request logging functions
 
 ---
 
