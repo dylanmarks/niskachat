@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import session from "express-session";
 import authRouter from "./routes/auth.js";
 import summarizeRouter from "./routes/summarize.js";
 
@@ -9,6 +10,19 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
+
+// Session middleware - uses in-memory store for development
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change-this-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    },
+  }),
+);
 
 // CORS configuration
 app.use(
