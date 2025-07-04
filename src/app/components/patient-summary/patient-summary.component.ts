@@ -299,7 +299,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
       // Call the backend summarization API
       const response = await firstValueFrom(
-        this.http.post<any>('/api/summarize', { bundle }),
+        this.http.post<any>('/api/llm', { bundle }),
       );
 
       this.summary = response.summary;

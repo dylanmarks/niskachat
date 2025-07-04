@@ -7,6 +7,7 @@ You now have a **fully functional, custom-built chat interface** integrated with
 ## 🏗️ Architecture Overview
 
 ### Frontend Chat Component (`src/app/components/chat/`)
+
 - **Complete chat UI** with professional medical styling
 - **Real-time messaging** with user/AI message differentiation
 - **Loading states** with animated typing indicators
@@ -15,6 +16,7 @@ You now have a **fully functional, custom-built chat interface** integrated with
 - **Clinical context integration** with patient data
 
 ### Backend LLM Integration (`backend/`)
+
 - **Pluggable prompt system** with easy file-based editing
 - **Context-aware routing** (summary vs chat interactions)
 - **Graceful fallbacks** when LLM is unavailable
@@ -33,7 +35,7 @@ backend/
 │   ├── promptLoader.js          # Prompt loading system
 │   └── reloadPrompts.js         # Development utility
 └── routes/
-    └── summarize.js             # Enhanced API endpoint
+    └── llm.js                   # Enhanced API endpoint
 
 src/app/components/chat/
 ├── chat.component.ts            # Main chat logic
@@ -45,13 +47,16 @@ src/app/components/chat/
 ## 🔧 How to Use & Customize
 
 ### 1. **Chat Interface**
+
 The chat is already integrated into your main app. Providers can:
+
 - Ask questions about patient data
 - Get clinical insights from the AI
 - Clear conversation history
 - See loading states and error messages
 
 ### 2. **Edit Chat Behavior**
+
 To customize how the AI responds:
 
 ```bash
@@ -63,13 +68,16 @@ npm run reload-prompts
 ```
 
 ### 3. **Department-Specific Prompts**
+
 See `backend/prompts/chat-examples.md` for:
+
 - Emergency Department focus
 - Primary Care priorities
 - Cardiology specialization
 - Response style customization
 
 ### 4. **Test with Your Local LLM**
+
 ```bash
 # Start backend
 npm run start:backend
@@ -84,6 +92,7 @@ npm run start:dev
 ## 🧠 Prompt Engineering Made Easy
 
 ### Current Chat Prompt Features
+
 - **Professional clinical tone** appropriate for providers
 - **Data-driven responses** based only on FHIR data
 - **Safety guidelines** (no direct diagnosis, provider judgment emphasis)
@@ -91,7 +100,9 @@ npm run start:dev
 - **Conversation context** that builds throughout the session
 
 ### Customize for Your Needs
+
 The prompt system supports:
+
 - **Variable substitution** (patient data, user queries)
 - **Hot reloading** during development
 - **Multiple prompt files** for different specialties
@@ -99,22 +110,27 @@ The prompt system supports:
 
 ## 🔌 LLM Integration Details
 
-### API Endpoint: `/summarize`
+### API Endpoint: `/llm`
+
 - **Context Type**: `clinical_chat` (vs `summary`)
 - **Input**: Patient data + user query
 - **Output**: AI response with metadata
 - **Fallback**: Graceful error messages when LLM unavailable
 
 ### Example Request:
+
 ```json
 {
   "context": "clinical_chat",
   "query": "What are the patient's active conditions?",
-  "patientData": { /* FHIR patient data */ }
+  "patientData": {
+    /* FHIR patient data */
+  }
 }
 ```
 
 ### Example Response:
+
 ```json
 {
   "success": true,
@@ -134,7 +150,7 @@ The prompt system supports:
 ✅ **Clinical Context**: Automatically includes patient data in conversations  
 ✅ **Error Handling**: Graceful fallbacks when LLM is unavailable  
 ✅ **Development Tools**: Prompt reload utility for easy iteration  
-✅ **Professional Styling**: Medical-appropriate design and interactions  
+✅ **Professional Styling**: Medical-appropriate design and interactions
 
 ## 🎯 Next Steps for You
 
