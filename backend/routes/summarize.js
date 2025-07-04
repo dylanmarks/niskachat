@@ -12,15 +12,7 @@ const LLM_CONFIG = {
 };
 
 // Medical summarization prompt template
-const MEDICAL_SUMMARY_PROMPT = `You are a clinical AI assistant. Please provide a concise clinical summary of the following FHIR patient data. Focus on:
-
-1. **Patient Demographics**: Age, gender, key identifiers
-2. **Active Conditions**: Current diagnosed conditions with dates
-3. **Recent Observations**: Key vital signs, lab results, diagnostic findings
-4. **Current Medications**: Active prescriptions with dosages
-5. **Clinical Highlights**: Most important medical information for provider review
-
-Keep the summary professional, clinical, and under 300 words. Use medical terminology appropriately.
+const MEDICAL_SUMMARY_PROMPT = `You are a clinical AI assistant. Please provide a brief 3-sentence clinical summary of the following FHIR patient data. Include the patient's basic demographics, primary active conditions, and current medications in a concise, professional format suitable for quick clinical review.
 
 FHIR Data:
 {fhirData}
@@ -187,18 +179,21 @@ async function callLLM(prompt) {
 }
 
 /**
- * Generate enhanced fallback summary without LLM
+ * Generate concise fallback summary without LLM
  */
 function generateFallbackSummary(data) {
-  let summary = "**Clinical Summary**\n\n";
+  // Generate a concise 3-sentence summary
+  let patientInfo = "Patient";
+  let conditionsInfo = "";
+  let medicationsInfo = "";
 
-  // Patient demographics with age calculation
+  // Patient demographics
   if (data.patient) {
     const patient = data.patient;
     const name = patient.name?.[0];
     const nameStr = name ? `${name.given?.[0]} ${name.family}` : "Patient";
 
-    let age = "Unknown";
+    let age = "unknown age";
     if (patient.birthDate) {
       const birthDate = new Date(patient.birthDate);
       const today = new Date();
@@ -208,109 +203,39 @@ function generateFallbackSummary(data) {
         monthDiff < 0 ||
         (monthDiff === 0 && today.getDate() < birthDate.getDate())
       ) {
-        age = (ageYears - 1).toString();
+        age = `${ageYears - 1} years old`;
       } else {
-        age = ageYears.toString();
+        age = `${ageYears} years old`;
       }
     }
 
-    const gender = patient.gender || "Unknown";
-    const mrn =
-      patient.identifier?.find((id) => id.type?.coding?.[0]?.code === "MR")
-        ?.value || "Not specified";
-
-    summary += `**Patient**: ${nameStr}\n`;
-    summary += `**Age**: ${age} years\n`;
-    summary += `**Gender**: ${gender}\n`;
-    summary += `**MRN**: ${mrn}\n\n`;
+    const gender = patient.gender || "unknown gender";
+    patientInfo = `${nameStr} is a ${age} ${gender}`;
   }
 
-  // Active conditions with clinical details
+  // Active conditions
   if (data.conditions.length > 0) {
-    summary += `**Active Conditions** (${data.conditions.length}):\n`;
-    data.conditions.slice(0, 8).forEach((condition, index) => {
-      const code = condition.code?.coding?.[0];
-      const display = code?.display || "Unspecified condition";
-      const codeSystem = code?.system?.includes("snomed")
-        ? "SNOMED"
-        : code?.system?.includes("icd")
-          ? "ICD"
-          : "Unknown";
-      const onset =
-        condition.onsetDateTime || condition.recordedDate || "Unknown date";
-      const verificationStatus =
-        condition.verificationStatus?.coding?.[0]?.code || "confirmed";
-
-      summary += `${index + 1}. **${display}**\n`;
-      summary += `   - Code: ${code?.code || "N/A"} (${codeSystem})\n`;
-      summary += `   - Onset: ${onset}\n`;
-      summary += `   - Status: ${verificationStatus}\n`;
+    const primaryConditions = data.conditions.slice(0, 3).map((condition) => {
+      const display =
+        condition.code?.coding?.[0]?.display || "unspecified condition";
+      return display.toLowerCase();
     });
-    summary += "\n";
+    conditionsInfo = ` with active conditions including ${primaryConditions.join(", ")}`;
   }
 
-  // Recent observations with clinical interpretation
-  if (data.observations.length > 0) {
-    summary += `**Recent Observations** (${data.observations.length}):\n`;
-    data.observations.slice(0, 8).forEach((obs, index) => {
-      const code = obs.code?.coding?.[0];
-      const display = code?.display || "Unknown observation";
-      const value = obs.valueQuantity?.value || obs.valueString || "No value";
-      const unit = obs.valueQuantity?.unit || "";
-      const date = obs.effectiveDateTime || obs.issued || "Unknown date";
-
-      // Add clinical interpretation for common values
-      let interpretation = "";
-      if (
-        display.toLowerCase().includes("blood pressure") &&
-        obs.valueQuantity?.value
-      ) {
-        if (obs.valueQuantity.value > 140) interpretation = " (High)";
-        else if (obs.valueQuantity.value < 90) interpretation = " (Low)";
-        else interpretation = " (Normal)";
-      }
-
-      summary += `${index + 1}. **${display}**: ${value} ${unit}${interpretation}\n`;
-      summary += `   - Date: ${date}\n`;
-      if (code?.code)
-        summary += `   - Code: ${code.code} (${code.system?.includes("loinc") ? "LOINC" : "Other"})\n`;
-    });
-    summary += "\n";
-  }
-
-  // Current medications with dosage
+  // Current medications
   if (data.medications.length > 0) {
-    summary += `**Current Medications** (${data.medications.length}):\n`;
-    data.medications.slice(0, 8).forEach((med, index) => {
-      const medication = med.medicationCodeableConcept?.coding?.[0];
-      const display = medication?.display || "Unknown medication";
-      const dosage = med.dosageInstruction?.[0]?.text || "Dosage not specified";
-      const frequency =
-        med.dosageInstruction?.[0]?.timing?.repeat?.frequency || "";
-      const prescriber = med.requester?.display || "Unknown prescriber";
-
-      summary += `${index + 1}. **${display}**\n`;
-      summary += `   - Dosage: ${dosage}\n`;
-      if (frequency) summary += `   - Frequency: ${frequency}\n`;
-      summary += `   - Prescriber: ${prescriber}\n`;
-    });
-    summary += "\n";
+    medicationsInfo = ` and is currently on ${data.medications.length} active medication${data.medications.length > 1 ? "s" : ""}`;
   }
 
-  // Clinical notes
-  summary += "**Clinical Notes**:\n";
-  if (data.conditions.length > 0) {
-    summary += `• Patient has ${data.conditions.length} active condition${data.conditions.length > 1 ? "s" : ""}\n`;
-  }
+  // Recent observations summary
+  let observationsInfo = "";
   if (data.observations.length > 0) {
-    summary += `• ${data.observations.length} observation${data.observations.length > 1 ? "s" : ""} recorded\n`;
-  }
-  if (data.medications.length > 0) {
-    summary += `• Currently on ${data.medications.length} active medication${data.medications.length > 1 ? "s" : ""}\n`;
+    observationsInfo = ` Recent clinical observations include ${data.observations.length} recorded measurements and lab results.`;
   }
 
-  summary +=
-    "\n*Note: This is a structured summary generated from FHIR data. For AI-powered clinical insights, ensure the LLM service is available.*";
+  // Build the final summary
+  const summary = `${patientInfo}${conditionsInfo}${medicationsInfo}.${observationsInfo} This clinical summary was generated from structured FHIR data for healthcare provider review.`;
 
   return summary;
 }
@@ -347,31 +272,47 @@ router.post("/", async (req, res) => {
 
     // Only attempt LLM if enabled and we have the service
     if (LLM_CONFIG.enabled) {
+      console.log(
+        `🤖 LLM is enabled, attempting to call LLM at ${LLM_CONFIG.url}`,
+      );
       try {
         // Attempt to use LLM for summarization
         const prompt = MEDICAL_SUMMARY_PROMPT.replace(
           "{fhirData}",
           formattedData,
         );
+        console.log(
+          `📝 Calling LLM with prompt length: ${prompt.length} characters`,
+        );
         summary = await callLLM(prompt);
         llmUsed = true;
+        console.log("✅ LLM call successful, using AI-generated summary");
       } catch (llmError) {
         console.log(
-          "LLM unavailable, using enhanced fallback summary:",
+          "❌ LLM unavailable, using concise fallback summary:",
           llmError.message,
         );
-        // Fall back to enhanced summary
+        // Fall back to concise summary
         summary = generateFallbackSummary(clinicalData);
+        console.log(
+          `📄 Generated fallback summary: "${summary.substring(0, 100)}..."`,
+        );
       }
     } else {
-      console.log("LLM disabled, using enhanced fallback summary");
+      console.log("🚫 LLM disabled, using concise fallback summary");
       summary = generateFallbackSummary(clinicalData);
+      console.log(
+        `📄 Generated fallback summary: "${summary.substring(0, 100)}..."`,
+      );
     }
 
     res.json({
       success: true,
       summary,
       llmUsed,
+      warning: !llmUsed
+        ? "AI summarization unavailable - using structured fallback"
+        : null,
       stats: {
         conditions: clinicalData.conditions.length,
         observations: clinicalData.observations.length,

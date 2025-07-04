@@ -16,7 +16,7 @@
     <app-smart-launch></app-smart-launch>
 
     <!-- File Upload Component for Offline Mode -->
-    <div class="upload-section">
+    <div class="upload-section" *ngIf="!context?.patient">
       <app-file-upload></app-file-upload>
     </div>
 
@@ -37,7 +37,5 @@
     <p>&copy; 2024 Niska Chat - SMART on FHIR Healthcare Data Platform</p>
   </footer>
 </div>
-
-
 
 <router-outlet />

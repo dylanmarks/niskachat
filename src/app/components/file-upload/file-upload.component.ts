@@ -123,6 +123,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     this.uploadStatus.fileName = file.name;
     this.uploadStatus.error = null;
     this.uploadStatus.success = false;
+
+    // Automatically start processing after selection
+    void this.processFile();
   }
 
   async processFile(): Promise<void> {
@@ -171,8 +174,12 @@ export class FileUploadComponent implements OnInit, OnDestroy {
   private readFile(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => { resolve(reader.result as string); };
-      reader.onerror = () => { reject(new Error('Failed to read file')); };
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
       reader.readAsText(file);
     });
   }
@@ -237,6 +244,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
 
   private mapPatient(resource: any): Patient {
     return {
+      resourceType: 'Patient',
       id: resource.id,
       name: resource.name,
       birthDate: resource.birthDate,
@@ -244,11 +252,12 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       identifier: resource.identifier,
       telecom: resource.telecom,
       address: resource.address,
-    };
+    } as any;
   }
 
   private mapCondition(resource: any): Condition {
     return {
+      resourceType: 'Condition',
       id: resource.id,
       clinicalStatus: resource.clinicalStatus,
       verificationStatus: resource.verificationStatus,
@@ -260,11 +269,12 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       recordedDate: resource.recordedDate,
       recorder: resource.recorder,
       asserter: resource.asserter,
-    };
+    } as any;
   }
 
   private mapObservation(resource: any): Observation {
     return {
+      resourceType: 'Observation',
       id: resource.id,
       status: resource.status,
       code: resource.code,
@@ -277,11 +287,12 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       component: resource.component,
       issued: resource.issued,
       performer: resource.performer,
-    };
+    } as any;
   }
 
   private mapMedicationRequest(resource: any): MedicationRequest {
     return {
+      resourceType: 'MedicationRequest',
       id: resource.id,
       status: resource.status,
       intent: resource.intent,
@@ -298,7 +309,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       dosageInstruction: resource.dosageInstruction,
       dispenseRequest: resource.dispenseRequest,
       substitution: resource.substitution,
-    };
+    } as any;
   }
 
   async loadResourcesIntoService(resources: {
@@ -353,6 +364,10 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         medicationRequests: [],
       },
     };
+  }
+
+  navigateToAuth(): void {
+    window.location.href = '/smart-launch';
   }
 
   async loadExampleData(patientId: string): Promise<void> {

@@ -391,6 +391,7 @@ export class FhirClientService {
    */
   private mapFhirPatient(fhirPatient: any): Patient {
     return {
+      resourceType: 'Patient',
       id: fhirPatient.id,
       name: fhirPatient.name,
       birthDate: fhirPatient.birthDate,
@@ -398,7 +399,7 @@ export class FhirClientService {
       identifier: fhirPatient.identifier,
       telecom: fhirPatient.telecom,
       address: fhirPatient.address,
-    };
+    } as any;
   }
 
   /**
@@ -536,6 +537,7 @@ export class FhirClientService {
    */
   private mapFhirCondition(fhirCondition: any): Condition {
     return {
+      resourceType: 'Condition',
       id: fhirCondition.id,
       clinicalStatus: fhirCondition.clinicalStatus,
       verificationStatus: fhirCondition.verificationStatus,
@@ -547,7 +549,7 @@ export class FhirClientService {
       recordedDate: fhirCondition.recordedDate,
       recorder: fhirCondition.recorder,
       asserter: fhirCondition.asserter,
-    };
+    } as any;
   }
 
   /**
@@ -626,6 +628,7 @@ export class FhirClientService {
    */
   private mapFhirObservation(fhirObservation: any): Observation {
     return {
+      resourceType: 'Observation',
       id: fhirObservation.id,
       status: fhirObservation.status,
       code: fhirObservation.code,
@@ -638,7 +641,7 @@ export class FhirClientService {
       component: fhirObservation.component,
       issued: fhirObservation.issued,
       performer: fhirObservation.performer,
-    };
+    } as any;
   }
 
   /**
@@ -698,6 +701,7 @@ export class FhirClientService {
     fhirMedicationRequest: any,
   ): MedicationRequest {
     return {
+      resourceType: 'MedicationRequest',
       id: fhirMedicationRequest.id,
       status: fhirMedicationRequest.status,
       intent: fhirMedicationRequest.intent,
@@ -715,7 +719,7 @@ export class FhirClientService {
       dosageInstruction: fhirMedicationRequest.dosageInstruction,
       dispenseRequest: fhirMedicationRequest.dispenseRequest,
       substitution: fhirMedicationRequest.substitution,
-    };
+    } as any;
   }
 
   /**

@@ -328,6 +328,30 @@
   font-family: inherit;
 }
 
+.summary-warning {
+  margin-bottom: 1rem;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  background: #fffbf0;
+  padding: 0.75rem 1rem;
+}
+
+.warning-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.warning-icon {
+  font-size: 1.1rem;
+}
+
+.warning-text {
+  font-weight: 500;
+}
+
 .summary-meta {
   display: flex;
   justify-content: space-between;

@@ -28,6 +28,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   isSummarizing = false;
   summary: string | null = null;
   summaryError: string | null = null;
+  summaryWarning: string | null = null;
   summaryUsedLLM = false;
   summaryTimestamp: Date | null = null;
 
@@ -298,12 +299,18 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
       // Call the backend summarization API
       const response = await firstValueFrom(
-        this.http.post<any>('/api/summarize', bundle),
+        this.http.post<any>('/api/summarize', { bundle }),
       );
 
       this.summary = response.summary;
-      this.summaryUsedLLM = response.llm_used || false;
+      this.summaryUsedLLM = response.llmUsed || false;
       this.summaryTimestamp = new Date();
+      this.summaryWarning = response.warning || null;
+
+      // Show warning if LLM failed
+      if (response.warning) {
+        console.warn('⚠️ LLM Warning:', response.warning);
+      }
     } catch (error: any) {
       console.error('Error generating summary:', error);
       this.summaryError =

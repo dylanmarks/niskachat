@@ -37,6 +37,12 @@
         <div class="summary-content">
           <pre>{{ summary }}</pre>
         </div>
+        <div class="summary-warning" *ngIf="summaryWarning">
+          <div class="warning-message">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">{{ summaryWarning }}</span>
+          </div>
+        </div>
         <div class="summary-meta">
           <span class="summary-type" [class.llm-used]="summaryUsedLLM">
             {{ summaryUsedLLM ? "🤖 AI Generated" : "📊 Structured Summary" }}
@@ -128,15 +134,5 @@
         </div>
       </details>
     </div>
-  </div>
-
-  <div class="no-patient-card" *ngIf="!patient && !isLoading && !errorMessage">
-    <h3>👤 No Patient Selected</h3>
-    <p>
-      Please complete SMART on FHIR authentication to view patient information.
-    </p>
-    <button class="auth-button" (click)="navigateToAuth()">
-      Start Authentication
-    </button>
   </div>
 </div>
