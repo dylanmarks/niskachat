@@ -139,7 +139,7 @@ describe("Summarization API", () => {
         .expect(400);
 
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Missing FHIR Bundle data");
+      expect(response.body.error).toBe("Missing patient data");
     });
 
     it("should return 400 for empty bundle", async () => {
@@ -166,7 +166,7 @@ describe("Summarization API", () => {
 
       // Check that summary contains expected content
       expect(response.body.summary).toContain("John Doe");
-      expect(response.body.summary).toContain("Clinical Summary");
+      expect(response.body.summary).toContain("structured FHIR data");
       expect(response.body.summary).toContain("male");
 
       // Check stats
@@ -283,7 +283,8 @@ describe("Summarization API", () => {
       const response = await request(app).get("/summarize/status").expect(200);
 
       expect(response.body).toHaveProperty("llmAvailable");
-      expect(response.body).toHaveProperty("error");
+      expect(response.body).toHaveProperty("providers");
+      expect(response.body).toHaveProperty("timestamp");
       // Since LLM is likely not available in test environment,
       // we expect llmAvailable to be false
       expect(response.body.llmAvailable).toBe(false);
