@@ -9,7 +9,7 @@ export class LLMProviderFactory {
   constructor() {
     this.providers = new Map();
     this.preferredProvider = process.env.LLM_PROVIDER || 'claude-haiku';
-    this.fallbackProvider = process.env.LLM_FALLBACK_PROVIDER || 'local-llama';
+    this.fallbackProvider = process.env.LLM_FALLBACK_PROVIDER || null;
     
     this.initializeProviders();
   }
@@ -60,11 +60,13 @@ export class LLMProviderFactory {
       return preferred;
     }
 
-    // If preferred is not available, try fallback
-    const fallback = this.providers.get(this.fallbackProvider);
-    if (fallback && fallback.isConfigured() && await fallback.isAvailable()) {
-      console.log(`Using fallback provider: ${this.fallbackProvider}`);
-      return fallback;
+    // If preferred is not available, try fallback when configured
+    if (this.fallbackProvider) {
+      const fallback = this.providers.get(this.fallbackProvider);
+      if (fallback && fallback.isConfigured() && await fallback.isAvailable()) {
+        console.log(`Using fallback provider: ${this.fallbackProvider}`);
+        return fallback;
+      }
     }
 
     // If both preferred and fallback fail, try any other configured provider
