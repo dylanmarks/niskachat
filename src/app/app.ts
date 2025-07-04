@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ChatComponent } from './components/chat/chat.component';
 import { ConditionsListComponent } from './components/conditions-list/conditions-list.component';
 import { FileUploadComponent } from './components/file-upload/file-upload.component';
 import { MedicationsListComponent } from './components/medications-list/medications-list.component';
@@ -21,6 +22,7 @@ import { FhirClientService, FhirContext } from './services/fhir-client.service';
     ObservationsChartComponent,
     MedicationsListComponent,
     FileUploadComponent,
+    ChatComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

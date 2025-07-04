@@ -1,23 +1,17 @@
 import express from "express";
+import { getLLMProviderFactory } from "../providers/providerFactory.js";
+import { getFormattedPrompt } from "../utils/promptLoader.js";
 
 const router = express.Router();
 
-// LLM server configuration - optimized for MacBook Air
-const LLM_CONFIG = {
-  url: process.env.LLM_URL || "http://127.0.0.1:8081",
-  timeout: parseInt(process.env.LLM_TIMEOUT) || 15000, // Reduced timeout for MacBook Air
-  maxTokens: parseInt(process.env.LLM_MAX_TOKENS) || 300, // Reduced tokens for lighter models
-  temperature: parseFloat(process.env.LLM_TEMPERATURE) || 0.3,
-  enabled: process.env.LLM_ENABLED !== "false", // Allow disabling LLM for MacBook Air
+// Get the LLM provider factory instance
+const llmFactory = getLLMProviderFactory();
+
+// Context types for different interactions
+const CONTEXT_TYPES = {
+  SUMMARY: "summary",
+  CLINICAL_CHAT: "clinical_chat",
 };
-
-// Medical summarization prompt template
-const MEDICAL_SUMMARY_PROMPT = `You are a clinical AI assistant. Please provide a brief 3-sentence clinical summary of the following FHIR patient data. Include the patient's basic demographics, primary active conditions, and current medications in a concise, professional format suitable for quick clinical review.
-
-FHIR Data:
-{fhirData}
-
-Clinical Summary:`;
 
 /**
  * Extract relevant clinical data from FHIR Bundle
@@ -140,38 +134,43 @@ function formatClinicalData(data) {
 }
 
 /**
- * Call local LLM for summarization
+ * Generate appropriate prompt based on context type
  */
-async function callLLM(prompt) {
-  try {
-    const response = await fetch(`${LLM_CONFIG.url}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "biomistral",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        max_tokens: LLM_CONFIG.maxTokens,
-        temperature: LLM_CONFIG.temperature,
-        stream: false,
-      }),
-      signal: AbortSignal.timeout(LLM_CONFIG.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `LLM API error: ${response.status} ${response.statusText}`,
-      );
+function generatePrompt(context, data, userQuery = null) {
+  switch (context) {
+    case CONTEXT_TYPES.CLINICAL_CHAT: {
+      // For chat interactions, format patient data and include user query
+      const patientData = formatClinicalData(data);
+      return getFormattedPrompt("clinical-chat", {
+        patientData,
+        userQuery: userQuery || "Please provide an overview of this patient.",
+      });
     }
 
-    const result = await response.json();
-    return result.choices?.[0]?.message?.content || "No summary generated";
+    case CONTEXT_TYPES.SUMMARY:
+    default: {
+      // For summaries, use the traditional formatted data
+      const formattedData = formatClinicalData(data);
+      return getFormattedPrompt("clinical-summary", {
+        fhirData: formattedData,
+      });
+    }
+  }
+}
+
+/**
+ * Call LLM provider for summarization
+ * @param {string} prompt - The prompt to send to the LLM
+ * @param {Object} options - Options for the LLM call
+ * @returns {Promise<{response: string, provider: string}>}
+ */
+async function callLLM(prompt, options = {}) {
+  try {
+    const result = await llmFactory.generateResponse(prompt, options);
+    return {
+      response: result.response || "No summary generated",
+      provider: result.provider,
+    };
   } catch (error) {
     console.error("LLM call failed:", error);
     throw error;
@@ -241,85 +240,115 @@ function generateFallbackSummary(data) {
 }
 
 /**
- * POST /summarize - Generate clinical summary from FHIR Bundle
+ * POST /summarize - Generate clinical summary or chat response from FHIR Bundle
  */
 router.post("/", async (req, res) => {
   try {
-    const { bundle } = req.body;
+    const {
+      bundle,
+      context = CONTEXT_TYPES.SUMMARY,
+      query,
+      patientData,
+    } = req.body;
 
-    if (!bundle) {
+    // For chat context, we can accept either bundle or patientData
+    if (!bundle && !patientData) {
       return res.status(400).json({
-        error: "Missing FHIR Bundle data",
-        message: "Please provide a FHIR Bundle in the request body",
+        error: "Missing patient data",
+        message:
+          "Please provide either a FHIR Bundle or patient data in the request body",
       });
     }
 
-    // Extract clinical data from bundle
-    const clinicalData = extractClinicalData(bundle);
+    let clinicalData;
 
-    if (clinicalData === "No clinical data available") {
-      return res.status(400).json({
-        error: "Invalid FHIR Bundle",
-        message: "Bundle contains no extractable clinical data",
-      });
+    // Handle different input types
+    if (bundle) {
+      // Extract clinical data from bundle
+      clinicalData = extractClinicalData(bundle);
+
+      if (clinicalData === "No clinical data available") {
+        return res.status(400).json({
+          error: "Invalid FHIR Bundle",
+          message: "Bundle contains no extractable clinical data",
+        });
+      }
+    } else if (patientData) {
+      // Use provided patient data directly (for chat context)
+      clinicalData = patientData;
     }
-
-    // Format data for LLM
-    const formattedData = formatClinicalData(clinicalData);
 
     let summary;
     let llmUsed = false;
+    let provider = null;
 
-    // Only attempt LLM if enabled and we have the service
-    if (LLM_CONFIG.enabled) {
-      console.log(
-        `🤖 LLM is enabled, attempting to call LLM at ${LLM_CONFIG.url}`,
-      );
+    // Check if any LLM provider is available
+    const hasProvider = await llmFactory.hasAvailableProvider();
+
+    if (hasProvider) {
       try {
-        // Attempt to use LLM for summarization
-        const prompt = MEDICAL_SUMMARY_PROMPT.replace(
-          "{fhirData}",
-          formattedData,
-        );
-        console.log(
-          `📝 Calling LLM with prompt length: ${prompt.length} characters`,
-        );
-        summary = await callLLM(prompt);
+        // Generate appropriate prompt based on context
+        const prompt = generatePrompt(context, clinicalData, query);
+        const llmResult = await callLLM(prompt);
+        summary = llmResult.response;
+        provider = llmResult.provider;
         llmUsed = true;
         console.log("✅ LLM call successful, using AI-generated summary");
       } catch (llmError) {
         console.log(
-          "❌ LLM unavailable, using concise fallback summary:",
+          `LLM providers unavailable for ${context} context, using fallback:`,
           llmError.message,
         );
-        // Fall back to concise summary
-        summary = generateFallbackSummary(clinicalData);
-        console.log(
-          `📄 Generated fallback summary: "${summary.substring(0, 100)}..."`,
-        );
+
+        // Fall back based on context
+        if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
+          summary =
+            "I apologize, but I'm currently unable to process your request due to a technical issue. Please try again in a moment, or rephrase your question.";
+        } else {
+          summary = generateFallbackSummary(clinicalData);
+        }
       }
     } else {
-      console.log("🚫 LLM disabled, using concise fallback summary");
-      summary = generateFallbackSummary(clinicalData);
       console.log(
-        `📄 Generated fallback summary: "${summary.substring(0, 100)}..."`,
+        `No LLM providers available for ${context} context, using fallback`,
       );
+
+      if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
+        summary =
+          "The AI assistant is currently unavailable. Please contact your system administrator for assistance with clinical data analysis.";
+      } else {
+        summary = generateFallbackSummary(clinicalData);
+      }
     }
 
-    res.json({
+    // Prepare response based on context
+    const response = {
       success: true,
       summary,
       llmUsed,
-      warning: !llmUsed
-        ? "AI summarization unavailable - using structured fallback"
-        : null,
-      stats: {
-        conditions: clinicalData.conditions.length,
-        observations: clinicalData.observations.length,
-        medications: clinicalData.medications.length,
-      },
+      provider,
+      context,
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    // Add stats for summary context or when we have structured clinical data
+    if (
+      context === CONTEXT_TYPES.SUMMARY ||
+      (clinicalData.conditions && clinicalData.observations)
+    ) {
+      response.stats = {
+        conditions: clinicalData.conditions?.length || 0,
+        observations: clinicalData.observations?.length || 0,
+        medications: clinicalData.medications?.length || 0,
+      };
+    }
+
+    // Add query echo for chat context
+    if (context === CONTEXT_TYPES.CLINICAL_CHAT && query) {
+      response.query = query;
+    }
+
+    res.json(response);
   } catch (error) {
     console.error("Summarization error:", error);
     res.status(500).json({
@@ -330,31 +359,24 @@ router.post("/", async (req, res) => {
 });
 
 /**
- * GET /status - Check LLM server status
+ * GET /status - Check LLM providers status
  */
 router.get("/status", async (req, res) => {
   try {
-    const response = await fetch(`${LLM_CONFIG.url}/v1/models`, {
-      signal: AbortSignal.timeout(5000),
-    });
+    const providersStatus = await llmFactory.getProvidersStatus();
+    const hasAvailable = await llmFactory.hasAvailableProvider();
 
-    if (response.ok) {
-      const models = await response.json();
-      res.json({
-        llmAvailable: true,
-        url: LLM_CONFIG.url,
-        models: models.data || [],
-      });
-    } else {
-      res.json({
-        llmAvailable: false,
-        error: `LLM server responded with ${response.status}`,
-      });
-    }
+    res.json({
+      llmAvailable: hasAvailable,
+      ...providersStatus,
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
+    console.error("Status check error:", error);
     res.json({
       llmAvailable: false,
       error: error.message,
+      timestamp: new Date().toISOString(),
     });
   }
 });
