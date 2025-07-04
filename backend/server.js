@@ -4,6 +4,7 @@ import session from "express-session";
 import helmet from "helmet";
 import authRouter from "./routes/auth.js";
 import llmRouter from "./routes/llm.js";
+import proxyRouter from "./routes/proxy.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +56,9 @@ app.use("/auth", authRouter);
 
 // Summarize routes
 app.use("/llm", llmRouter);
+
+// FHIR proxy routes
+app.use("/proxy", proxyRouter);
 
 // Basic route
 app.get("/", (req, res) => {
