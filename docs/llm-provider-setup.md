@@ -39,8 +39,13 @@ ANTHROPIC_API_KEY=sk-ant-api03-your-actual-key-here
 
 # Provider configuration
 LLM_PROVIDER=claude-haiku
-LLM_FALLBACK_PROVIDER=local-llama
+# Optional: fallback provider if the primary fails
+# Leave unset to disable fallback
+# LLM_FALLBACK_PROVIDER=local-llama
 ```
+
+If you leave `LLM_FALLBACK_PROVIDER` unset, the application won't attempt
+a fallback provider.
 
 ## 🎯 **Claude Haiku Setup**
 
@@ -103,7 +108,7 @@ llama-server --model path/to/your/model.gguf --port 8081
 ```bash
 # In your .env file
 LLAMA_URL=http://127.0.0.1:8081
-LLM_FALLBACK_PROVIDER=local-llama
+# LLM_FALLBACK_PROVIDER=local-llama  # optional; unset to disable fallback
 ```
 
 ### **4. Optional Configuration**
@@ -153,7 +158,7 @@ curl http://localhost:3000/llm/status
 {
   "llmAvailable": true,
   "preferredProvider": "claude-haiku",
-  "fallbackProvider": "local-llama",
+  "fallbackProvider": null,
   "providers": {
     "claude-haiku": {
       "available": true,
