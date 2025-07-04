@@ -18,7 +18,7 @@ Follow test-driven development: write tests first, then implement, then validate
 | **Phase 9**  | ⏳ PENDING   | Optional Backend FHIR Proxy                 | 0/0 ⏳   | -         |
 | **Phase 10** | ✅ COMPLETED | LLM Summary Integration (MacBook Air Safe)  | 8/8 ✅   | `current` |
 | **Phase 11** | ⏳ PENDING   | Deployment & Integration Testing            | 0/0 ⏳   | -         |
-| **Phase 12** | ✅ COMPLETED | Custom Chat UI (Provider-Facing)           | 10/10 ✅ | `current` |
+| **Phase 12** | ✅ COMPLETED | Custom Chat UI (Provider-Facing)            | 10/10 ✅ | `current` |
 | **Phase 13** | ⏳ PENDING   | Chat UI with Pre-Set Topics                 | 0/0 ⏳   | -         |
 | **Phase 14** | ⏳ PENDING   | Enhanced Security & Compliance              | 0/0 ⏳   | -         |
 | **Phase 15** | ⏳ PENDING   | Performance & Optimization                  | 0/0 ⏳   | -         |
@@ -228,7 +228,7 @@ Follow test-driven development: write tests first, then implement, then validate
 **Tasks**
 
 - [x] Install `llama.cpp` via Homebrew
-- [x] Create `/summarize` API endpoint accepting FHIR Bundle input
+- [x] Create `/llm` API endpoint accepting FHIR Bundle input
 - [x] Implement clinical data extraction from FHIR Bundle
 - [x] Add enhanced fallback summary with clinical formatting
 - [x] Configure MacBook Air safe settings (TinyLlama, low threads, small context)
@@ -302,7 +302,7 @@ Follow test-driven development: write tests first, then implement, then validate
 - [x] Implement message interface and types (ChatMessage)
 - [x] Build chat message display with user/AI message styling
 - [x] Add message input with send functionality
-- [x] Integrate with existing `/summarize` endpoint for AI responses
+- [x] Integrate with existing `/llm` endpoint for AI responses
 - [x] Add loading states and typing indicators
 - [x] Implement auto-scroll to bottom on new messages
 - [x] Add "Clear Chat" functionality

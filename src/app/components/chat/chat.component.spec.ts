@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/dot-notation */
 import {
   HttpClientTestingModule,
   HttpTestingController,
@@ -6,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
-import { FhirClientService } from '../../services/fhir-client.service';
+import { FhirClientService, Patient } from '../../services/fhir-client.service';
 import {
   ChatComponent,
   ChatMessage,
@@ -175,7 +176,7 @@ describe('ChatComponent', () => {
       const sendPromise = component.sendMessage();
 
       // Verify request
-      const req = httpMock.expectOne('/summarize');
+      const req = httpMock.expectOne('/llm');
       expect(req.request.method).toBe('POST');
 
       const requestBody = req.request.body as ChatRequest;
@@ -197,14 +198,14 @@ describe('ChatComponent', () => {
 
       // Verify messages
       expect(component.messages.length).toBe(initialCount + 2); // user + AI
-      expect(component.messages[initialCount].content).toBe(
+      expect(component.messages[initialCount]!.content).toBe(
         'What are the patient conditions?',
       );
-      expect(component.messages[initialCount].isUser).toBe(true);
-      expect(component.messages[initialCount + 1].content).toBe(
+      expect(component.messages[initialCount]!.isUser).toBe(true);
+      expect(component.messages[initialCount + 1]!.content).toBe(
         'Patient has hypertension and diabetes.',
       );
-      expect(component.messages[initialCount + 1].isUser).toBe(false);
+      expect(component.messages[initialCount + 1]!.isUser).toBe(false);
 
       // Verify state
       expect(component.currentMessage).toBe('');
@@ -217,7 +218,7 @@ describe('ChatComponent', () => {
 
       const sendPromise = component.sendMessage();
 
-      const req = httpMock.expectOne('/api/summarize');
+      const req = httpMock.expectOne('/api/llm');
       req.flush('Server error', {
         status: 500,
         statusText: 'Internal Server Error',
@@ -227,7 +228,7 @@ describe('ChatComponent', () => {
 
       // Verify error message
       expect(component.messages.length).toBe(initialCount + 2);
-      expect(component.messages[initialCount + 1].content).toBe(
+      expect(component.messages[initialCount + 1]!.content).toBe(
         'Server error occurred. Please try again later.',
       );
       expect(component.isLoading).toBe(false);
@@ -239,14 +240,14 @@ describe('ChatComponent', () => {
 
       const sendPromise = component.sendMessage();
 
-      const req = httpMock.expectOne('/api/summarize');
+      const req = httpMock.expectOne('/api/llm');
       req.flush('', { status: 0, statusText: 'Network Error' });
 
       await sendPromise;
 
       // Verify error message
       expect(component.messages.length).toBe(initialCount + 2);
-      expect(component.messages[initialCount + 1].content).toBe(
+      expect(component.messages[initialCount + 1]!.content).toBe(
         'Unable to connect to the server. Please check your connection.',
       );
       expect(component.isLoading).toBe(false);
@@ -264,7 +265,7 @@ describe('ChatComponent', () => {
 
       expect(enterEvent.preventDefault).toHaveBeenCalled();
 
-      const req = httpMock.expectOne('/api/summarize');
+      const req = httpMock.expectOne('/api/llm');
       req.flush({ summary: 'Response' });
 
       await sendPromise;
@@ -281,7 +282,7 @@ describe('ChatComponent', () => {
       await component.sendMessage(shiftEnterEvent);
 
       expect(component.messages.length).toBe(initialCount);
-      httpMock.expectNone('/api/summarize');
+      httpMock.expectNone('/api/llm');
     });
   });
 
@@ -296,10 +297,10 @@ describe('ChatComponent', () => {
       component.clearChat();
 
       expect(component.messages.length).toBe(1);
-      expect(component.messages[0].content).toBe(
+      expect(component.messages[0]!.content).toBe(
         'Chat cleared. How can I help you analyze the patient data?',
       );
-      expect(component.messages[0].isUser).toBe(false);
+      expect(component.messages[0]!.isUser).toBe(false);
     });
 
     it('should determine if message can be sent', () => {
@@ -356,7 +357,7 @@ describe('ChatComponent', () => {
     it('should return null when no patient', () => {
       fhirClientService.getCurrentContext.and.returnValue({
         authenticated: true,
-        patient: undefined,
+        patient: undefined as unknown as Patient,
       });
 
       const context = component['gatherPatientContext']();
@@ -421,7 +422,7 @@ describe('ChatComponent', () => {
       );
       expect(messageElements.length).toBe(1);
 
-      const welcomeMessage = messageElements[0];
+      const welcomeMessage = messageElements[0]!;
       expect(welcomeMessage.classes['ai-message']).toBe(true);
     });
 

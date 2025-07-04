@@ -1,9 +1,9 @@
 import cors from "cors";
 import express from "express";
-import helmet from "helmet";
 import session from "express-session";
+import helmet from "helmet";
 import authRouter from "./routes/auth.js";
-import summarizeRouter from "./routes/summarize.js";
+import llmRouter from "./routes/llm.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,7 +54,7 @@ app.get("/health", (req, res) => {
 app.use("/auth", authRouter);
 
 // Summarize routes
-app.use("/summarize", summarizeRouter);
+app.use("/llm", llmRouter);
 
 // Basic route
 app.get("/", (req, res) => {
@@ -67,7 +67,7 @@ app.use("*", (req, res) => {
 });
 
 // Error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });

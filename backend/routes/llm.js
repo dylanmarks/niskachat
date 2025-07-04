@@ -240,7 +240,7 @@ function generateFallbackSummary(data) {
 }
 
 /**
- * POST /summarize - Generate clinical summary or chat response from FHIR Bundle
+ * POST /llm - Generate clinical summary or chat response from FHIR Bundle
  */
 router.post("/", async (req, res) => {
   try {

@@ -94,7 +94,7 @@ export class ChatComponent {
 
       // Call the backend
       const response = await this.http
-        .post<ChatResponse>('/summarize', chatRequest)
+        .post<ChatResponse>('/llm', chatRequest)
         .toPromise();
 
       // Replace loading message with response

@@ -1,11 +1,11 @@
 import express from "express";
 import request from "supertest";
-import summarizeRouter from "./summarize.js";
+import llmRouter from "./llm.js";
 
 // Create a test app
 const app = express();
 app.use(express.json());
-app.use("/summarize", summarizeRouter);
+app.use("/llm", llmRouter);
 
 // Mock FHIR Bundle for testing
 const mockFhirBundle = {
@@ -131,12 +131,9 @@ const emptyBundle = {
 };
 
 describe("Summarization API", () => {
-  describe("POST /summarize", () => {
+  describe("POST /llm", () => {
     it("should return 400 for missing bundle", async () => {
-      const response = await request(app)
-        .post("/summarize")
-        .send({})
-        .expect(400);
+      const response = await request(app).post("/llm").send({}).expect(400);
 
       expect(response.body).toHaveProperty("error");
       expect(response.body.error).toBe("Missing patient data");
@@ -144,7 +141,7 @@ describe("Summarization API", () => {
 
     it("should return 400 for empty bundle", async () => {
       const response = await request(app)
-        .post("/summarize")
+        .post("/llm")
         .send({ bundle: emptyBundle })
         .expect(400);
 
@@ -154,7 +151,7 @@ describe("Summarization API", () => {
 
     it("should generate fallback summary when LLM is unavailable", async () => {
       const response = await request(app)
-        .post("/summarize")
+        .post("/llm")
         .send({ bundle: mockFhirBundle })
         .expect(200);
 
@@ -184,7 +181,7 @@ describe("Summarization API", () => {
       };
 
       const response = await request(app)
-        .post("/summarize")
+        .post("/llm")
         .send({ bundle: patientOnlyBundle })
         .expect(200);
 
@@ -220,7 +217,7 @@ describe("Summarization API", () => {
       };
 
       const response = await request(app)
-        .post("/summarize")
+        .post("/llm")
         .send({ bundle: inactiveConditionBundle })
         .expect(200);
 
@@ -245,7 +242,7 @@ describe("Summarization API", () => {
       };
 
       const response = await request(app)
-        .post("/summarize")
+        .post("/llm")
         .send({ bundle: inactiveMedicationBundle })
         .expect(200);
 
@@ -269,7 +266,7 @@ describe("Summarization API", () => {
       };
 
       const response = await request(app)
-        .post("/summarize")
+        .post("/llm")
         .send({ bundle: malformedBundle })
         .expect(400);
 
@@ -278,9 +275,9 @@ describe("Summarization API", () => {
     });
   });
 
-  describe("GET /summarize/status", () => {
+  describe("GET /llm/status", () => {
     it("should return LLM status", async () => {
-      const response = await request(app).get("/summarize/status").expect(200);
+      const response = await request(app).get("/llm/status").expect(200);
 
       expect(response.body).toHaveProperty("llmAvailable");
       expect(response.body).toHaveProperty("providers");
