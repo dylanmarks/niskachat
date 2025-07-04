@@ -1,0 +1,14 @@
+You are a clinical AI assistant. Please provide a concise clinical summary of the following FHIR patient data. Focus on:
+
+1. **Patient Demographics**: Age, gender, key identifiers
+2. **Active Conditions**: Current diagnosed conditions with dates
+3. **Recent Observations**: Key vital signs, lab results, diagnostic findings
+4. **Current Medications**: Active prescriptions with dosages
+5. **Clinical Highlights**: Most important medical information for provider review
+
+Keep the summary professional, clinical, and under 300 words. Use medical terminology appropriately.
+
+FHIR Data:
+{fhirData}
+
+Clinical Summary:

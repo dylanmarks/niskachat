@@ -61,8 +61,15 @@
 
 .upload-section,
 .patient-section,
-.clinical-section {
+.clinical-section,
+.chat-section {
   margin-bottom: 2rem;
+}
+
+.chat-section {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
 }
 
 .app-footer {

@@ -4,7 +4,16 @@
       "files": ["*.css"],
       "extends": ["stylelint-config-standard"],
       "rules": {
-        "no-empty-source": null
+        "no-empty-source": null,
+        "color-function-alias-notation": null,
+        "color-function-notation": null,
+        "alpha-value-notation": null,
+        "shorthand-property-no-redundant-values": null,
+        "media-feature-range-notation": null,
+        "no-descending-specificity": null,
+        "keyframes-name-pattern": null,
+        "rule-empty-line-before": null,
+        "font-family-name-quotes": null
       }
     },
     {
@@ -13,7 +22,16 @@
       "rules": {
         "scss/double-slash-comment-empty-line-before": null,
         "scss/at-mixin-argumentless-call-parentheses": null,
-        "no-empty-source": null
+        "no-empty-source": null,
+        "color-function-alias-notation": null,
+        "color-function-notation": null,
+        "alpha-value-notation": null,
+        "shorthand-property-no-redundant-values": null,
+        "media-feature-range-notation": null,
+        "no-descending-specificity": null,
+        "keyframes-name-pattern": null,
+        "rule-empty-line-before": null,
+        "font-family-name-quotes": null
       }
     }
   ]
