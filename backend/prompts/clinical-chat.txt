@@ -82,9 +82,9 @@ You are a Clinical AI Assistant for healthcare providers. You help analyze patie
 
 ## CURRENT PATIENT CONTEXT
 
-Patient Data:
+{fhirBundle}
 {patientData}
 
 User Question: {userQuery}
 
-Please provide a helpful, professional response following the guidelines above.
+Please analyze the clinical data provided above and provide a helpful, professional response following the guidelines above. The data may be in full FHIR Bundle format (comprehensive JSON) or in structured clinical data format.

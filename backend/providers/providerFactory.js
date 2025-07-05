@@ -193,3 +193,10 @@ export function getLLMProviderFactory() {
   }
   return factoryInstance;
 }
+
+/**
+ * Reset the singleton instance (useful for testing or when env vars change)
+ */
+export function resetLLMProviderFactory() {
+  factoryInstance = null;
+}

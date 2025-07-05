@@ -1,9 +1,18 @@
+import dotenv from "dotenv";
+
+// Load environment variables from .env file BEFORE importing other modules
+dotenv.config();
+
 import cors from "cors";
 import express from "express";
 import session from "express-session";
 import helmet from "helmet";
+import { resetLLMProviderFactory } from "./providers/providerFactory.js";
 import authRouter from "./routes/auth.js";
 import llmRouter from "./routes/llm.js";
+
+// Reset the provider factory to ensure it uses the loaded environment variables
+resetLLMProviderFactory();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

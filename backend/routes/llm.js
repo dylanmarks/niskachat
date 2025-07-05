@@ -4,9 +4,6 @@ import { getFormattedPrompt } from "../utils/promptLoader.js";
 
 const router = express.Router();
 
-// Get the LLM provider factory instance
-const llmFactory = getLLMProviderFactory();
-
 // Context types for different interactions
 const CONTEXT_TYPES = {
   SUMMARY: "summary",
@@ -76,6 +73,16 @@ function extractClinicalData(bundle) {
  * Format clinical data for LLM prompt
  */
 function formatClinicalData(data) {
+  console.log("formatClinicalData called with:", {
+    dataType: typeof data,
+    dataKeys: data ? Object.keys(data) : null,
+  });
+
+  if (!data) {
+    console.warn("formatClinicalData received null/undefined data");
+    return "No clinical data available";
+  }
+
   let formatted = "";
 
   // Patient demographics
@@ -137,23 +144,79 @@ function formatClinicalData(data) {
  * Generate appropriate prompt based on context type
  */
 function generatePrompt(context, data, userQuery = null) {
+  console.log("generatePrompt called with:", {
+    context,
+    dataType: typeof data,
+    dataKeys: data ? Object.keys(data) : null,
+    userQuery,
+  });
+
   switch (context) {
     case CONTEXT_TYPES.CLINICAL_CHAT: {
-      // For chat interactions, format patient data and include user query
-      const patientData = formatClinicalData(data);
-      return getFormattedPrompt("clinical-chat", {
-        patientData,
-        userQuery: userQuery || "Please provide an overview of this patient.",
-      });
+      // For chat interactions, check if we have a full FHIR bundle
+      let promptData;
+
+      if (data && data.resourceType === "Bundle" && data.entry) {
+        console.log(
+          "Processing FHIR bundle with",
+          data.entry.length,
+          "entries",
+        );
+        // We have a full FHIR bundle - pass it directly as JSON
+        promptData = JSON.stringify(data, null, 2);
+        return getFormattedPrompt("clinical-chat", {
+          fhirBundle: promptData,
+          patientData: "", // Empty string for legacy compatibility
+          userQuery: userQuery || "Please provide an overview of this patient.",
+        });
+      } else {
+        console.log("Processing legacy structured data");
+        // Legacy handling for structured data
+        let formattedData;
+        if (
+          data &&
+          data.patient &&
+          !data.conditions &&
+          !data.observations &&
+          !data.medications
+        ) {
+          // Convert minimal patient data to expected structure
+          formattedData = {
+            patient: data.patient,
+            conditions: [],
+            observations: [],
+            medications: [],
+          };
+        } else {
+          formattedData = data;
+        }
+
+        const patientData = formatClinicalData(formattedData);
+        return getFormattedPrompt("clinical-chat", {
+          fhirBundle: "", // Empty string for FHIR bundle
+          patientData,
+          userQuery: userQuery || "Please provide an overview of this patient.",
+        });
+      }
     }
 
     case CONTEXT_TYPES.SUMMARY:
     default: {
-      // For summaries, use the traditional formatted data
-      const formattedData = formatClinicalData(data);
-      return getFormattedPrompt("clinical-summary", {
-        fhirData: formattedData,
-      });
+      // For summaries, check if we have a full FHIR bundle
+      if (data && data.resourceType === "Bundle" && data.entry) {
+        // Extract clinical data from the bundle
+        const clinicalData = extractClinicalData(data);
+        const formattedData = formatClinicalData(clinicalData);
+        return getFormattedPrompt("clinical-summary", {
+          fhirData: formattedData,
+        });
+      } else {
+        // Legacy handling for structured data
+        const formattedData = formatClinicalData(data);
+        return getFormattedPrompt("clinical-summary", {
+          fhirData: formattedData,
+        });
+      }
     }
   }
 }
@@ -166,6 +229,7 @@ function generatePrompt(context, data, userQuery = null) {
  */
 async function callLLM(prompt, options = {}) {
   try {
+    const llmFactory = getLLMProviderFactory();
     const result = await llmFactory.generateResponse(prompt, options);
     return {
       response: result.response || "No summary generated",
@@ -264,18 +328,29 @@ router.post("/", async (req, res) => {
 
     // Handle different input types
     if (bundle) {
-      // Extract clinical data from bundle
-      clinicalData = extractClinicalData(bundle);
-
-      if (clinicalData === "No clinical data available") {
-        return res.status(400).json({
-          error: "Invalid FHIR Bundle",
-          message: "Bundle contains no extractable clinical data",
-        });
-      }
+      // If we have a bundle, use it directly for FHIR bundle processing
+      clinicalData = bundle;
     } else if (patientData) {
-      // Use provided patient data directly (for chat context)
-      clinicalData = patientData;
+      // Check if patientData is actually a FHIR bundle
+      if (
+        patientData &&
+        patientData.resourceType === "Bundle" &&
+        patientData.entry
+      ) {
+        // patientData is a FHIR bundle
+        clinicalData = patientData;
+      } else {
+        // Legacy structured data or minimal patient data
+        clinicalData = patientData;
+      }
+    }
+
+    // Validate we have some clinical data
+    if (!clinicalData) {
+      return res.status(400).json({
+        error: "Invalid patient data",
+        message: "No valid clinical data found in the request",
+      });
     }
 
     let summary;
@@ -283,12 +358,21 @@ router.post("/", async (req, res) => {
     let provider = null;
 
     // Check if any LLM provider is available
+    const llmFactory = getLLMProviderFactory();
     const hasProvider = await llmFactory.hasAvailableProvider();
 
     if (hasProvider) {
       try {
+        console.log(`Generating prompt for ${context} context with data:`, {
+          clinicalDataType: typeof clinicalData,
+          clinicalDataKeys: clinicalData ? Object.keys(clinicalData) : null,
+          query,
+        });
+
         // Generate appropriate prompt based on context
         const prompt = generatePrompt(context, clinicalData, query);
+        console.log(`Generated prompt length: ${prompt.length}`);
+
         const llmResult = await callLLM(prompt);
         summary = llmResult.response;
         provider = llmResult.provider;
@@ -299,13 +383,37 @@ router.post("/", async (req, res) => {
           `LLM providers unavailable for ${context} context, using fallback:`,
           llmError.message,
         );
+        console.log("Error stack:", llmError.stack);
 
         // Fall back based on context
         if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
           summary =
             "I apologize, but I'm currently unable to process your request due to a technical issue. Please try again in a moment, or rephrase your question.";
         } else {
-          summary = generateFallbackSummary(clinicalData);
+          // Ensure we have proper data structure for fallback summary
+          let fallbackData = clinicalData;
+          if (
+            clinicalData &&
+            clinicalData.resourceType === "Bundle" &&
+            clinicalData.entry
+          ) {
+            // Extract clinical data from FHIR bundle for fallback
+            fallbackData = extractClinicalData(clinicalData);
+          } else if (
+            clinicalData &&
+            clinicalData.patient &&
+            !clinicalData.conditions &&
+            !clinicalData.observations &&
+            !clinicalData.medications
+          ) {
+            fallbackData = {
+              patient: clinicalData.patient,
+              conditions: [],
+              observations: [],
+              medications: [],
+            };
+          }
+          summary = generateFallbackSummary(fallbackData);
         }
       }
     } else {
@@ -317,7 +425,30 @@ router.post("/", async (req, res) => {
         summary =
           "The AI assistant is currently unavailable. Please contact your system administrator for assistance with clinical data analysis.";
       } else {
-        summary = generateFallbackSummary(clinicalData);
+        // Ensure we have proper data structure for fallback summary
+        let fallbackData = clinicalData;
+        if (
+          clinicalData &&
+          clinicalData.resourceType === "Bundle" &&
+          clinicalData.entry
+        ) {
+          // Extract clinical data from FHIR bundle for fallback
+          fallbackData = extractClinicalData(clinicalData);
+        } else if (
+          clinicalData &&
+          clinicalData.patient &&
+          !clinicalData.conditions &&
+          !clinicalData.observations &&
+          !clinicalData.medications
+        ) {
+          fallbackData = {
+            patient: clinicalData.patient,
+            conditions: [],
+            observations: [],
+            medications: [],
+          };
+        }
+        summary = generateFallbackSummary(fallbackData);
       }
     }
 
@@ -332,15 +463,24 @@ router.post("/", async (req, res) => {
     };
 
     // Add stats for summary context or when we have structured clinical data
-    if (
-      context === CONTEXT_TYPES.SUMMARY ||
-      (clinicalData.conditions && clinicalData.observations)
-    ) {
-      response.stats = {
-        conditions: clinicalData.conditions?.length || 0,
-        observations: clinicalData.observations?.length || 0,
-        medications: clinicalData.medications?.length || 0,
-      };
+    if (context === CONTEXT_TYPES.SUMMARY) {
+      let statsData = clinicalData;
+      if (
+        clinicalData &&
+        clinicalData.resourceType === "Bundle" &&
+        clinicalData.entry
+      ) {
+        // Extract clinical data from FHIR bundle for stats
+        statsData = extractClinicalData(clinicalData);
+      }
+
+      if (statsData && statsData.conditions && statsData.observations) {
+        response.stats = {
+          conditions: statsData.conditions?.length || 0,
+          observations: statsData.observations?.length || 0,
+          medications: statsData.medications?.length || 0,
+        };
+      }
     }
 
     // Add query echo for chat context
@@ -363,6 +503,7 @@ router.post("/", async (req, res) => {
  */
 router.get("/status", async (req, res) => {
   try {
+    const llmFactory = getLLMProviderFactory();
     const providersStatus = await llmFactory.getProvidersStatus();
     const hasAvailable = await llmFactory.hasAvailableProvider();
 

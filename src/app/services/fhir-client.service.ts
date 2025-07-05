@@ -556,7 +556,6 @@ export class FhirClientService {
    * Get observations for current patient
    */
   getObservations(params: Record<string, any> = {}): Observable<Observation[]> {
-
     const currentPatient = this.getCurrentPatient();
 
     if (!currentPatient) {
@@ -565,7 +564,6 @@ export class FhirClientService {
 
     // If in offline mode, return offline data
     if (this.isOfflineMode() && this.offlineData) {
-
       let observations = this.offlineData.observations;
 
       // Apply basic filtering based on code parameter (LOINC codes)
@@ -581,7 +579,6 @@ export class FhirClientService {
       return of(observations);
     }
 
-    
     const searchParams = {
       patient: currentPatient.id,
       ...params,
@@ -714,7 +711,6 @@ export class FhirClientService {
    * Set offline mode with uploaded FHIR Bundle data
    */
   setOfflineMode(data: OfflineModeData): void {
-
     this.offlineData = data;
     const newContext = {
       patient: data.patient,
@@ -741,5 +737,212 @@ export class FhirClientService {
    */
   isOfflineMode(): boolean {
     return this.contextSubject.value.isOfflineMode || false;
+  }
+
+  /**
+   * Build a comprehensive FHIR Bundle with all available patient data
+   * This method gathers all resources for the current patient and builds a Bundle
+   * @returns {Promise<any>} Complete FHIR Bundle
+   */
+  async buildComprehensiveFhirBundle(): Promise<any> {
+    console.log('buildComprehensiveFhirBundle called');
+
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      throw new Error('No current patient available');
+    }
+
+    console.log('Current patient:', currentPatient);
+
+    const bundle: any = {
+      resourceType: 'Bundle',
+      type: 'collection',
+      entry: [],
+    };
+
+    try {
+      // Add patient resource
+      bundle.entry.push({
+        resource: {
+          resourceType: 'Patient',
+          ...currentPatient,
+        },
+      });
+
+      console.log('Added patient resource to bundle');
+
+      // If in offline mode, use offline data
+      if (this.isOfflineMode() && this.offlineData) {
+        console.log('Using offline data, offlineData:', this.offlineData);
+
+        // Add conditions
+        console.log(
+          'Adding conditions:',
+          this.offlineData.conditions?.length || 0,
+        );
+        this.offlineData.conditions?.forEach((condition) => {
+          bundle.entry.push({
+            resource: {
+              resourceType: 'Condition',
+              ...condition,
+            },
+          });
+        });
+
+        // Add observations
+        console.log(
+          'Adding observations:',
+          this.offlineData.observations?.length || 0,
+        );
+        this.offlineData.observations?.forEach((observation) => {
+          bundle.entry.push({
+            resource: {
+              resourceType: 'Observation',
+              ...observation,
+            },
+          });
+        });
+
+        // Add medication requests
+        console.log(
+          'Adding medication requests:',
+          this.offlineData.medicationRequests?.length || 0,
+        );
+        this.offlineData.medicationRequests?.forEach((medicationRequest) => {
+          bundle.entry.push({
+            resource: {
+              resourceType: 'MedicationRequest',
+              ...medicationRequest,
+            },
+          });
+        });
+      } else {
+        // Fetch all available resources using the existing methods
+        try {
+          const conditions = await this.getConditions().toPromise();
+          conditions?.forEach((condition) => {
+            bundle.entry.push({
+              resource: {
+                resourceType: 'Condition',
+                ...condition,
+              },
+            });
+          });
+        } catch (error) {
+          console.warn('Could not fetch conditions:', error);
+        }
+
+        try {
+          const observations = await this.getObservations().toPromise();
+          observations?.forEach((observation) => {
+            bundle.entry.push({
+              resource: {
+                resourceType: 'Observation',
+                ...observation,
+              },
+            });
+          });
+        } catch (error) {
+          console.warn('Could not fetch observations:', error);
+        }
+
+        try {
+          const medicationRequests =
+            await this.getMedicationRequests().toPromise();
+          medicationRequests?.forEach((medicationRequest) => {
+            bundle.entry.push({
+              resource: {
+                resourceType: 'MedicationRequest',
+                ...medicationRequest,
+              },
+            });
+          });
+        } catch (error) {
+          console.warn('Could not fetch medication requests:', error);
+        }
+
+        // Try to fetch other common resource types that might be available
+        try {
+          const allergyResponse = await this.search('AllergyIntolerance', {
+            patient: currentPatient.id,
+          }).toPromise();
+          if (allergyResponse?.entry) {
+            allergyResponse.entry.forEach((entry: any) => {
+              if (entry.resource) {
+                bundle.entry.push({ resource: entry.resource });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Could not fetch allergies:', error);
+        }
+
+        try {
+          const procedureResponse = await this.search('Procedure', {
+            patient: currentPatient.id,
+          }).toPromise();
+          if (procedureResponse?.entry) {
+            procedureResponse.entry.forEach((entry: any) => {
+              if (entry.resource) {
+                bundle.entry.push({ resource: entry.resource });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Could not fetch procedures:', error);
+        }
+
+        try {
+          const diagnosticResponse = await this.search('DiagnosticReport', {
+            patient: currentPatient.id,
+          }).toPromise();
+          if (diagnosticResponse?.entry) {
+            diagnosticResponse.entry.forEach((entry: any) => {
+              if (entry.resource) {
+                bundle.entry.push({ resource: entry.resource });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Could not fetch diagnostic reports:', error);
+        }
+
+        try {
+          const encounterResponse = await this.search('Encounter', {
+            patient: currentPatient.id,
+          }).toPromise();
+          if (encounterResponse?.entry) {
+            encounterResponse.entry.forEach((entry: any) => {
+              if (entry.resource) {
+                bundle.entry.push({ resource: entry.resource });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Could not fetch encounters:', error);
+        }
+
+        try {
+          const immunizationResponse = await this.search('Immunization', {
+            patient: currentPatient.id,
+          }).toPromise();
+          if (immunizationResponse?.entry) {
+            immunizationResponse.entry.forEach((entry: any) => {
+              if (entry.resource) {
+                bundle.entry.push({ resource: entry.resource });
+              }
+            });
+          }
+        } catch (error) {
+          console.warn('Could not fetch immunizations:', error);
+        }
+      }
+
+      console.log('Completed FHIR bundle with', bundle.entry.length, 'entries');
+      return bundle;
+    } catch (error) {
+      console.error('Error building comprehensive FHIR bundle:', error);
+      throw error;
+    }
   }
 }
