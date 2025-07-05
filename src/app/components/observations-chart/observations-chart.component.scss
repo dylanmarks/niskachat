@@ -1,0 +1,406 @@
+/* CSS UPDATE - Force refresh timestamp: 2024-12-19 */
+@import "../../../themes/theme";
+
+.observations-chart-container {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-lg);
+  max-width: 100%;
+}
+
+.observations-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: var(--spacing-md);
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* FORCE BUTTON STYLES WITH ::ng-deep */
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+::ng-deep .observations-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+
+  .category-select-field {
+    min-width: 200px;
+  }
+
+  .back-button {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    border: 2px solid #1976d2 !important;
+    border-radius: 4px !important;
+    background-color: white !important;
+    padding: 0 20px !important;
+    min-width: 160px !important;
+    height: 56px !important;
+    color: #1976d2 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+
+    &:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+      background-color: #1976d2 !important;
+      color: white !important;
+    }
+
+    &:focus {
+      outline: 2px solid #1976d2 !important;
+      outline-offset: 2px !important;
+    }
+
+    .mat-icon {
+      margin-right: 4px !important;
+      width: 18px !important;
+      height: 18px !important;
+      font-size: 18px !important;
+    }
+  }
+}
+
+.observations-content {
+  min-height: 400px;
+}
+
+// Material Card States
+.loading-state,
+.error-state,
+.empty-state {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+
+  .loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+
+    p {
+      margin: 0;
+      color: var(--color-text-secondary);
+    }
+  }
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+
+  mat-card-actions {
+    justify-content: center;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+  }
+}
+
+.debug-info {
+  margin-top: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  background-color: var(--color-surface);
+  padding: var(--spacing-md);
+  text-align: left;
+
+  p {
+    margin: var(--spacing-xs) 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+}
+
+// Observations Table
+.observations-table-container {
+  margin-bottom: var(--spacing-lg);
+
+  mat-card-header {
+    mat-card-title {
+      color: var(--color-text-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    mat-card-subtitle {
+      color: var(--color-text-secondary);
+      font-style: italic;
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+
+    .observations-table {
+      width: 100%;
+
+      // Custom styling for mat-table
+      th.mat-header-cell {
+        border-bottom: 2px solid var(--color-border);
+        background-color: var(--color-surface);
+        color: var(--color-text-primary);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      td.mat-cell {
+        border-bottom: 1px solid var(--color-border-light);
+        padding: var(--spacing-md) var(--spacing-sm);
+      }
+
+      tr.mat-row {
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+
+        &:hover {
+          background-color: var(--color-surface);
+        }
+      }
+    }
+  }
+}
+
+// Table Column Styles
+.obs-type.clickable {
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+
+  &:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+  }
+}
+
+.obs-value {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.obs-date {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.obs-status {
+  .status-badge {
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+
+    &.status-final {
+      background-color: var(--color-success-light);
+      color: var(--color-success-dark);
+    }
+
+    &.status-preliminary {
+      background-color: var(--color-warning-light);
+      color: var(--color-warning-dark);
+    }
+
+    &.status-cancelled {
+      background-color: var(--color-error-light);
+      color: var(--color-error-dark);
+    }
+
+    &.status-unknown {
+      background-color: var(--color-surface);
+      color: var(--color-text-secondary);
+    }
+  }
+}
+
+.obs-actions {
+  width: 80px;
+  text-align: center;
+}
+
+// Chart Container
+.chart-container {
+  margin-bottom: var(--spacing-lg);
+
+  mat-card-header {
+    mat-card-title {
+      color: var(--color-text-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    mat-card-subtitle {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  .no-chart-data {
+    padding: var(--spacing-xl);
+    color: var(--color-text-secondary);
+    text-align: center;
+
+    button {
+      margin-left: var(--spacing-sm);
+    }
+  }
+
+  .chart-wrapper {
+    position: relative;
+    margin-top: var(--spacing-md);
+    min-height: 400px;
+
+    canvas {
+      max-width: 100%;
+      height: auto !important;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .observations-chart-container {
+    padding: var(--spacing-md);
+  }
+
+  .observations-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+
+    h3 {
+      font-size: var(--font-size-lg);
+    }
+  }
+
+  .observations-controls {
+    justify-content: space-between;
+    width: 100%;
+
+    .category-select-field {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .back-button {
+      flex-shrink: 0;
+    }
+  }
+
+  .chart-wrapper {
+    min-height: 300px;
+  }
+
+  .table-container {
+    .observations-table {
+      th.mat-header-cell,
+      td.mat-cell {
+        padding: var(--spacing-sm) var(--spacing-xs);
+        font-size: var(--font-size-sm);
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .observations-controls {
+    flex-direction: column;
+    align-items: stretch;
+
+    .category-select-field {
+      min-width: auto;
+    }
+
+    .back-button {
+      align-self: flex-start;
+    }
+  }
+
+  .obs-actions {
+    width: 60px;
+  }
+}
+
+// Material Card Overrides
+mat-card {
+  box-shadow: var(--elevation-2);
+  border-radius: var(--border-radius);
+
+  mat-card-header {
+    mat-card-title {
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    mat-card-subtitle {
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+    }
+  }
+
+  mat-card-content {
+    p {
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+  }
+}
+
+// Accessibility
+button:focus,
+.mat-row:focus,
+.obs-type.clickable:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// Animation
+.observations-table-container,
+.chart-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// Chart.js customizations for Material theme
+.chart-wrapper {
+  /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+  ::ng-deep {
+    .chartjs-tooltip {
+      box-shadow: var(--elevation-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius);
+      background-color: var(--color-surface);
+      color: var(--color-text-primary);
+    }
+  }
+}

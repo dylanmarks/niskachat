@@ -6,13 +6,14 @@
       <p class="chat-subtitle">Ask questions about patient data</p>
     </div>
     <button
+      mat-icon-button
       class="clear-button"
       (click)="clearChat()"
       [disabled]="isLoading"
       aria-label="Clear chat history"
+      matTooltip="Clear chat history"
     >
-      <span class="clear-icon">🗑️</span>
-      Clear
+      <mat-icon>delete</mat-icon>
     </button>
   </div>
 
@@ -66,33 +67,39 @@
   <div class="chat-input-area">
     <form (ngSubmit)="sendMessage()" class="chat-form">
       <div class="input-wrapper">
-        <textarea
-          [(ngModel)]="currentMessage"
-          name="message"
-          (keydown)="sendMessage($event)"
-          [disabled]="isLoading"
-          class="chat-input"
-          placeholder="Ask about patient conditions, medications, observations..."
-          rows="2"
-          maxlength="1000"
-          aria-label="Type your message"
-        ></textarea>
+        <mat-form-field appearance="outline" class="chat-input-field">
+          <mat-label>
+            Ask about patient conditions, medications, observations...
+          </mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="currentMessage"
+            name="message"
+            (keydown)="sendMessage($event)"
+            [disabled]="isLoading"
+            class="chat-input"
+            rows="2"
+            maxlength="1000"
+            aria-label="Type your message"
+          ></textarea>
+          <mat-hint>{{ currentMessage.length }}/1000</mat-hint>
+        </mat-form-field>
 
         <button
+          mat-fab
+          color="primary"
           type="submit"
           class="send-button"
           [disabled]="!canSendMessage()"
           aria-label="Send message"
+          matTooltip="Send message"
         >
-          <span class="send-icon" [class.loading]="isLoading">
-            {{ isLoading ? "⏳" : "➤" }}
-          </span>
+          <mat-icon>{{ isLoading ? "hourglass_empty" : "send" }}</mat-icon>
         </button>
       </div>
 
-      <!-- Character count -->
+      <!-- Input hint -->
       <div class="input-footer">
-        <small class="char-count">{{ currentMessage.length }}/1000</small>
         <small class="input-hint">
           Press Enter to send, Shift+Enter for new line
         </small>

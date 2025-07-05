@@ -1,0 +1,393 @@
+<!-- UPDATED 2024-12-19: Fixed spacing and headers -->
+<div class="medications-container">
+  <div class="medications-header">
+    <h1>
+      <mat-icon>medication</mat-icon>
+      Medications
+    </h1>
+    <div class="header-controls">
+      <div class="medication-count" *ngIf="activeMedications.length > 0">
+        <span class="count">{{ activeMedications.length }}</span>
+        <span class="label">
+          {{
+            activeMedications.length === 1
+              ? "active medication"
+              : "active medications"
+          }}
+        </span>
+      </div>
+      <button
+        *ngIf="inactiveMedications.length > 0"
+        mat-stroked-button
+        color="accent"
+        (click)="toggleInactive()"
+        [color]="showInactive ? 'primary' : 'accent'"
+        class="toggle-inactive-btn"
+      >
+        <mat-icon>
+          {{ showInactive ? "visibility_off" : "visibility" }}
+        </mat-icon>
+        {{ showInactive ? "Hide" : "Show" }} Inactive Medications ({{
+          inactiveMedications.length
+        }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="loading-state">
+    <mat-card-content>
+      <div class="loading-content">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="48"
+        ></mat-progress-spinner>
+        <p>Loading medications...</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Error State -->
+  <mat-card *ngIf="errorMessage" class="error-state">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="warn">warning</mat-icon>
+        Error Loading Medications
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ errorMessage }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="loadMedications()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- No Patient State -->
+  <mat-card
+    *ngIf="!isLoading && !errorMessage && !context?.patient"
+    class="no-patient-state"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">person</mat-icon>
+        No Patient Selected
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Please authenticate and select a patient to view medications.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Empty State -->
+  <mat-card
+    *ngIf="
+      !isLoading &&
+      !errorMessage &&
+      context?.patient &&
+      medications.length === 0
+    "
+    class="empty-state"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">medication</mat-icon>
+        No Medications Found
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>No medications are available for this patient.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Active Medications Table -->
+  <mat-card *ngIf="activeMedications.length > 0" class="medications-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">medication</mat-icon>
+        Active Medications
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="medications-table-container">
+        <div class="table-wrapper">
+          <table
+            mat-table
+            [dataSource]="activeMedications"
+            class="medications-table"
+          >
+            <!-- Medication Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Medication</th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-name"
+                (click)="selectMedication(medication)"
+                [class.selected]="selectedMedicationId === medication.id"
+              >
+                {{ getMedicationName(medication) }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-status"
+              >
+                <span
+                  class="status-badge"
+                  [class]="getStatusClass(medication.status)"
+                >
+                  {{ getMedicationStatus(medication) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Prescribed Date Column -->
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Prescribed Date</th>
+              <td mat-cell *matCellDef="let medication" class="medication-date">
+                {{ formatDate(medication.authoredOn) }}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-actions"
+              >
+                <button
+                  mat-icon-button
+                  (click)="selectMedication(medication)"
+                  [color]="
+                    selectedMedicationId === medication.id ? 'primary' : ''
+                  "
+                  matTooltip="View details"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              [class.selected]="selectedMedicationId === row.id"
+              (click)="selectMedication(row)"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Inactive Medications Table -->
+  <mat-card
+    *ngIf="showInactive && inactiveMedications.length > 0"
+    class="medications-section inactive-section"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="accent">medication</mat-icon>
+        Inactive Medications
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="medications-table-container">
+        <div class="table-wrapper">
+          <table
+            mat-table
+            [dataSource]="inactiveMedications"
+            class="medications-table"
+          >
+            <!-- Medication Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Medication</th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-name"
+                (click)="selectMedication(medication)"
+                [class.selected]="selectedMedicationId === medication.id"
+              >
+                {{ getMedicationName(medication) }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-status"
+              >
+                <span
+                  class="status-badge"
+                  [class]="getStatusClass(medication.status)"
+                >
+                  {{ getMedicationStatus(medication) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Prescribed Date Column -->
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Prescribed Date</th>
+              <td mat-cell *matCellDef="let medication" class="medication-date">
+                {{ formatDate(medication.authoredOn) }}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-actions"
+              >
+                <button
+                  mat-icon-button
+                  (click)="selectMedication(medication)"
+                  [color]="
+                    selectedMedicationId === medication.id ? 'primary' : ''
+                  "
+                  matTooltip="View details"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              [class.selected]="selectedMedicationId === row.id"
+              (click)="selectMedication(row)"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Medication Details Panel -->
+  <mat-card *ngIf="selectedMedication" class="medication-details-panel">
+    <mat-card-header>
+      <mat-card-title>Medication Details</mat-card-title>
+      <mat-card-subtitle>
+        {{ getMedicationName(selectedMedication) }}
+      </mat-card-subtitle>
+      <button
+        mat-icon-button
+        (click)="clearSelection()"
+        matTooltip="Close details"
+        class="close-button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="detail-section">
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="selectedMedication.authoredOn">
+            <span class="detail-label">Prescribed:</span>
+            <span class="detail-value">
+              {{ formatDate(selectedMedication.authoredOn) }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="selectedMedication.requester?.display"
+          >
+            <span class="detail-label">Prescriber:</span>
+            <span class="detail-value">
+              {{ selectedMedication.requester?.display }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getDosageText(selectedMedication)">
+            <span class="detail-label">Dosage:</span>
+            <span class="detail-value">
+              {{ getDosageText(selectedMedication) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getFrequencyText(selectedMedication)">
+            <span class="detail-label">Frequency:</span>
+            <span class="detail-value">
+              {{ getFrequencyText(selectedMedication) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getRouteText(selectedMedication)">
+            <span class="detail-label">Route:</span>
+            <span class="detail-value">
+              {{ getRouteText(selectedMedication) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getQuantityText(selectedMedication)">
+            <span class="detail-label">Quantity:</span>
+            <span class="detail-value">
+              {{ getQuantityText(selectedMedication) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getReasonText(selectedMedication)">
+            <span class="detail-label">Reason:</span>
+            <span class="detail-value">
+              {{ getReasonText(selectedMedication) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedMedication.id">
+            <span class="detail-label">Request ID:</span>
+            <span class="detail-value">
+              {{ selectedMedication.id }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medication Codes -->
+      <div
+        class="detail-section"
+        *ngIf="getMedicationCodes(selectedMedication).length > 0"
+      >
+        <h4>Medication Codes</h4>
+        <div class="codes-list">
+          <div
+            *ngFor="let code of getMedicationCodes(selectedMedication)"
+            class="code-item"
+          >
+            <span class="code-system">
+              {{ getCodeSystem(code.system) }}
+            </span>
+            <span class="code-value">{{ code.code }}</span>
+            <span class="code-display" *ngIf="code.display">
+              {{ code.display }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

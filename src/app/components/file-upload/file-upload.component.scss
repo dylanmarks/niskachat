@@ -1,25 +1,31 @@
+@import "../../../themes/theme";
+
 .file-upload-container {
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-lg);
   max-width: 800px;
 }
 
 .upload-header {
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-xl);
   text-align: center;
-}
 
-.upload-header h2 {
-  margin: 0 0 10px 0;
-  color: #333;
-  font-weight: 600;
-  font-size: 1.8rem;
+  h2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xl);
+  }
 }
 
 .upload-subtitle {
   margin: 0;
-  color: #666;
-  font-size: 1rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
 
 .upload-zone {
@@ -150,139 +156,213 @@
   height: 100%;
 }
 
+// Material Card Overrides
 .error-card,
-.success-card {
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  background: white;
-  padding: 30px 20px;
-  text-align: center;
+.success-card,
+.loading-card,
+.context-info-card {
+  margin-bottom: var(--spacing-lg);
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
 }
 
 .error-card {
-  border-left: 4px solid #e53e3e;
+  border-left: 4px solid var(--color-error);
 }
 
 .success-card {
-  border-left: 4px solid #4caf50;
+  border-left: 4px solid var(--color-success);
 }
 
-.error-icon,
-.success-icon {
-  margin-bottom: 15px;
-  font-size: 3rem;
+.loading-card {
+  border-left: 4px solid var(--color-primary);
+
+  .loading-content {
+    text-align: center;
+
+    h4 {
+      margin: 0 0 var(--spacing-md) 0;
+      color: var(--color-text-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    mat-progress-bar {
+      margin: var(--spacing-md) 0;
+    }
+
+    .progress-text {
+      margin: var(--spacing-sm) 0 0 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
+    }
+  }
 }
 
-.error-card h3,
-.success-card h3 {
-  margin: 0 0 10px 0;
-  color: #333;
-  font-weight: 600;
+.context-info-card {
+  border-left: 4px solid var(--color-info);
+
+  mat-card-content {
+    p {
+      margin: 0 0 var(--spacing-md) 0;
+      color: var(--color-text-secondary);
+    }
+  }
 }
 
-.error-card p,
-.success-card p {
-  margin: 0 0 20px 0;
-  color: #666;
-}
-
+// Extracted Resources Section
 .extracted-resources {
-  margin: 20px 0;
-  border-radius: 8px;
-  background: #f8f9fa;
-  padding: 20px;
-}
+  margin: var(--spacing-lg) 0;
+  border-radius: var(--border-radius);
+  background-color: var(--color-surface);
+  padding: var(--spacing-lg);
 
-.extracted-resources h4 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-weight: 600;
+  h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
 }
 
 .resource-counts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
+  gap: var(--spacing-md);
 }
 
 .resource-count {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background: white;
-  padding: 15px;
+  box-shadow: var(--elevation-1);
+  border-radius: var(--border-radius);
+  background-color: var(--color-background);
+  padding: var(--spacing-md);
   text-align: center;
+
+  .count {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-lg);
+  }
+
+  .label {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+  }
 }
 
-.resource-count .count {
-  display: block;
-  margin-bottom: 5px;
-  color: #667eea;
-  font-weight: 700;
-  font-size: 1.5rem;
-}
-
-.resource-count .label {
-  color: #666;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.context-info {
-  border: 1px solid #bbdefb;
-  border-radius: 8px;
-  background: #e3f2fd;
-  padding: 15px;
-  text-align: center;
-}
-
-.info-icon {
-  margin-bottom: 10px;
-  font-size: 1.5rem;
-}
-
-.context-info p {
-  margin: 0;
-  color: #1565c0;
-  font-size: 0.9rem;
-}
-
+// Example Data Section
 .example-data-section {
-  margin-top: 20px;
+  margin-top: var(--spacing-lg);
+
+  h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
 }
 
 .example-buttons {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: var(--spacing-md);
+
+  .upload-button,
+  .example-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-width: 140px;
+
+    mat-icon {
+      font-size: var(--font-size-base);
+    }
+  }
 }
 
-.example-button {
-  transition: background-color 0.2s;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background: #667eea;
-  padding: 12px 24px;
-  color: white;
-  font-weight: 500;
+// Auth Section
+.auth-section {
+  margin-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-md);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    width: 100%;
+
+    mat-icon {
+      font-size: var(--font-size-base);
+    }
+  }
 }
 
-.example-button:hover {
-  background: #5a67d8;
-}
-
+// Responsive Design
 @media (max-width: 768px) {
   .file-upload-container {
-    padding: 15px;
+    padding: var(--spacing-md);
   }
 
-  .upload-zone {
-    padding: 30px 15px;
-    min-height: 150px;
+  .upload-header {
+    h2 {
+      font-size: var(--font-size-lg);
+    }
   }
 
   .example-buttons {
     flex-direction: column;
+    align-items: center;
+
+    .upload-button,
+    .example-button {
+      justify-content: center;
+      min-width: 200px;
+    }
   }
+
+  .resource-counts {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: var(--spacing-sm);
+  }
+}
+
+// Accessibility improvements
+.upload-button:focus,
+.example-button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// Angular Material overrides for consistent theming
+mat-card {
+  box-shadow: var(--elevation-2);
+
+  mat-card-header {
+    mat-card-title {
+      color: var(--color-text-primary);
+    }
+  }
+
+  mat-card-content {
+    color: var(--color-text-secondary);
+  }
+}
+
+// Hide file input
+input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }

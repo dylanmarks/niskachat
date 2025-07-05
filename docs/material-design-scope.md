@@ -1,35 +1,75 @@
-# 📐 Material Design System Scope of Work
+# Material Design System Scope of Work
 
-This document outlines the work required to apply a consistent Material Design system to NiskaChat. The goal is to enhance usability and ensure a cohesive look and feel across the application.
+This document defines the scope for applying a consistent Material Design system to the NiskaChat application. The goal is to improve UI consistency, accessibility, responsiveness, and maintainability by leveraging Angular Material and custom design tokens. Use node.js standards for storing html and css properly.
 
-## 🎨 Design Foundation
+## Design Foundation
 
-- **Define design tokens** for colors, typography, spacing and elevation.
-- **Select Angular Material** as the primary UI component library.
-- **Create a custom theme** with SCSS variables for light and dark modes.
-- **Establish global typography rules** (headings, body text, captions).
+- Define design tokens using SCSS for:
 
-## 🏗️ Component Refactoring
+  - Color palette (primary, secondary, background, surface, error, etc.)
+  - Typography (font family, weights, sizes for headings, body, captions)
+  - Spacing (margin, padding scales)
+  - Elevation (z-index and box-shadow layers)
 
-- **Refactor existing components** to use Angular Material modules.
-- **Develop reusable button components** with standardized styles and states.
-- **Create card/surface components** for displaying grouped information.
-- **Apply consistent spacing and responsive layout utilities**.
-- **Add hover, focus and active states** for interactive elements.
+- Select Angular Material as the primary UI component library
 
-## ♿ Accessibility & Testing
+- Create a custom theme using Angular Material’s theming system:
 
-- **Review color contrast** and typography for WCAG AA compliance.
-- **Implement keyboard navigation** and verify tab order across views.
-- **Write tests** ensuring components follow design tokens and render properly on mobile.
-- **Run existing test suites** to maintain overall coverage.
+  - Start with Material’s default light theme
+  - Add dark theme support as needed
+  - Store theme definitions in `theme.scss`
 
-## 🚀 Implementation Steps
+- Apply global typography rules consistently across the app
 
-1. Run `ng add @angular/material` and configure the theme.
-2. Introduce shared SCSS files for tokens and typography.
-3. Update component templates to use Material directives and components.
-4. Replace custom CSS with Material classes where possible.
-5. Add additional Jest/Karma tests covering design tokens and interaction states.
+## Component Refactoring
 
-Refer to **Phase 17** in `docs/tasks.md` for the checklist of tasks that drive these improvements.
+- Refactor existing UI components to use Angular Material:
+
+  - Buttons → `<button mat-button>` or `<button mat-raised-button>`
+  - Cards → `<mat-card>`
+  - Inputs/forms → `<mat-form-field>`, `<mat-input>`, `<mat-select>`, etc.
+  - Navigation → `<mat-toolbar>`, `<mat-sidenav>`, `<mat-menu>`, etc.
+
+- Replace custom CSS with shared design tokens or Angular Material utility classes
+
+- Create reusable shared components:
+
+  - `ButtonComponent` with standardized interaction states (hover, focus, disabled)
+  - `CardComponent` or surface container for grouped content
+
+- Apply consistent layout spacing and grid-based structure using CSS classes or Angular Material layout utilities
+
+## Interaction and Visual States
+
+- Add consistent hover, focus, and active styles using SCSS mixins or Angular Material states
+- Use Material animations and transitions for modal dialogs and expandable sections
+- Ensure visual feedback for user interactions is smooth and accessible
+
+## Accessibility and Compliance
+
+- Review color contrast to ensure WCAG AA compliance
+- Ensure keyboard navigation and focus order is consistent and intuitive
+- Use appropriate ARIA roles, `mat-label`, `mat-error`, and semantic HTML elements where needed
+
+## Testing and Validation
+
+- Write tests to validate:
+
+  - All components follow the design token system
+  - Visual states (hover, focus, disabled) are correctly applied
+  - Typography and spacing are consistent across views
+  - Components render properly across screen sizes
+  - Color contrast meets accessibility standards
+  - Tab and keyboard navigation works for all primary flows
+
+- Run existing component and integration test suites to maintain coverage
+
+## Implementation Steps
+
+1. Install Angular Material using `ng add @angular/material`
+2. Create shared SCSS files for theme tokens and typography
+3. Configure the Angular Material theme in the project
+4. Begin component-by-component refactoring using Material primitives
+5. Replace inline styles with shared SCSS variables or utility classes
+6. Write tests for shared components and interaction states
+7. Validate accessibility, responsiveness, and design consistency

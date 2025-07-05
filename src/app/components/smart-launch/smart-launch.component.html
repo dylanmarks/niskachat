@@ -1,47 +1,121 @@
 <div class="smart-launch-container">
-  <div class="loading-card" *ngIf="isLoading">
-    <h2>🔐 Connecting to FHIR Server</h2>
-    <div class="spinner"></div>
-    <p>{{ statusMessage }}</p>
-  </div>
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="loading-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">security</mat-icon>
+        Connecting to FHIR Server
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="loading-content">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="60"
+          color="primary"
+        ></mat-progress-spinner>
+        <p>{{ statusMessage }}</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
-  <div class="error-card" *ngIf="errorMessage">
-    <h2>❌ Authentication Failed</h2>
-    <p>{{ errorMessage }}</p>
-    <button class="retry-button" (click)="retry()">Try Again</button>
-  </div>
+  <!-- Error State -->
+  <mat-card *ngIf="errorMessage" class="error-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="warn">error</mat-icon>
+        Authentication Failed
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ errorMessage }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </mat-card-actions>
+  </mat-card>
 
+  <!-- Launch Options -->
   <div
     class="launch-options"
     *ngIf="!isLoading && !context?.authenticated && !errorMessage"
   >
-    <h2>🚀 SMART on FHIR Launch</h2>
-
-    <div class="launch-method">
-      <h3>EHR Launch</h3>
-      <p>
-        If you were redirected here from an EHR, we'll automatically detect the
-        launch context.
-      </p>
-      <button class="launch-button" (click)="handleEhrLaunch()">
-        Check for EHR Launch
-      </button>
+    <div class="launch-header">
+      <h2>
+        <mat-icon>rocket_launch</mat-icon>
+        SMART on FHIR Launch
+      </h2>
     </div>
 
-    <div class="launch-method">
-      <h3>Standalone Launch</h3>
-      <p>Connect directly to a FHIR server (SMART Health IT Sandbox)</p>
-      <button class="launch-button" (click)="handleStandaloneLaunch()">
-        Launch Standalone
-      </button>
-    </div>
+    <!-- EHR Launch -->
+    <mat-card class="launch-method-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="primary">business</mat-icon>
+          EHR Launch
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>
+          If you were redirected here from an EHR, we'll automatically detect
+          the launch context.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="handleEhrLaunch()">
+          <mat-icon>search</mat-icon>
+          Check for EHR Launch
+        </button>
+      </mat-card-actions>
+    </mat-card>
 
-    <div class="test-mode">
-      <h3>Test Mode</h3>
-      <p>Upload a FHIR Bundle file for testing</p>
-      <button class="test-button" (click)="navigateToTestMode()">
-        Test Mode
-      </button>
-    </div>
+    <!-- Standalone Launch -->
+    <mat-card class="launch-method-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="primary">cloud</mat-icon>
+          Standalone Launch
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Connect directly to a FHIR server (SMART Health IT Sandbox)</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="handleStandaloneLaunch()"
+        >
+          <mat-icon>launch</mat-icon>
+          Launch Standalone
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Test Mode -->
+    <mat-card class="test-mode-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="accent">science</mat-icon>
+          Test Mode
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Upload a FHIR Bundle file for testing</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button
+          mat-stroked-button
+          color="accent"
+          (click)="navigateToTestMode()"
+        >
+          <mat-icon>upload_file</mat-icon>
+          Test Mode
+        </button>
+      </mat-card-actions>
+    </mat-card>
   </div>
 </div>

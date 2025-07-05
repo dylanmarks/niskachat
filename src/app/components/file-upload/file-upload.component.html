@@ -1,128 +1,187 @@
 <div class="file-upload-container" *ngIf="!context?.patient">
   <div class="upload-header">
-    <h2>📁 Upload FHIR Bundle</h2>
+    <h2>
+      <mat-icon>folder_open</mat-icon>
+      Upload FHIR Bundle
+    </h2>
     <p class="upload-subtitle">
       Upload a FHIR Bundle JSON file to view patient data offline
     </p>
   </div>
 
-  <!-- Upload Area removed per new design -->
-
   <!-- Error State -->
-  <div *ngIf="uploadStatus.error" class="error-card">
-    <div class="error-icon">⚠️</div>
-    <h3>Upload Error</h3>
-    <p>{{ uploadStatus.error }}</p>
-    <button
-      class="retry-button"
-      (click)="resetUpload(); $event.stopPropagation()"
-    >
-      Try Again
-    </button>
-  </div>
+  <mat-card *ngIf="uploadStatus.error" class="error-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="warn">warning</mat-icon>
+        Upload Error
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ uploadStatus.error }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="resetUpload(); $event.stopPropagation()"
+      >
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </mat-card-actions>
+  </mat-card>
 
-  <!-- Success State hidden per new design -->
-  <div *ngIf="false" class="success-card">
-    <div class="extracted-resources">
-      <h4>Extracted Resources:</h4>
-      <div class="resource-counts">
-        <div
-          class="resource-count"
-          *ngIf="uploadStatus.extractedResources.patients.length > 0"
-        >
-          <span class="count">
-            {{ uploadStatus.extractedResources.patients.length }}
-          </span>
-          <span class="label">Patient(s)</span>
-        </div>
-        <div
-          class="resource-count"
-          *ngIf="uploadStatus.extractedResources.conditions.length > 0"
-        >
-          <span class="count">
-            {{ uploadStatus.extractedResources.conditions.length }}
-          </span>
-          <span class="label">Condition(s)</span>
-        </div>
-        <div
-          class="resource-count"
-          *ngIf="uploadStatus.extractedResources.observations.length > 0"
-        >
-          <span class="count">
-            {{ uploadStatus.extractedResources.observations.length }}
-          </span>
-          <span class="label">Observation(s)</span>
-        </div>
-        <div
-          class="resource-count"
-          *ngIf="uploadStatus.extractedResources.medicationRequests.length > 0"
-        >
-          <span class="count">
-            {{ uploadStatus.extractedResources.medicationRequests.length }}
-          </span>
-          <span class="label">Medication(s)</span>
+  <!-- Success State (hidden per design) -->
+  <mat-card *ngIf="false" class="success-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">check_circle</mat-icon>
+        Upload Successful
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="extracted-resources">
+        <h4>Extracted Resources:</h4>
+        <div class="resource-counts">
+          <div
+            class="resource-count"
+            *ngIf="uploadStatus.extractedResources.patients.length > 0"
+          >
+            <span class="count">
+              {{ uploadStatus.extractedResources.patients.length }}
+            </span>
+            <span class="label">Patient(s)</span>
+          </div>
+          <div
+            class="resource-count"
+            *ngIf="uploadStatus.extractedResources.conditions.length > 0"
+          >
+            <span class="count">
+              {{ uploadStatus.extractedResources.conditions.length }}
+            </span>
+            <span class="label">Condition(s)</span>
+          </div>
+          <div
+            class="resource-count"
+            *ngIf="uploadStatus.extractedResources.observations.length > 0"
+          >
+            <span class="count">
+              {{ uploadStatus.extractedResources.observations.length }}
+            </span>
+            <span class="label">Observation(s)</span>
+          </div>
+          <div
+            class="resource-count"
+            *ngIf="
+              uploadStatus.extractedResources.medicationRequests.length > 0
+            "
+          >
+            <span class="count">
+              {{ uploadStatus.extractedResources.medicationRequests.length }}
+            </span>
+            <span class="label">Medication(s)</span>
+          </div>
         </div>
       </div>
-    </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="resetUpload(); $event.stopPropagation()"
+      >
+        <mat-icon>cloud_upload</mat-icon>
+        Upload Another Bundle
+      </button>
+    </mat-card-actions>
+  </mat-card>
 
-    <button
-      class="new-upload-button"
-      (click)="resetUpload(); $event.stopPropagation()"
-    >
-      Upload Another Bundle
-    </button>
-  </div>
+  <!-- Loading State -->
+  <mat-card *ngIf="uploadStatus.isUploading" class="loading-card">
+    <mat-card-content>
+      <div class="loading-content">
+        <h4>Processing FHIR Bundle...</h4>
+        <mat-progress-bar
+          mode="determinate"
+          [value]="uploadStatus.progress"
+        ></mat-progress-bar>
+        <p class="progress-text">{{ uploadStatus.progress }}% complete</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
   <!-- Current Context Info -->
-  <div *ngIf="context && !context.patient" class="context-info">
-    <div class="info-icon">ℹ️</div>
-    <p>
-      <strong>Offline Mode:</strong>
-      Upload a FHIR Bundle to view patient data without connecting to a FHIR
-      server.
-    </p>
+  <mat-card *ngIf="context && !context.patient" class="context-info-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">info</mat-icon>
+        Offline Mode
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>
+        Upload a FHIR Bundle to view patient data without connecting to a FHIR
+        server.
+      </p>
 
-    <!-- Example Data Buttons -->
-    <div class="example-data-section">
-      <h4>Or try example data:</h4>
-      <div class="example-buttons">
-        <!-- Simple Upload Bundle button -->
-        <input
-          #fileInput
-          type="file"
-          accept=".json"
-          (change)="onFileSelected($event)"
-          style="display: none"
-        />
-        <button
-          class="example-button"
-          (click)="fileInput.click()"
-          [disabled]="uploadStatus.isUploading"
-        >
-          📁 Upload Bundle
-        </button>
-        <button
-          class="example-button"
-          (click)="loadExampleData('johnsmith')"
-          [disabled]="uploadStatus.isUploading"
-        >
-          📊 Load John Smith Data
-        </button>
-        <button
-          class="example-button"
-          (click)="loadExampleData('maria')"
-          [disabled]="uploadStatus.isUploading"
-        >
-          📊 Load Maria Johnson Data
-        </button>
+      <!-- Example Data Buttons -->
+      <div class="example-data-section">
+        <h4>Upload Options:</h4>
+        <div class="example-buttons">
+          <!-- Hidden File Input -->
+          <input
+            #fileInput
+            type="file"
+            accept=".json"
+            (change)="onFileSelected($event)"
+            style="display: none"
+          />
+
+          <!-- Upload Bundle Button -->
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="fileInput.click()"
+            [disabled]="uploadStatus.isUploading"
+            class="upload-button"
+          >
+            <mat-icon>upload_file</mat-icon>
+            Upload Bundle
+          </button>
+
+          <!-- Example Data Buttons -->
+          <button
+            mat-stroked-button
+            color="accent"
+            (click)="loadExampleData('johnsmith')"
+            [disabled]="uploadStatus.isUploading"
+            class="example-button"
+          >
+            <mat-icon>person</mat-icon>
+            Load John Smith Data
+          </button>
+
+          <button
+            mat-stroked-button
+            color="accent"
+            (click)="loadExampleData('maria')"
+            [disabled]="uploadStatus.isUploading"
+            class="example-button"
+          >
+            <mat-icon>person</mat-icon>
+            Load Maria Johnson Data
+          </button>
+        </div>
       </div>
-    </div>
+    </mat-card-content>
 
-    <!-- Authentication Button -->
-    <div class="auth-section">
-      <button class="auth-button" (click)="navigateToAuth()">
+    <!-- Authentication Section -->
+    <mat-card-actions class="auth-section">
+      <button mat-flat-button color="primary" (click)="navigateToAuth()">
+        <mat-icon>login</mat-icon>
         Start Authentication
       </button>
-    </div>
-  </div>
+    </mat-card-actions>
+  </mat-card>
 </div>

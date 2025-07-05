@@ -1,134 +1,195 @@
+@import "../../../themes/theme";
+
 .smart-launch-container {
-  margin: 2rem auto;
-  padding: 2rem;
+  margin: var(--spacing-xl) auto;
+  padding: var(--spacing-lg);
   max-width: 600px;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
+// Launch Header
+.launch-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+
+  h2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xl);
+  }
+}
+
+// Material Card Overrides
 .loading-card,
 .error-card,
-.success-card {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
+.launch-method-card,
+.test-mode-card {
+  margin-bottom: var(--spacing-lg);
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      color: var(--color-text-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+
+  mat-card-content {
+    p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+  }
+
+  mat-card-actions {
+    button {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+
+      mat-icon {
+        font-size: var(--font-size-base);
+      }
+    }
+  }
 }
 
+// Loading Card Specific Styles
 .loading-card {
-  background: #f8f9fa;
+  border-left: 4px solid var(--color-primary);
+
+  .loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+
+    mat-progress-spinner {
+      margin: var(--spacing-sm) 0;
+    }
+
+    p {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
+      text-align: center;
+    }
+  }
 }
 
+// Error Card Specific Styles
 .error-card {
-  border: 1px solid #fcc;
-  background: #fee;
-}
+  border-left: 4px solid var(--color-error);
 
-.success-card {
-  border: 1px solid #cfc;
-  background: #efe;
-}
-
-.spinner {
-  animation: spin 1s linear infinite;
-  margin: 1rem auto;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
+  mat-card-content {
+    p {
+      color: var(--color-error);
+      font-weight: var(--font-weight-medium);
+    }
   }
 }
 
+// Launch Options
 .launch-options {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 }
 
-.launch-method,
-.test-mode {
-  margin: 2rem 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fafafa;
-  padding: 1.5rem;
+// Launch Method Cards
+.launch-method-card {
+  border-left: 4px solid var(--color-primary);
+
+  mat-card-actions {
+    justify-content: center;
+  }
 }
 
-.launch-button,
-.continue-button,
-.retry-button,
-.test-button {
-  transition: background-color 0.2s;
-  cursor: pointer;
-  margin: 0.5rem;
-  border: none;
-  border-radius: 4px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+// Test Mode Card
+.test-mode-card {
+  border-left: 4px solid var(--color-accent);
+
+  mat-card-actions {
+    justify-content: center;
+  }
 }
 
-.launch-button {
-  background: #007bff;
-  color: white;
+// Angular Material Overrides
+mat-card {
+  box-shadow: var(--elevation-2);
+  border-radius: var(--border-radius);
+
+  mat-card-header {
+    padding-bottom: var(--spacing-sm);
+
+    mat-card-title {
+      font-size: var(--font-size-lg);
+      line-height: 1.2;
+    }
+  }
+
+  mat-card-content {
+    padding: var(--spacing-md) var(--spacing-lg);
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+    }
+  }
+
+  mat-card-actions {
+    justify-content: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+
+    button {
+      min-width: 160px;
+    }
+  }
 }
 
-.launch-button:hover {
-  background: #0056b3;
+// Responsive Design
+@media (max-width: 768px) {
+  .smart-launch-container {
+    margin: var(--spacing-lg) auto;
+    padding: var(--spacing-md);
+  }
+
+  .launch-header {
+    h2 {
+      font-size: var(--font-size-lg);
+    }
+  }
+
+  mat-card {
+    mat-card-actions {
+      button {
+        min-width: 120px;
+      }
+    }
+  }
 }
 
-.continue-button {
-  background: #28a745;
-  color: white;
+// Focus and Accessibility
+button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
-.continue-button:hover {
-  background: #1e7e34;
-}
+// Animation for card entrance
+.launch-method-card,
+.test-mode-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
-.retry-button {
-  background: #dc3545;
-  color: white;
-}
-
-.retry-button:hover {
-  background: #c82333;
-}
-
-.test-button {
-  background: #6c757d;
-  color: white;
-}
-
-.test-button:hover {
-  background: #545b62;
-}
-
-.patient-info {
-  margin: 1rem 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  padding: 1rem;
-}
-
-h2 {
-  margin: 0 0 1rem 0;
-  color: #333;
-}
-
-h3 {
-  margin: 0 0 0.5rem 0;
-  color: #555;
-}
-
-p {
-  margin: 0.5rem 0;
-  color: #666;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elevation-4);
+  }
 }
