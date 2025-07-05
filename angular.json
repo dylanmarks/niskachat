@@ -32,7 +32,10 @@
                 "output": "/examples"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -93,7 +96,10 @@
                 "output": "/examples"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/styles.scss"
+            ]
           }
         },
         "lint": {

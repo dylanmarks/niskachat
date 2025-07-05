@@ -10,6 +10,14 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { distinctUntilChanged, Subject, takeUntil } from 'rxjs';
@@ -45,161 +53,19 @@ type GroupedObservations = Record<string, Observation[]>;
 @Component({
   selector: 'app-observations-chart',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="observations-chart-container">
-      <div class="observations-header">
-        <h3>Clinical Observations</h3>
-        <div class="observations-controls">
-          <label for="category-select">Filter by type:</label>
-          <select
-            id="category-select"
-            [(ngModel)]="selectedCategory"
-            (change)="onCategoryChange($event)"
-            class="category-select"
-          >
-            <option value="all">All Observations</option>
-            <option value="blood-pressure">Blood Pressure</option>
-            <option value="a1c">Hemoglobin A1c</option>
-            <option value="glucose">Glucose</option>
-            <option value="weight">Weight</option>
-            <option value="height">Height</option>
-          </select>
-
-          <!-- Back to table button when in chart view -->
-          <button
-            *ngIf="selectedCategory !== 'all'"
-            (click)="backToTable()"
-            class="back-button"
-          >
-            ← Back to Table
-          </button>
-        </div>
-      </div>
-
-      <div class="observations-content">
-        <div *ngIf="loading" class="loading-state">
-          <div class="loading-spinner"></div>
-          <p>Loading observations...</p>
-        </div>
-
-        <div *ngIf="error" class="error-state">
-          <div class="error-icon">⚠️</div>
-          <h4>Error Loading Observations</h4>
-          <p>{{ error }}</p>
-          <button (click)="loadObservations()" class="retry-button">
-            Try Again
-          </button>
-        </div>
-
-        <div
-          *ngIf="!loading && !error && observations.length === 0"
-          class="empty-state"
-        >
-          <div class="empty-icon">📊</div>
-          <h4>No Observations Found</h4>
-          <p>No clinical observations are available for this patient.</p>
-
-          <!-- Debug info -->
-          <div class="debug-info">
-            <p><strong>Debug Info:</strong></p>
-            <p>Loading: {{ loading }}</p>
-            <p>Error: {{ error || 'None' }}</p>
-            <p>Observations count: {{ observations.length }}</p>
-            <p>Current context: {{ getCurrentContextInfo() }}</p>
-          </div>
-        </div>
-
-        <!-- Table view for all observations -->
-        <div
-          *ngIf="
-            !loading &&
-            !error &&
-            observations.length > 0 &&
-            selectedCategory === 'all'
-          "
-          class="observations-table-container"
-        >
-          <div class="observations-summary">
-            <h4>Summary ({{ observations.length }} total observations)</h4>
-            <p>Click on an observation type to view chart visualization</p>
-          </div>
-
-          <div class="table-container">
-            <table class="observations-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Value</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  *ngFor="
-                    let obs of sortedObservations;
-                    trackBy: trackByObservation
-                  "
-                  class="observation-row"
-                  (click)="onObservationClick(obs)"
-                  [title]="
-                    'Click to view chart for ' + getObservationLabel(obs)
-                  "
-                >
-                  <td class="obs-type clickable">
-                    {{ getObservationLabel(obs) }}
-                  </td>
-                  <td class="obs-value">{{ formatObservationValue(obs) }}</td>
-                  <td class="obs-date">{{ formatObservationDate(obs) }}</td>
-                  <td class="obs-status">
-                    <span [class]="'status-' + (obs.status || 'unknown')">
-                      {{ obs.status || 'Unknown' }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Chart view for filtered observations -->
-        <div
-          *ngIf="
-            !loading &&
-            !error &&
-            observations.length > 0 &&
-            selectedCategory !== 'all'
-          "
-          class="chart-container"
-        >
-          <div class="chart-header">
-            <h4>{{ getCategoryDisplayName(selectedCategory) }} Trends</h4>
-            <p>{{ getFilteredObservations().length }} observations</p>
-          </div>
-
-          <div
-            *ngIf="getFilteredObservations().length === 0"
-            class="no-chart-data"
-          >
-            <p>
-              No observations found for this category.
-              <button (click)="backToTable()" class="link-button">
-                Return to table view
-              </button>
-            </p>
-          </div>
-
-          <div
-            *ngIf="getFilteredObservations().length > 0"
-            class="chart-wrapper"
-          >
-            <canvas #chartCanvas></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatTableModule,
+    MatTooltipModule,
+  ],
+  templateUrl: './observations-chart.component.html',
   styles: [
     `
       .observations-chart-container {
@@ -513,6 +379,13 @@ export class ObservationsChartComponent
   chartData: ObservationChartData = {};
   selectedCategory = 'all';
   chart: Chart | null = null;
+  observationDisplayedColumns: string[] = [
+    'type',
+    'value',
+    'date',
+    'status',
+    'actions',
+  ];
 
   private destroy$ = new Subject<void>();
 

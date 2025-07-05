@@ -96,6 +96,7 @@ describe('FhirClientService', () => {
 
       expect(service.isAuthenticated()).toBeTrue();
       const context = service.getCurrentContext();
+
       expect(context.authenticated).toBeTrue();
       expect(context.patient?.id).toBe('test-patient-123');
     });
@@ -108,6 +109,7 @@ describe('FhirClientService', () => {
 
       expect(service.isAuthenticated()).toBeFalse();
       const context = service.getCurrentContext();
+
       expect(context.authenticated).toBeFalse();
     });
 

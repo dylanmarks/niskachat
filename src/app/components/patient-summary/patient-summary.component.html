@@ -1,138 +1,196 @@
 <div class="patient-summary-container">
-  <div class="loading-card" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Loading patient information...</p>
-  </div>
-
-  <div class="error-card" *ngIf="errorMessage">
-    <h3>❌ Unable to Load Patient</h3>
-    <p>{{ errorMessage }}</p>
-    <button class="retry-button" (click)="loadPatient()">Retry</button>
-  </div>
-
-  <div class="patient-card" *ngIf="patient && !isLoading && !errorMessage">
-    <div class="patient-header">
-      <h2>👤 Patient Summary</h2>
-      <div class="header-actions">
-        <button
-          class="summarize-button"
-          *ngIf="patient"
-          (click)="generateSummary()"
-          [disabled]="isSummarizing"
-        >
-          <span *ngIf="!isSummarizing">✨ Summarize</span>
-          <span *ngIf="isSummarizing">⏳ Generating...</span>
-        </button>
-        <div class="patient-id" *ngIf="patient.id">
-          <span class="label">Patient ID:</span>
-          <span class="value">{{ patient.id }}</span>
-        </div>
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="loading-card">
+    <mat-card-content>
+      <div class="loading-content">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="40"
+        ></mat-progress-spinner>
+        <p>Loading patient information...</p>
       </div>
-    </div>
+    </mat-card-content>
+  </mat-card>
 
-    <!-- Summary Section -->
-    <div class="summary-section" *ngIf="summary || summaryError">
-      <div class="summary-card" *ngIf="summary">
-        <h3>📋 Clinical Summary</h3>
-        <div class="summary-content">
-          <pre>{{ summary }}</pre>
+  <!-- Error State -->
+  <mat-card *ngIf="errorMessage" class="error-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="warn">error</mat-icon>
+        Unable to Load Patient
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ errorMessage }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="loadPatient()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Patient Information -->
+  <div *ngIf="patient && !isLoading && !errorMessage" class="patient-content">
+    <!-- Main Patient Card -->
+    <mat-card class="patient-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Patient Summary
+        </mat-card-title>
+        <mat-card-subtitle *ngIf="patient.id">
+          Patient ID: {{ patient.id }}
+        </mat-card-subtitle>
+        <div class="card-header-spacer"></div>
+        <div class="header-actions">
+          <button
+            mat-raised-button
+            color="accent"
+            *ngIf="patient"
+            (click)="generateSummary()"
+            [disabled]="isSummarizing"
+          >
+            <mat-icon *ngIf="!isSummarizing">auto_awesome</mat-icon>
+            <mat-icon *ngIf="isSummarizing">hourglass_empty</mat-icon>
+            <span *ngIf="!isSummarizing">Summarize</span>
+            <span *ngIf="isSummarizing">Generating...</span>
+          </button>
         </div>
-        <div class="summary-warning" *ngIf="summaryWarning">
-          <div class="warning-message">
-            <span class="warning-icon">⚠️</span>
-            <span class="warning-text">{{ summaryWarning }}</span>
+      </mat-card-header>
+
+      <!-- Demographics Section -->
+      <mat-card-content>
+        <div class="info-section">
+          <h3>Demographics</h3>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Name:</span>
+              <span class="value">{{ getPatientName() }}</span>
+            </div>
+
+            <div class="info-item" *ngIf="patient.birthDate">
+              <span class="label">Date of Birth:</span>
+              <span class="value">{{ formatDate(patient.birthDate) }}</span>
+            </div>
+
+            <div class="info-item" *ngIf="getAge()">
+              <span class="label">Age:</span>
+              <span class="value">{{ getAge() }} years old</span>
+            </div>
+
+            <div class="info-item" *ngIf="patient.gender">
+              <span class="label">Gender:</span>
+              <span class="value">{{ formatGender(patient.gender) }}</span>
+            </div>
           </div>
         </div>
-        <div class="summary-meta">
+
+        <!-- Medical Record Section -->
+        <div class="info-section" *ngIf="getMedicalRecordNumber()">
+          <h3>Medical Record</h3>
+          <div class="info-item">
+            <span class="label">MRN:</span>
+            <span class="value">{{ getMedicalRecordNumber() }}</span>
+          </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="info-section" *ngIf="hasContactInfo()">
+          <h3>Contact Information</h3>
+          <div class="contact-list">
+            <div class="contact-item" *ngFor="let contact of getContactInfo()">
+              <span class="contact-type">{{ contact.type }}:</span>
+              <span class="contact-value">{{ contact.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Section -->
+        <div class="info-section" *ngIf="hasAddresses()">
+          <h3>Address</h3>
+          <div class="address-list">
+            <div class="address-item" *ngFor="let address of getAddresses()">
+              <div class="address-type">{{ address.type }}</div>
+              <div class="address-text">{{ address.text }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Summary Card -->
+    <mat-card *ngIf="summary" class="summary-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Clinical Summary
+        </mat-card-title>
+        <mat-card-subtitle>
           <span class="summary-type" [class.llm-used]="summaryUsedLLM">
-            {{ summaryUsedLLM ? "🤖 AI Generated" : "📊 Structured Summary" }}
+            <mat-icon *ngIf="summaryUsedLLM">smart_toy</mat-icon>
+            <mat-icon *ngIf="!summaryUsedLLM">analytics</mat-icon>
+            {{ summaryUsedLLM ? "AI Generated" : "Structured Summary" }}
           </span>
           <span class="summary-timestamp">
             {{ summaryTimestamp | date: "short" }}
           </span>
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-content">
+          <pre>{{ summary }}</pre>
         </div>
-      </div>
+        <div class="summary-warning" *ngIf="summaryWarning">
+          <mat-icon color="warn">warning</mat-icon>
+          <span class="warning-text">{{ summaryWarning }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
 
-      <div class="summary-error" *ngIf="summaryError">
-        <h3>❌ Summary Error</h3>
+    <!-- Summary Error Card -->
+    <mat-card *ngIf="summaryError" class="error-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="warn">error</mat-icon>
+          Summary Error
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
         <p>{{ summaryError }}</p>
-        <button class="retry-button" (click)="generateSummary()">Retry</button>
-      </div>
-    </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="generateSummary()">
+          <mat-icon>refresh</mat-icon>
+          Retry
+        </button>
+      </mat-card-actions>
+    </mat-card>
 
-    <div class="patient-info">
-      <div class="info-section">
-        <h3>Demographics</h3>
-
-        <div class="info-item">
-          <span class="label">Name:</span>
-          <span class="value">{{ getPatientName() }}</span>
+    <!-- Technical Details Expansion Panel -->
+    <mat-expansion-panel *ngIf="hasMetadata()" class="metadata-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>settings</mat-icon>
+          Technical Details
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="metadata-content">
+        <div class="metadata-item" *ngIf="context?.clientId">
+          <span class="label">FHIR Client ID:</span>
+          <span class="value">{{ context?.clientId }}</span>
         </div>
-
-        <div class="info-item" *ngIf="patient.birthDate">
-          <span class="label">Date of Birth:</span>
-          <span class="value">{{ formatDate(patient.birthDate) }}</span>
+        <div class="metadata-item" *ngIf="context?.serverUrl">
+          <span class="label">FHIR Server:</span>
+          <span class="value">{{ context?.serverUrl }}</span>
         </div>
-
-        <div class="info-item" *ngIf="getAge()">
-          <span class="label">Age:</span>
-          <span class="value">{{ getAge() }} years old</span>
-        </div>
-
-        <div class="info-item" *ngIf="patient.gender">
-          <span class="label">Gender:</span>
-          <span class="value">{{ formatGender(patient.gender) }}</span>
-        </div>
-      </div>
-
-      <div class="info-section" *ngIf="getMedicalRecordNumber()">
-        <h3>Medical Record</h3>
-        <div class="info-item">
-          <span class="label">MRN:</span>
-          <span class="value">{{ getMedicalRecordNumber() }}</span>
+        <div class="metadata-item" *ngIf="context?.scope">
+          <span class="label">OAuth Scope:</span>
+          <span class="value">{{ context?.scope }}</span>
         </div>
       </div>
-
-      <div class="info-section" *ngIf="hasContactInfo()">
-        <h3>Contact Information</h3>
-
-        <div class="contact-list">
-          <div class="contact-item" *ngFor="let contact of getContactInfo()">
-            <span class="contact-type">{{ contact.type }}:</span>
-            <span class="contact-value">{{ contact.value }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="info-section" *ngIf="hasAddresses()">
-        <h3>Address</h3>
-        <div class="address-list">
-          <div class="address-item" *ngFor="let address of getAddresses()">
-            <div class="address-type">{{ address.type }}</div>
-            <div class="address-text">{{ address.text }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="patient-metadata" *ngIf="hasMetadata()">
-      <details class="metadata-details">
-        <summary>Technical Details</summary>
-        <div class="metadata-content">
-          <div class="metadata-item" *ngIf="context?.clientId">
-            <span class="label">FHIR Client ID:</span>
-            <span class="value">{{ context?.clientId }}</span>
-          </div>
-          <div class="metadata-item" *ngIf="context?.serverUrl">
-            <span class="label">FHIR Server:</span>
-            <span class="value">{{ context?.serverUrl }}</span>
-          </div>
-          <div class="metadata-item" *ngIf="context?.scope">
-            <span class="label">OAuth Scope:</span>
-            <span class="value">{{ context?.scope }}</span>
-          </div>
-        </div>
-      </details>
-    </div>
+    </mat-expansion-panel>
   </div>
 </div>

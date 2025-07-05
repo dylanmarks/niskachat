@@ -1,1 +1,189 @@
 /* You can add global styles to this file, and also import other style files */
+
+// Import Angular Material theme and design tokens
+@import "themes/theme";
+
+// Global typography rules applying Material Design typography
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--niska-background);
+  color: var(--niska-on-background);
+  font-size: var(--niska-font-size-base);
+  line-height: var(--niska-line-height-normal);
+  font-family: var(--niska-font-family);
+}
+
+// Typography hierarchy following Material Design
+h1,
+.mat-headline-1 {
+  margin: var(--niska-spacing-lg) 0;
+  font-weight: var(--niska-font-weight-light);
+  font-size: var(--niska-font-size-4xl);
+  line-height: var(--niska-line-height-tight);
+}
+
+h2,
+.mat-headline-2 {
+  margin: var(--niska-spacing-md) 0;
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-3xl);
+  line-height: var(--niska-line-height-tight);
+}
+
+h3,
+.mat-headline-3 {
+  margin: var(--niska-spacing-md) 0;
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-2xl);
+  line-height: var(--niska-line-height-normal);
+}
+
+h4,
+.mat-headline-4 {
+  margin: var(--niska-spacing-sm) 0;
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-xl);
+  line-height: var(--niska-line-height-normal);
+}
+
+h5,
+.mat-headline-5 {
+  margin: var(--niska-spacing-sm) 0;
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-lg);
+  line-height: var(--niska-line-height-normal);
+}
+
+h6,
+.mat-headline-6 {
+  margin: var(--niska-spacing-sm) 0;
+  font-weight: var(--niska-font-weight-medium);
+  font-size: var(--niska-font-size-base);
+  line-height: var(--niska-line-height-normal);
+}
+
+// Body text styles
+p,
+.mat-body {
+  margin: var(--niska-spacing-sm) 0;
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-base);
+  line-height: var(--niska-line-height-normal);
+}
+
+.mat-body-2 {
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-sm);
+  line-height: var(--niska-line-height-normal);
+}
+
+// Caption and overline styles
+.mat-caption {
+  color: var(--niska-on-surface-variant);
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-xs);
+  line-height: var(--niska-line-height-normal);
+}
+
+.mat-overline {
+  color: var(--niska-on-surface-variant);
+  font-weight: var(--niska-font-weight-regular);
+  font-size: var(--niska-font-size-xs);
+  line-height: var(--niska-line-height-normal);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+// Link styles
+a {
+  transition: color var(--niska-transition-fast);
+  color: var(--niska-primary-500);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--niska-primary-600);
+    text-decoration: underline;
+  }
+
+  &:focus {
+    outline: 2px solid var(--niska-primary-500);
+    outline-offset: 2px;
+  }
+}
+
+// Code styles
+code {
+  border-radius: var(--niska-radius-sm);
+  background-color: var(--niska-surface-variant);
+  padding: var(--niska-spacing-xs);
+  font-size: 0.9em;
+  font-family: "Courier New", monospace;
+}
+
+pre {
+  border-radius: var(--niska-radius-md);
+  background-color: var(--niska-surface-variant);
+  padding: var(--niska-spacing-md);
+  overflow-x: auto;
+
+  code {
+    background-color: transparent;
+    padding: 0;
+  }
+}
+
+// Global accessibility improvements
+*:focus {
+  outline: 2px solid var(--niska-primary-500);
+  outline-offset: 2px;
+}
+
+// Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}
+
+/* GLOBAL OVERRIDE FOR OBSERVATIONS BACK BUTTON - FORCE STYLES */
+.observations-controls .back-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  border: 2px solid #1976d2 !important;
+  border-radius: 4px !important;
+  background-color: white !important;
+  padding: 0 20px !important;
+  min-width: 160px !important;
+  height: 56px !important;
+  color: #1976d2 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+.observations-controls .back-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.observations-controls .back-button:focus {
+  outline: 2px solid #1976d2 !important;
+  outline-offset: 2px !important;
+}
+
+.observations-controls .back-button .mat-icon {
+  margin-right: 4px !important;
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 18px !important;
+}

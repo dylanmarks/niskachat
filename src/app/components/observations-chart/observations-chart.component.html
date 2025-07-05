@@ -1,0 +1,234 @@
+<div class="observations-chart-container">
+  <div class="observations-header">
+    <h3>
+      <mat-icon>timeline</mat-icon>
+      Clinical Observations
+    </h3>
+    <div class="observations-controls">
+      <mat-form-field appearance="outline" class="category-select-field">
+        <mat-label>Filter by type</mat-label>
+        <mat-select
+          [(ngModel)]="selectedCategory"
+          (selectionChange)="onCategoryChange($event)"
+        >
+          <mat-option value="all">All Observations</mat-option>
+          <mat-option value="blood-pressure">Blood Pressure</mat-option>
+          <mat-option value="a1c">Hemoglobin A1c</mat-option>
+          <mat-option value="glucose">Glucose</mat-option>
+          <mat-option value="weight">Weight</mat-option>
+          <mat-option value="height">Height</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Back to table button when in chart view -->
+      <button
+        *ngIf="selectedCategory !== 'all'"
+        mat-stroked-button
+        color="primary"
+        (click)="backToTable()"
+        class="back-button"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        Back to Table
+      </button>
+    </div>
+  </div>
+
+  <div class="observations-content">
+    <!-- Loading State -->
+    <mat-card *ngIf="loading" class="loading-state">
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-progress-spinner
+            mode="indeterminate"
+            diameter="48"
+          ></mat-progress-spinner>
+          <p>Loading observations...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Error State -->
+    <mat-card *ngIf="error" class="error-state">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="warn">warning</mat-icon>
+          Error Loading Observations
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ error }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="loadObservations()">
+          <mat-icon>refresh</mat-icon>
+          Try Again
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Empty State -->
+    <mat-card
+      *ngIf="!loading && !error && observations.length === 0"
+      class="empty-state"
+    >
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="primary">assessment</mat-icon>
+          No Observations Found
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>No clinical observations are available for this patient.</p>
+
+        <!-- Debug info -->
+        <div class="debug-info">
+          <p><strong>Debug Info:</strong></p>
+          <p>Loading: {{ loading }}</p>
+          <p>Error: {{ error || "None" }}</p>
+          <p>Observations count: {{ observations.length }}</p>
+          <p>Current context: {{ getCurrentContextInfo() }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Table view for all observations -->
+    <mat-card
+      *ngIf="
+        !loading &&
+        !error &&
+        observations.length > 0 &&
+        selectedCategory === 'all'
+      "
+      class="observations-table-container"
+    >
+      <mat-card-header>
+        <mat-card-title>
+          Summary ({{ observations.length }} total observations)
+        </mat-card-title>
+        <mat-card-subtitle>
+          Click on an observation type to view chart visualization
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="table-container">
+          <table
+            mat-table
+            [dataSource]="sortedObservations"
+            class="observations-table"
+          >
+            <!-- Type Column -->
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td
+                mat-cell
+                *matCellDef="let obs"
+                class="obs-type clickable"
+                (click)="onObservationClick(obs)"
+                [matTooltip]="
+                  'Click to view chart for ' + getObservationLabel(obs)
+                "
+              >
+                {{ getObservationLabel(obs) }}
+              </td>
+            </ng-container>
+
+            <!-- Value Column -->
+            <ng-container matColumnDef="value">
+              <th mat-header-cell *matHeaderCellDef>Value</th>
+              <td mat-cell *matCellDef="let obs" class="obs-value">
+                {{ formatObservationValue(obs) }}
+              </td>
+            </ng-container>
+
+            <!-- Date Column -->
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let obs" class="obs-date">
+                {{ formatObservationDate(obs) }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let obs" class="obs-status">
+                <span
+                  [class]="'status-badge status-' + (obs.status || 'unknown')"
+                >
+                  {{ obs.status || "Unknown" }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let obs" class="obs-actions">
+                <button
+                  mat-icon-button
+                  (click)="onObservationClick(obs)"
+                  matTooltip="View chart"
+                  color="primary"
+                >
+                  <mat-icon>bar_chart</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr
+              mat-header-row
+              *matHeaderRowDef="observationDisplayedColumns"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: observationDisplayedColumns"
+              [matTooltip]="
+                'Click to view chart for ' + getObservationLabel(row)
+              "
+            ></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Chart view for filtered observations -->
+    <mat-card
+      *ngIf="
+        !loading &&
+        !error &&
+        observations.length > 0 &&
+        selectedCategory !== 'all'
+      "
+      class="chart-container"
+    >
+      <mat-card-header>
+        <mat-card-title>
+          {{ getCategoryDisplayName(selectedCategory) }} Trends
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ getFilteredObservations().length }} observations
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div
+          *ngIf="getFilteredObservations().length === 0"
+          class="no-chart-data"
+        >
+          <p>
+            No observations found for this category.
+            <button mat-button color="primary" (click)="backToTable()">
+              Return to table view
+            </button>
+          </p>
+        </div>
+
+        <div *ngIf="getFilteredObservations().length > 0" class="chart-wrapper">
+          <canvas #chartCanvas></canvas>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

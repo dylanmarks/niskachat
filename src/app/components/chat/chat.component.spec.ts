@@ -83,6 +83,7 @@ describe('ChatComponent', () => {
 
       expect(component.messages.length).toBe(initialCount + 1);
       const newMessage = component.messages[component.messages.length - 1];
+
       expect(newMessage).toBeDefined();
       expect(newMessage?.id).toBe(messageId);
       expect(newMessage?.content).toBe('Test message');
@@ -96,6 +97,7 @@ describe('ChatComponent', () => {
 
       expect(component.messages.length).toBe(initialCount + 1);
       const newMessage = component.messages[component.messages.length - 1];
+
       expect(newMessage).toBeDefined();
       expect(newMessage?.id).toBe(messageId);
       expect(newMessage?.content).toBe('AI response');
@@ -109,6 +111,7 @@ describe('ChatComponent', () => {
 
       expect(component.messages.length).toBe(initialCount + 1);
       const newMessage = component.messages[component.messages.length - 1];
+
       expect(newMessage).toBeDefined();
       expect(newMessage?.id).toBe(messageId);
       expect(newMessage?.content).toBe('');
@@ -125,6 +128,7 @@ describe('ChatComponent', () => {
       component['updateLoadingMessage'](messageId, 'Updated content');
 
       const updatedMessage = component.messages[messageIndex];
+
       expect(updatedMessage).toBeDefined();
       expect(updatedMessage?.content).toBe('Updated content');
       expect(updatedMessage?.isLoading).toBe(false);
@@ -149,20 +153,18 @@ describe('ChatComponent', () => {
           name: [{ given: ['John'], family: 'Doe' }],
         },
       });
-      fhirClientService.buildComprehensiveFhirBundle.and.returnValue(
-        Promise.resolve({
-          resourceType: 'Bundle',
-          type: 'collection',
-          entry: [
-            {
-              resource: {
-                id: 'test-patient',
-                name: [{ given: ['John'], family: 'Doe' }],
-              },
+      fhirClientService.buildComprehensiveFhirBundle.and.resolveTo({
+        resourceType: 'Bundle',
+        type: 'collection',
+        entry: [
+          {
+            resource: {
+              id: 'test-patient',
+              name: [{ given: ['John'], family: 'Doe' }],
             },
-          ],
-        }),
-      );
+          },
+        ],
+      });
     });
 
     it('should not send empty message', async () => {
@@ -192,9 +194,11 @@ describe('ChatComponent', () => {
 
       // Verify request
       const req = httpMock.expectOne('/api/llm');
+
       expect(req.request.method).toBe('POST');
 
       const requestBody = req.request.body as ChatRequest;
+
       expect(requestBody.query).toBe('What are the patient conditions?');
       expect(requestBody.context).toBe('clinical_chat');
       expect(requestBody.patientData).toBeDefined();
@@ -216,10 +220,12 @@ describe('ChatComponent', () => {
       expect(component.messages[initialCount]!.content).toBe(
         'What are the patient conditions?',
       );
+
       expect(component.messages[initialCount]!.isUser).toBe(true);
       expect(component.messages[initialCount + 1]!.content).toBe(
         'Patient has hypertension and diabetes.',
       );
+
       expect(component.messages[initialCount + 1]!.isUser).toBe(false);
 
       // Verify state
@@ -246,6 +252,7 @@ describe('ChatComponent', () => {
       expect(component.messages[initialCount + 1]!.content).toBe(
         'Server error occurred. Please try again later.',
       );
+
       expect(component.isLoading).toBe(false);
     });
 
@@ -265,6 +272,7 @@ describe('ChatComponent', () => {
       expect(component.messages[initialCount + 1]!.content).toBe(
         'Unable to connect to the server. Please check your connection.',
       );
+
       expect(component.isLoading).toBe(false);
     });
 
@@ -315,6 +323,7 @@ describe('ChatComponent', () => {
       expect(component.messages[0]!.content).toBe(
         'Chat cleared. How can I help you analyze the patient data?',
       );
+
       expect(component.messages[0]!.isUser).toBe(false);
     });
 
@@ -322,20 +331,24 @@ describe('ChatComponent', () => {
       // Empty message
       component.currentMessage = '';
       component.isLoading = false;
+
       expect(component.canSendMessage()).toBe(false);
 
       // Whitespace only
       component.currentMessage = '   ';
+
       expect(component.canSendMessage()).toBe(false);
 
       // Valid message but loading
       component.currentMessage = 'Valid message';
       component.isLoading = true;
+
       expect(component.canSendMessage()).toBe(false);
 
       // Valid message and not loading
       component.currentMessage = 'Valid message';
       component.isLoading = false;
+
       expect(component.canSendMessage()).toBe(true);
     });
   });
@@ -353,17 +366,15 @@ describe('ChatComponent', () => {
 
       fhirClientService.getCurrentContext.and.returnValue(mockContext);
       // Mock the buildComprehensiveFhirBundle method to return a FHIR bundle
-      fhirClientService.buildComprehensiveFhirBundle.and.returnValue(
-        Promise.resolve({
-          resourceType: 'Bundle',
-          type: 'collection',
-          entry: [
-            {
-              resource: mockContext.patient,
-            },
-          ],
-        }),
-      );
+      fhirClientService.buildComprehensiveFhirBundle.and.resolveTo({
+        resourceType: 'Bundle',
+        type: 'collection',
+        entry: [
+          {
+            resource: mockContext.patient,
+          },
+        ],
+      });
 
       const context = await component['gatherPatientContext']();
 
@@ -417,31 +428,38 @@ describe('ChatComponent', () => {
 
     it('should render chat header', () => {
       const header = fixture.debugElement.query(By.css('.chat-header'));
+
       expect(header).toBeTruthy();
 
       const title = header.query(By.css('h3'));
+
       expect(title.nativeElement.textContent).toBe('Clinical AI Assistant');
     });
 
     it('should render clear button', () => {
       const clearButton = fixture.debugElement.query(By.css('.clear-button'));
+
       expect(clearButton).toBeTruthy();
       expect(clearButton.nativeElement.textContent.trim()).toContain('Clear');
     });
 
     it('should render messages area', () => {
       const messagesArea = fixture.debugElement.query(By.css('.chat-messages'));
+
       expect(messagesArea).toBeTruthy();
     });
 
     it('should render input area', () => {
       const inputArea = fixture.debugElement.query(By.css('.chat-input-area'));
+
       expect(inputArea).toBeTruthy();
 
       const textarea = inputArea.query(By.css('textarea'));
+
       expect(textarea).toBeTruthy();
 
       const sendButton = inputArea.query(By.css('.send-button'));
+
       expect(sendButton).toBeTruthy();
     });
 
@@ -449,9 +467,11 @@ describe('ChatComponent', () => {
       const messageElements = fixture.debugElement.queryAll(
         By.css('.message-wrapper'),
       );
+
       expect(messageElements.length).toBe(1);
 
       const welcomeMessage = messageElements[0]!;
+
       expect(welcomeMessage.classes['ai-message']).toBe(true);
     });
 
@@ -460,6 +480,7 @@ describe('ChatComponent', () => {
       fixture.detectChanges();
 
       const sendButton = fixture.debugElement.query(By.css('.send-button'));
+
       expect(sendButton.nativeElement.disabled).toBe(true);
     });
 
@@ -468,6 +489,7 @@ describe('ChatComponent', () => {
       fixture.detectChanges();
 
       const sendButton = fixture.debugElement.query(By.css('.send-button'));
+
       expect(sendButton.nativeElement.disabled).toBe(false);
     });
   });
