@@ -12,7 +12,7 @@ export class BaseLLMProvider {
    * @returns {Promise<boolean>}
    */
   async isAvailable() {
-    throw new Error('isAvailable() must be implemented by provider');
+    throw new Error("isAvailable() must be implemented by provider");
   }
 
   /**
@@ -21,8 +21,9 @@ export class BaseLLMProvider {
    * @param {Object} options - Additional options for the request
    * @returns {Promise<string>} - The LLM response
    */
-  async generateResponse(prompt, options = {}) {
-    throw new Error('generateResponse() must be implemented by provider');
+  async generateResponse(_prompt) {
+    void _prompt;
+    throw new Error("generateResponse() must be implemented by provider");
   }
 
   /**
@@ -30,7 +31,7 @@ export class BaseLLMProvider {
    * @returns {Promise<Object>}
    */
   async getStatus() {
-    throw new Error('getStatus() must be implemented by provider');
+    throw new Error("getStatus() must be implemented by provider");
   }
 
   /**
@@ -38,7 +39,7 @@ export class BaseLLMProvider {
    * @returns {string}
    */
   getName() {
-    throw new Error('getName() must be implemented by provider');
+    throw new Error("getName() must be implemented by provider");
   }
 
   /**
@@ -55,6 +56,6 @@ export class BaseLLMProvider {
    */
   isConfigured() {
     const requiredVars = this.getRequiredEnvVars();
-    return requiredVars.every(varName => process.env[varName]);
+    return requiredVars.every((varName) => process.env[varName]);
   }
 }
