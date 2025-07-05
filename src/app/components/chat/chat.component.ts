@@ -83,7 +83,8 @@ export class ChatComponent {
 
     try {
       // Get current patient data for context
-      const patientData = this.gatherPatientContext();
+      const patientData = await this.gatherPatientContext();
+      console.log('Gathered patient data:', patientData);
 
       // Prepare request
       const chatRequest: ChatRequest = {
@@ -92,9 +93,11 @@ export class ChatComponent {
         patientData: patientData,
       };
 
+      console.log('Sending chat request:', chatRequest);
+
       // Call the backend
       const response = await this.http
-        .post<ChatResponse>('/llm', chatRequest)
+        .post<ChatResponse>('/api/llm', chatRequest)
         .toPromise();
 
       // Replace loading message with response
@@ -217,23 +220,30 @@ export class ChatComponent {
   /**
    * Gather comprehensive patient context for the LLM
    */
-  private gatherPatientContext(): any {
+  private async gatherPatientContext(): Promise<any> {
     const context = this.fhirClientService.getCurrentContext();
+    console.log('Current FHIR context:', context);
 
     if (!context.authenticated || !context.patient) {
+      console.log('Not authenticated or no patient available');
       return null;
     }
 
-    // Create a comprehensive patient data object
-    // This will include patient demographics plus any available clinical data
-    const patientData = {
-      patient: context.patient,
-      // Note: For now we're sending the patient data
-      // In the future, we could fetch conditions, medications, observations
-      // from the FHIR client service if needed
-    };
-
-    return patientData;
+    try {
+      // Build a comprehensive FHIR bundle with all available patient data
+      console.log('Building comprehensive FHIR bundle...');
+      const fhirBundle =
+        await this.fhirClientService.buildComprehensiveFhirBundle();
+      console.log('Successfully built FHIR bundle:', fhirBundle);
+      return fhirBundle;
+    } catch (error) {
+      console.error('Error gathering patient context:', error);
+      // Fallback to basic patient data if bundle building fails
+      console.log('Falling back to basic patient data');
+      return {
+        patient: context.patient,
+      };
+    }
   }
 
   /**

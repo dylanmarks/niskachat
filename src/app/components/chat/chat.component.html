@@ -5,30 +5,31 @@
       <h3>Clinical AI Assistant</h3>
       <p class="chat-subtitle">Ask questions about patient data</p>
     </div>
-    <button 
-      class="clear-button" 
-      (click)="clearChat()" 
+    <button
+      class="clear-button"
+      (click)="clearChat()"
       [disabled]="isLoading"
-      aria-label="Clear chat history">
+      aria-label="Clear chat history"
+    >
       <span class="clear-icon">🗑️</span>
       Clear
     </button>
   </div>
 
   <!-- Messages Area -->
-  <div 
-    class="chat-messages" 
-    #messagesContainer 
-    role="log" 
-    aria-live="polite" 
-    aria-label="Chat messages">
-    
-    <div 
-      *ngFor="let message of messages; trackBy: trackMessage" 
+  <div
+    class="chat-messages"
+    #messagesContainer
+    role="log"
+    aria-live="polite"
+    aria-label="Chat messages"
+  >
+    <div
+      *ngFor="let message of messages; trackBy: trackMessage"
       class="message-wrapper"
       [class.user-message]="message.isUser"
-      [class.ai-message]="!message.isUser">
-      
+      [class.ai-message]="!message.isUser"
+    >
       <div class="message-content">
         <!-- Loading indicator -->
         <div *ngIf="message.isLoading" class="loading-indicator">
@@ -39,21 +40,21 @@
           </div>
           <span class="loading-text">Thinking...</span>
         </div>
-        
+
         <!-- Message text -->
-        <div 
-          *ngIf="!message.isLoading" 
+        <div
+          *ngIf="!message.isLoading"
           class="message-text"
-          [innerHTML]="message.content">
-        </div>
+          [innerHTML]="message.content"
+        ></div>
       </div>
-      
+
       <!-- Message timestamp -->
       <div class="message-time">
-        {{ message.timestamp | date:'short' }}
+        {{ message.timestamp | date: "short" }}
       </div>
     </div>
-    
+
     <!-- Empty state when no messages -->
     <div *ngIf="messages.length === 0" class="empty-state">
       <div class="empty-icon">💬</div>
@@ -65,33 +66,33 @@
   <div class="chat-input-area">
     <form (ngSubmit)="sendMessage()" class="chat-form">
       <div class="input-wrapper">
-        <textarea 
+        <textarea
           [(ngModel)]="currentMessage"
+          name="message"
           (keydown)="sendMessage($event)"
           [disabled]="isLoading"
           class="chat-input"
           placeholder="Ask about patient conditions, medications, observations..."
           rows="2"
           maxlength="1000"
-          aria-label="Type your message">
-        </textarea>
-        
-        <button 
+          aria-label="Type your message"
+        ></textarea>
+
+        <button
           type="submit"
           class="send-button"
           [disabled]="!canSendMessage()"
-          aria-label="Send message">
+          aria-label="Send message"
+        >
           <span class="send-icon" [class.loading]="isLoading">
-            {{ isLoading ? '⏳' : '➤' }}
+            {{ isLoading ? "⏳" : "➤" }}
           </span>
         </button>
       </div>
-      
+
       <!-- Character count -->
       <div class="input-footer">
-        <small class="char-count">
-          {{ currentMessage.length }}/1000
-        </small>
+        <small class="char-count">{{ currentMessage.length }}/1000</small>
         <small class="input-hint">
           Press Enter to send, Shift+Enter for new line
         </small>
