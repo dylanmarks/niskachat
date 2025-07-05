@@ -24,6 +24,7 @@ describe('ChatComponent', () => {
   beforeEach(async () => {
     const fhirClientSpy = jasmine.createSpyObj('FhirClientService', [
       'getCurrentContext',
+      'buildComprehensiveFhirBundle',
     ]);
 
     await TestBed.configureTestingModule({
@@ -148,6 +149,20 @@ describe('ChatComponent', () => {
           name: [{ given: ['John'], family: 'Doe' }],
         },
       });
+      fhirClientService.buildComprehensiveFhirBundle.and.returnValue(
+        Promise.resolve({
+          resourceType: 'Bundle',
+          type: 'collection',
+          entry: [
+            {
+              resource: {
+                id: 'test-patient',
+                name: [{ given: ['John'], family: 'Doe' }],
+              },
+            },
+          ],
+        }),
+      );
     });
 
     it('should not send empty message', async () => {
@@ -176,7 +191,7 @@ describe('ChatComponent', () => {
       const sendPromise = component.sendMessage();
 
       // Verify request
-      const req = httpMock.expectOne('/llm');
+      const req = httpMock.expectOne('/api/llm');
       expect(req.request.method).toBe('POST');
 
       const requestBody = req.request.body as ChatRequest;
@@ -326,7 +341,7 @@ describe('ChatComponent', () => {
   });
 
   describe('FHIR Context Integration', () => {
-    it('should gather patient context when authenticated', () => {
+    it('should gather patient context when authenticated', async () => {
       const mockContext = {
         authenticated: true,
         patient: {
@@ -337,30 +352,44 @@ describe('ChatComponent', () => {
       };
 
       fhirClientService.getCurrentContext.and.returnValue(mockContext);
+      // Mock the buildComprehensiveFhirBundle method to return a FHIR bundle
+      fhirClientService.buildComprehensiveFhirBundle.and.returnValue(
+        Promise.resolve({
+          resourceType: 'Bundle',
+          type: 'collection',
+          entry: [
+            {
+              resource: mockContext.patient,
+            },
+          ],
+        }),
+      );
 
-      const context = component['gatherPatientContext']();
+      const context = await component['gatherPatientContext']();
 
       expect(context).toBeDefined();
-      expect(context.patient).toEqual(mockContext.patient);
+      expect(context.resourceType).toBe('Bundle');
+      expect(context.entry).toBeDefined();
+      expect(context.entry[0].resource).toEqual(mockContext.patient);
     });
 
-    it('should return null when not authenticated', () => {
+    it('should return null when not authenticated', async () => {
       fhirClientService.getCurrentContext.and.returnValue({
         authenticated: false,
       });
 
-      const context = component['gatherPatientContext']();
+      const context = await component['gatherPatientContext']();
 
       expect(context).toBeNull();
     });
 
-    it('should return null when no patient', () => {
+    it('should return null when no patient', async () => {
       fhirClientService.getCurrentContext.and.returnValue({
         authenticated: true,
         patient: undefined as unknown as Patient,
       });
 
-      const context = component['gatherPatientContext']();
+      const context = await component['gatherPatientContext']();
 
       expect(context).toBeNull();
     });
