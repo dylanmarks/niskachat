@@ -10,6 +10,7 @@ import helmet from "helmet";
 import { resetLLMProviderFactory } from "./providers/providerFactory.js";
 import authRouter from "./routes/auth.js";
 import llmRouter from "./routes/llm.js";
+import proxyRouter from "./routes/proxy.js";
 
 // Reset the provider factory to ensure it uses the loaded environment variables
 resetLLMProviderFactory();
@@ -64,6 +65,9 @@ app.use("/auth", authRouter);
 
 // Summarize routes
 app.use("/llm", llmRouter);
+
+// FHIR proxy routes
+app.use("/proxy", proxyRouter);
 
 // Basic route
 app.get("/", (req, res) => {
