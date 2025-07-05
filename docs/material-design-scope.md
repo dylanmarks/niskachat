@@ -31,5 +31,6 @@ This document outlines the work required to apply a consistent Material Design s
 3. Update component templates to use Material directives and components.
 4. Replace custom CSS with Material classes where possible.
 5. Add additional Jest/Karma tests covering design tokens and interaction states.
+6. Document the token list in the README so new contributors can apply the same variables.
 
 Refer to **Phase 17** in `docs/tasks.md` for the checklist of tasks that drive these improvements.
