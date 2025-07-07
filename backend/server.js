@@ -18,18 +18,30 @@ resetLLMProviderFactory();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configure session secret
+const sessionSecret =
+  process.env.SESSION_SECRET ||
+  (process.env.NODE_ENV === "test" ? "test-secret" : undefined);
+
+// Exit if no secret in non-test environments
+if (process.env.NODE_ENV !== "test" && !sessionSecret) {
+  console.error("SESSION_SECRET is required but was not provided.");
+  process.exit(1);
+}
+
 // Security middleware
 app.use(helmet());
 
 // Session middleware - uses in-memory store for development
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "change-this-secret",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
+      sameSite: "lax",
     },
   }),
 );
