@@ -1,5 +1,6 @@
 import express from "express";
 import { getLLMProviderFactory } from "../providers/providerFactory.js";
+import { compressFHIRBundle } from "../utils/fhirBundleCompressor.js";
 import { getFormattedPrompt } from "../utils/promptLoader.js";
 
 const router = express.Router();
@@ -518,6 +519,37 @@ router.get("/status", async (req, res) => {
       llmAvailable: false,
       error: error.message,
       timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * POST /llm/compress - Get compressed FHIR bundle summary
+ */
+router.post("/compress", async (req, res) => {
+  try {
+    const { bundle } = req.body;
+
+    if (!bundle) {
+      return res.status(400).json({
+        error: "Missing bundle",
+        message: "Please provide a FHIR Bundle in the request body",
+      });
+    }
+
+    // Compress the FHIR bundle
+    const compressedSummary = compressFHIRBundle(bundle);
+
+    res.json({
+      success: true,
+      compressedSummary,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error compressing FHIR bundle:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: "Failed to compress FHIR bundle",
     });
   }
 });

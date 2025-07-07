@@ -1,7 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
 // Import Angular Material theme and design tokens
-@import "themes/theme";
+@use "themes/theme";
 
 // Global typography rules applying Material Design typography
 html,
@@ -155,13 +155,13 @@ html {
   gap: 8px !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-  border: 2px solid #1976d2 !important;
+  border: 2px solid var(--niska-primary-700) !important;
   border-radius: 4px !important;
-  background-color: white !important;
+  background-color: var(--niska-surface) !important;
   padding: 0 20px !important;
   min-width: 160px !important;
   height: 56px !important;
-  color: #1976d2 !important;
+  color: var(--niska-primary-700) !important;
   font-weight: 600 !important;
   font-size: 14px !important;
   line-height: 1.5 !important;
@@ -172,12 +172,12 @@ html {
 .observations-controls .back-button:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-  background-color: #1976d2 !important;
-  color: white !important;
+  background-color: var(--niska-primary-700) !important;
+  color: var(--niska-surface) !important;
 }
 
 .observations-controls .back-button:focus {
-  outline: 2px solid #1976d2 !important;
+  outline: 2px solid var(--niska-primary-700) !important;
   outline-offset: 2px !important;
 }
 

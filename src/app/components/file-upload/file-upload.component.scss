@@ -1,4 +1,4 @@
-@import "../../../themes/theme";
+@use "../../../themes/theme";
 
 .file-upload-container {
   margin: 0 auto;
@@ -35,28 +35,28 @@
   transition: all 0.3s ease;
   cursor: pointer;
   margin-bottom: 20px;
-  border: 2px dashed #ccc;
+  border: 2px dashed var(--color-border);
   border-radius: 12px;
-  background: #fafafa;
+  background: var(--color-surface-variant);
   padding: 40px 20px;
   min-height: 200px;
   text-align: center;
 }
 
 .upload-zone:hover {
-  border-color: #667eea;
-  background: #f0f2ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .upload-zone.drag-over {
   transform: scale(1.02);
-  border-color: #667eea;
-  background: #e8f2ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .upload-zone.has-file {
-  border-color: #4caf50;
-  background: #f1f8e9;
+  border-color: var(--color-success);
+  background: var(--color-success-light);
 }
 
 .upload-prompt,
@@ -75,23 +75,23 @@
 .file-info h3,
 .processing-state h3 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
 .upload-prompt p,
 .file-info p {
   margin: 0 0 15px 0;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .browse-link {
-  color: #667eea;
+  color: var(--color-primary);
   font-weight: 500;
 }
 
 .upload-prompt small {
-  color: #999;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
@@ -103,30 +103,30 @@
   margin-top: 15px;
   border: none;
   border-radius: 6px;
-  background: #667eea;
+  background: var(--color-primary);
   padding: 12px 24px;
-  color: white;
+  color: var(--color-surface);
   font-weight: 500;
 }
 
 .process-button:hover,
 .new-upload-button:hover {
-  background: #5a67d8;
+  background: var(--color-primary-dark);
 }
 
 .retry-button {
-  background: #e53e3e;
+  background: var(--color-error-dark);
 }
 
 .retry-button:hover {
-  background: #c53030;
+  background: var(--color-error-dark);
 }
 
 .spinner {
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border: 4px solid var(--color-border-light);
+  border-top: 4px solid var(--color-primary);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -144,7 +144,7 @@
 .progress-bar {
   margin: 15px 0;
   border-radius: 4px;
-  background: #e0e0e0;
+  background: var(--color-border-light);
   width: 100%;
   height: 8px;
   overflow: hidden;
@@ -152,7 +152,11 @@
 
 .progress-fill {
   transition: width 0.3s ease;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-primary-dark)
+  );
   height: 100%;
 }
 

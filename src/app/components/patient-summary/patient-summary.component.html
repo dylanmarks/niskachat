@@ -38,10 +38,15 @@
       <mat-card-header>
         <mat-card-title>
           <mat-icon>person</mat-icon>
-          Patient Summary
+          {{ getPatientName() }}
         </mat-card-title>
-        <mat-card-subtitle *ngIf="patient.id">
-          Patient ID: {{ patient.id }}
+        <mat-card-subtitle>
+          <div *ngIf="compressedSummary" class="compressed-summary">
+            {{ compressedSummary }}
+          </div>
+          <div *ngIf="patient.id" class="patient-id">
+            Patient ID: {{ patient.id }}
+          </div>
         </mat-card-subtitle>
         <div class="card-header-spacer"></div>
         <div class="header-actions">
@@ -60,34 +65,8 @@
         </div>
       </mat-card-header>
 
-      <!-- Demographics Section -->
+      <!-- Patient Details Content -->
       <mat-card-content>
-        <div class="info-section">
-          <h3>Demographics</h3>
-
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="label">Name:</span>
-              <span class="value">{{ getPatientName() }}</span>
-            </div>
-
-            <div class="info-item" *ngIf="patient.birthDate">
-              <span class="label">Date of Birth:</span>
-              <span class="value">{{ formatDate(patient.birthDate) }}</span>
-            </div>
-
-            <div class="info-item" *ngIf="getAge()">
-              <span class="label">Age:</span>
-              <span class="value">{{ getAge() }} years old</span>
-            </div>
-
-            <div class="info-item" *ngIf="patient.gender">
-              <span class="label">Gender:</span>
-              <span class="value">{{ formatGender(patient.gender) }}</span>
-            </div>
-          </div>
-        </div>
-
         <!-- Medical Record Section -->
         <div class="info-section" *ngIf="getMedicalRecordNumber()">
           <h3>Medical Record</h3>

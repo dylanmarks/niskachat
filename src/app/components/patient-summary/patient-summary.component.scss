@@ -1,8 +1,8 @@
 // Import theme for component-specific overrides
-@import "../../../themes/theme";
+@use "../../../themes/theme";
 
 .patient-summary-container {
-  margin: var(--niska-spacing-2xl) auto;
+  margin: var(--niska-spacing-sm) auto;
   padding: var(--niska-spacing-md);
   max-width: 800px;
   font-family: var(--niska-font-family);
@@ -63,8 +63,9 @@
 // Main Patient Card
 .patient-card {
   mat-card-header {
-    margin: calc(-1 * var(--niska-spacing-md));
+    margin: 0;
     margin-bottom: var(--niska-spacing-md);
+    border-radius: var(--niska-radius-md) var(--niska-radius-md) 0 0;
     background: linear-gradient(
       135deg,
       var(--niska-primary-500) 0%,
@@ -89,6 +90,18 @@
       margin-top: var(--niska-spacing-xs);
       color: rgba(255, 255, 255, 0.8);
       font-size: var(--niska-font-size-sm);
+
+      .compressed-summary {
+        margin-bottom: var(--niska-spacing-xs);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: var(--niska-font-size-sm);
+        line-height: var(--niska-line-height-normal);
+      }
+
+      .patient-id {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: var(--niska-font-size-xs);
+      }
     }
 
     .card-header-spacer {
