@@ -2,6 +2,7 @@ import express from "express";
 import { getLLMProviderFactory } from "../providers/providerFactory.js";
 import { compressFHIRBundle } from "../utils/fhirBundleCompressor.js";
 import { getFormattedPrompt } from "../utils/promptLoader.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -74,13 +75,13 @@ function extractClinicalData(bundle) {
  * Format clinical data for LLM prompt
  */
 function formatClinicalData(data) {
-  console.log("formatClinicalData called with:", {
+  logger.debug("formatClinicalData called", {
     dataType: typeof data,
     dataKeys: data ? Object.keys(data) : null,
   });
 
   if (!data) {
-    console.warn("formatClinicalData received null/undefined data");
+    logger.warn("formatClinicalData received null/undefined data");
     return "No clinical data available";
   }
 
@@ -145,7 +146,7 @@ function formatClinicalData(data) {
  * Generate appropriate prompt based on context type
  */
 function generatePrompt(context, data, userQuery = null) {
-  console.log("generatePrompt called with:", {
+  logger.debug("generatePrompt called", {
     context,
     dataType: typeof data,
     dataKeys: data ? Object.keys(data) : null,
@@ -158,11 +159,7 @@ function generatePrompt(context, data, userQuery = null) {
       let promptData;
 
       if (data && data.resourceType === "Bundle" && data.entry) {
-        console.log(
-          "Processing FHIR bundle with",
-          data.entry.length,
-          "entries",
-        );
+        logger.debug("Processing FHIR bundle", { count: data.entry.length });
         // We have a full FHIR bundle - pass it directly as JSON
         promptData = JSON.stringify(data, null, 2);
         return getFormattedPrompt("clinical-chat", {
@@ -171,7 +168,7 @@ function generatePrompt(context, data, userQuery = null) {
           userQuery: userQuery || "Please provide an overview of this patient.",
         });
       } else {
-        console.log("Processing legacy structured data");
+        logger.debug("Processing legacy structured data");
         // Legacy handling for structured data
         let formattedData;
         if (
@@ -237,7 +234,7 @@ async function callLLM(prompt, options = {}) {
       provider: result.provider,
     };
   } catch (error) {
-    console.error("LLM call failed:", error);
+    logger.error("LLM call failed:", error);
     throw error;
   }
 }
@@ -364,7 +361,7 @@ router.post("/", async (req, res) => {
 
     if (hasProvider) {
       try {
-        console.log(`Generating prompt for ${context} context with data:`, {
+        logger.debug(`Generating prompt for ${context} context`, {
           clinicalDataType: typeof clinicalData,
           clinicalDataKeys: clinicalData ? Object.keys(clinicalData) : null,
           query,
@@ -372,19 +369,18 @@ router.post("/", async (req, res) => {
 
         // Generate appropriate prompt based on context
         const prompt = generatePrompt(context, clinicalData, query);
-        console.log(`Generated prompt length: ${prompt.length}`);
+        logger.debug(`Generated prompt length: ${prompt.length}`);
 
         const llmResult = await callLLM(prompt);
         summary = llmResult.response;
         provider = llmResult.provider;
         llmUsed = true;
-        console.log("✅ LLM call successful, using AI-generated summary");
+        logger.info("✅ LLM call successful, using AI-generated summary");
       } catch (llmError) {
-        console.log(
-          `LLM providers unavailable for ${context} context, using fallback:`,
-          llmError.message,
+        logger.warn(
+          `LLM providers unavailable for ${context} context, using fallback: ${llmError.message}`,
         );
-        console.log("Error stack:", llmError.stack);
+        logger.debug("Error stack:", llmError.stack);
 
         // Fall back based on context
         if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
@@ -418,7 +414,7 @@ router.post("/", async (req, res) => {
         }
       }
     } else {
-      console.log(
+      logger.warn(
         `No LLM providers available for ${context} context, using fallback`,
       );
 
@@ -491,7 +487,7 @@ router.post("/", async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error("Summarization error:", error);
+    logger.error("Summarization error:", error);
     res.status(500).json({
       error: "Summarization failed",
       message: error.message,
@@ -514,7 +510,7 @@ router.get("/status", async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Status check error:", error);
+    logger.error("Status check error:", error);
     res.json({
       llmAvailable: false,
       error: error.message,
@@ -546,7 +542,7 @@ router.post("/compress", async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error compressing FHIR bundle:", error);
+    logger.error("Error compressing FHIR bundle:", error);
     res.status(500).json({
       error: "Internal server error",
       message: "Failed to compress FHIR bundle",

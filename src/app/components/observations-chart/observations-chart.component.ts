@@ -18,7 +18,19 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import {
+  CategoryScale,
+  Chart,
+  ChartConfiguration,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
+  Title,
+  Tooltip,
+} from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 
@@ -27,8 +39,18 @@ import {
   Observation,
 } from '../../services/fhir-client.service';
 
-// Register Chart.js components
-Chart.register(...registerables);
+// Register only the necessary Chart.js components for line charts
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Title,
+  Tooltip,
+  Legend,
+);
 
 interface ChartDataPoint {
   x: string; // ISO date string

@@ -1,19 +1,17 @@
 # 🧠 LLM Provider Setup Guide
 
-NiskaChat now supports **multiple LLM providers** with automatic fallback and proper API key security. This guide shows you how to configure Claude Haiku and local llama providers.
+NiskaChat now supports **Claude Haiku** with secure API key management and proper configuration. This guide shows you how to configure the Claude Haiku provider.
 
 ## 🏗️ **Provider Architecture**
 
 ### **Supported Providers**
 
 - **Claude Haiku** (Anthropic) - Cloud-based, fast, cost-effective
-- **Local Llama** (llama.cpp) - Local inference, privacy-focused
 
 ### **Key Features**
 
-- ✅ **Automatic fallback** - If preferred provider fails, falls back to secondary
 - ✅ **Secure API keys** - Environment variables, never exposed to client
-- ✅ **Provider selection** - Configure preferred and fallback providers
+- ✅ **Provider selection** - Configure preferred provider
 - ✅ **Status monitoring** - Real-time provider availability checks
 - ✅ **Consistent interface** - Same API for all providers
 
@@ -39,13 +37,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-your-actual-key-here
 
 # Provider configuration
 LLM_PROVIDER=claude-haiku
-# Optional: fallback provider if the primary fails
-# Leave unset to disable fallback
-# LLM_FALLBACK_PROVIDER=local-llama
 ```
-
-If you leave `LLM_FALLBACK_PROVIDER` unset, the application won't attempt
-a fallback provider.
 
 ## 🎯 **Claude Haiku Setup**
 
@@ -85,64 +77,21 @@ npm run start:backend
 curl http://localhost:3000/llm/status
 ```
 
-## 🏠 **Local Llama Setup**
-
-### **1. Install llama.cpp** (if not already done)
-
-```bash
-# macOS with Homebrew
-brew install llama.cpp
-
-# Or follow existing setup from Phase 10
-```
-
-### **2. Start Local Server**
-
-```bash
-# Start llama.cpp server (example)
-llama-server --model path/to/your/model.gguf --port 8081
-```
-
-### **3. Configure Environment**
-
-```bash
-# In your .env file
-LLAMA_URL=http://127.0.0.1:8081
-# LLM_FALLBACK_PROVIDER=local-llama  # optional; unset to disable fallback
-```
-
-### **4. Optional Configuration**
-
-```bash
-# Customize local llama behavior
-LLAMA_MODEL=biomistral
-LLAMA_MAX_TOKENS=300
-LLAMA_TEMPERATURE=0.3
-LLAMA_TIMEOUT=15000
-```
-
 ## ⚙️ **Provider Configuration**
 
 ### **Provider Priority**
 
-Set which provider to use first and which to fall back to:
+Set which provider to use:
 
 ```bash
-# Use Claude first, local llama as backup
+# Use Claude Haiku
 LLM_PROVIDER=claude-haiku
-LLM_FALLBACK_PROVIDER=local-llama
-
-# Use local llama first, Claude as backup
-LLM_PROVIDER=local-llama
-LLM_FALLBACK_PROVIDER=claude-haiku
 ```
 
 ### **How Provider Selection Works**
 
 1. **Primary**: Try the `LLM_PROVIDER` first
-2. **Fallback**: If primary fails, try `LLM_FALLBACK_PROVIDER`
-3. **Any Available**: If both fail, try any other configured provider
-4. **Graceful Degradation**: If no providers work, show fallback messages
+2. **Graceful Degradation**: If no providers work, show fallback messages
 
 ## 🧪 **Testing Your Setup**
 
@@ -158,7 +107,6 @@ curl http://localhost:3000/llm/status
 {
   "llmAvailable": true,
   "preferredProvider": "claude-haiku",
-  "fallbackProvider": null,
   "providers": {
     "claude-haiku": {
       "available": true,
@@ -166,12 +114,6 @@ curl http://localhost:3000/llm/status
       "model": "claude-3-haiku-20240307",
       "configured": true,
       "hasApiKey": true
-    },
-    "local-llama": {
-      "available": true,
-      "provider": "local-llama",
-      "url": "http://127.0.0.1:8081",
-      "model": "biomistral"
     }
   }
 }
@@ -219,21 +161,6 @@ curl -X POST http://localhost:3000/llm \
 
 - Wait a few minutes and try again
 - Consider upgrading your Anthropic plan
-- Configure local llama as fallback
-
-### **Local Llama Issues**
-
-**❌ "Local Llama unavailable"**
-
-- Check llama.cpp server is running: `curl http://127.0.0.1:8081/v1/models`
-- Verify the URL in your `.env` file
-- Check if another process is using port 8081
-
-**❌ "Model not found"**
-
-- Ensure your model file exists
-- Check the model path in llama.cpp startup
-- Verify the model format is compatible
 
 ### **General Issues**
 
@@ -245,15 +172,15 @@ curl -X POST http://localhost:3000/llm \
 
 ## 📊 **Provider Comparison**
 
-| Feature         | Claude Haiku           | Local Llama             |
-| --------------- | ---------------------- | ----------------------- |
-| **Speed**       | Very Fast              | Fast                    |
-| **Cost**        | Pay per token          | Free (after setup)      |
-| **Privacy**     | Data sent to Anthropic | Completely local        |
-| **Setup**       | API key only           | Model download + server |
-| **Quality**     | Excellent for medical  | Good (model dependent)  |
-| **Reliability** | High (cloud)           | High (local)            |
-| **Internet**    | Required               | Not required            |
+| Feature         | Claude Haiku           |
+| --------------- | ---------------------- |
+| **Speed**       | Very Fast              |
+| **Cost**        | Pay per token          |
+| **Privacy**     | Data sent to Anthropic |
+| **Setup**       | API key only           |
+| **Quality**     | Excellent for medical  |
+| **Reliability** | High (cloud)           |
+| **Internet**    | Required               |
 
 ## 💡 **Best Practices**
 
@@ -262,7 +189,6 @@ curl -X POST http://localhost:3000/llm \
 ```bash
 # Recommended production configuration
 LLM_PROVIDER=claude-haiku
-LLM_FALLBACK_PROVIDER=local-llama
 CLAUDE_MAX_TOKENS=800
 CLAUDE_TEMPERATURE=0.2
 ```
@@ -271,9 +197,8 @@ CLAUDE_TEMPERATURE=0.2
 
 ```bash
 # For development and testing
-LLM_PROVIDER=local-llama
-LLM_FALLBACK_PROVIDER=claude-haiku
-LLAMA_MAX_TOKENS=300
+LLM_PROVIDER=claude-haiku
+CLAUDE_MAX_TOKENS=1000
 ```
 
 ### **Security Reminders**
@@ -286,11 +211,10 @@ LLAMA_MAX_TOKENS=300
 
 ## 🎉 **You're Ready!**
 
-With both providers configured, NiskaChat will:
+With Claude Haiku configured, NiskaChat will:
 
-- Use your preferred provider for fast responses
-- Automatically fall back if the primary provider fails
+- Use Claude Haiku for fast, high-quality responses
 - Provide secure, HIPAA-appropriate clinical AI assistance
-- Maintain high availability with multiple provider options
+- Maintain high availability with cloud-based reliability
 
-Your API keys are secure, your setup is robust, and you have the flexibility to use either cloud or local AI providers as needed!
+Your API keys are secure, your setup is robust, and you have access to excellent medical AI assistance!

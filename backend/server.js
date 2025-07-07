@@ -11,6 +11,7 @@ import { resetLLMProviderFactory } from "./providers/providerFactory.js";
 import authRouter from "./routes/auth.js";
 import llmRouter from "./routes/llm.js";
 import proxyRouter from "./routes/proxy.js";
+import logger from "./utils/logger.js";
 
 // Reset the provider factory to ensure it uses the loaded environment variables
 resetLLMProviderFactory();
@@ -18,32 +19,59 @@ resetLLMProviderFactory();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configure session secret
+const sessionSecret =
+  process.env.SESSION_SECRET ||
+  (process.env.NODE_ENV === "test" ? "test-secret" : undefined);
+
+// Exit if no secret in non-test environments
+if (process.env.NODE_ENV !== "test" && !sessionSecret) {
+  console.error("SESSION_SECRET is required but was not provided.");
+  process.exit(1);
+}
+
 // Security middleware
 app.use(helmet());
 
 // Session middleware - uses in-memory store for development
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "change-this-secret",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
+      sameSite: "lax",
     },
   }),
 );
 
 // CORS configuration
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",")
-  : process.env.NODE_ENV === "production"
-    ? ["https://yourdomain.com"] // Replace with your production frontend URL
-    : ["http://localhost:4200"]; // Angular dev server
+const allowedOriginsEnv = process.env.CORS_ORIGINS || "";
+const allowedOrigins = allowedOriginsEnv
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length === 0) {
+  allowedOrigins.push(
+    process.env.NODE_ENV === "production"
+      ? "https://yourdomain.com" // Replace with your production frontend URL
+      : "http://localhost:4200", // Angular dev server
+  );
+}
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (origin && allowedOrigins.includes(origin)) {
+        // echo back allowed origin
+        return callback(null, origin);
+      }
+      // origin not allowed - do not set CORS headers
+      return callback(null, false);
+    },
     credentials: true,
   }),
 );
@@ -81,14 +109,14 @@ app.use("*", (req, res) => {
 
 // Error handler
 app.use((err, req, res) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
 
 // Start server
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {
-    console.log(`🚀 NiskaChat API server running on port ${PORT}`);
+    logger.info(`🚀 NiskaChat API server running on port ${PORT}`);
   });
 }
 
