@@ -44,6 +44,9 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   summaryUsedLLM = false;
   summaryTimestamp: Date | null = null;
 
+  // Compressed summary for header display
+  compressedSummary: string | null = null;
+
   constructor(
     private fhirClient: FhirClientService,
     private http: HttpClient,
@@ -58,6 +61,8 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
         if (context?.authenticated && context.patient) {
           this.patient = context.patient;
           this.errorMessage = '';
+          // Generate compressed summary for header
+          void this.generateCompressedSummary();
         } else if (context?.authenticated && !context.patient) {
           this.loadPatient();
         }
@@ -85,6 +90,11 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
     try {
       const patient = await firstValueFrom(this.fhirClient.getPatient());
       this.patient = patient ?? null;
+
+      // Generate compressed summary for header
+      if (this.patient) {
+        await this.generateCompressedSummary();
+      }
     } catch (error) {
       this.errorMessage = `Failed to load patient: ${String(error)}`;
       console.error('Error loading patient:', error);
@@ -330,5 +340,112 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
     } finally {
       this.isSummarizing = false;
     }
+  }
+
+  /**
+   * Generate compressed summary for header display
+   */
+  private async generateCompressedSummary(): Promise<void> {
+    if (!this.patient) {
+      return;
+    }
+
+    try {
+      // Create a basic FHIR Bundle with patient data
+      const bundle = {
+        resourceType: 'Bundle',
+        id: `bundle-${this.patient.id || 'unknown'}`,
+        type: 'collection',
+        entry: [
+          {
+            resource: this.patient,
+          },
+        ],
+      };
+
+      // If we have a FHIR client, try to fetch additional resources
+      if (this.fhirClient.isAuthenticated()) {
+        try {
+          // Try to get conditions
+          const conditions = await firstValueFrom(
+            this.fhirClient.getConditions(),
+          );
+          if (conditions) {
+            conditions.forEach((condition) => {
+              bundle.entry.push({ resource: condition });
+            });
+          }
+
+          // Try to get observations
+          const observations = await firstValueFrom(
+            this.fhirClient.getObservations(),
+          );
+          if (observations) {
+            observations.forEach((observation) => {
+              bundle.entry.push({ resource: observation });
+            });
+          }
+
+          // Try to get medications
+          const medications = await firstValueFrom(
+            this.fhirClient.getMedicationRequests(),
+          );
+          if (medications) {
+            medications.forEach((medication: any) => {
+              bundle.entry.push({ resource: medication });
+            });
+          }
+        } catch (fetchError) {
+          console.warn('Could not fetch additional resources:', fetchError);
+          // Continue with just patient data
+        }
+      }
+
+      // Call the backend to get the compressed summary
+      const response = await firstValueFrom(
+        this.http.post<any>('/api/llm/compress', { bundle }),
+      );
+
+      this.compressedSummary = response.compressedSummary || null;
+    } catch (error: any) {
+      console.warn('Could not generate compressed summary:', error);
+      // Create a basic summary from patient data
+      this.compressedSummary = this.createBasicSummary();
+    }
+  }
+
+  /**
+   * Create a basic summary from patient data when backend is unavailable
+   */
+  private createBasicSummary(): string {
+    if (!this.patient) {
+      return '';
+    }
+
+    const parts = [];
+
+    // Add patient name
+    const name = this.getPatientName();
+    if (name !== 'Unknown Patient') {
+      parts.push(`Pt: ${name}`);
+    }
+
+    // Add gender
+    if (this.patient.gender) {
+      parts.push(this.patient.gender.charAt(0).toUpperCase());
+    }
+
+    // Add birth date
+    if (this.patient.birthDate) {
+      parts.push(`DOB ${this.patient.birthDate}`);
+    }
+
+    // Add MRN
+    const mrn = this.getMedicalRecordNumber();
+    if (mrn) {
+      parts.push(`MRN ${mrn}`);
+    }
+
+    return parts.join(', ');
   }
 }

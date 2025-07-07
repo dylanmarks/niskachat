@@ -19,9 +19,8 @@
       <button
         *ngIf="inactiveMedications.length > 0"
         mat-stroked-button
-        color="accent"
         (click)="toggleInactive()"
-        [color]="showInactive ? 'primary' : 'accent'"
+        [color]="showInactive ? 'primary' : ''"
         class="toggle-inactive-btn"
       >
         <mat-icon>

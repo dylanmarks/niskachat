@@ -181,6 +181,20 @@
   --color-warning-light: var(--niska-accent-100);
   --color-warning-dark: var(--niska-accent-700);
   --color-accent: var(--niska-accent-500);
+
+  /* Border radius */
+  --border-radius: var(--niska-radius-md);
+  --border-radius-sm: var(--niska-radius-sm);
+  --border-radius-lg: var(--niska-radius-lg);
+
+  /* Elevation */
+  --elevation-0: var(--niska-elevation-0);
+  --elevation-1: var(--niska-elevation-1);
+  --elevation-2: var(--niska-elevation-2);
+  --elevation-3: var(--niska-elevation-3);
+  --elevation-4: var(--niska-elevation-4);
+  --elevation-6: var(--niska-elevation-6);
+  --elevation-8: var(--niska-elevation-8);
 }
 
 /* stylelint-enable no-duplicate-selectors */
