@@ -132,28 +132,6 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get formatted patient name
-   */
-  getPatientName(): string {
-    if (!this.context?.patient?.name?.[0]) {
-      return 'Unknown Patient';
-    }
-
-    const name = this.context.patient.name[0];
-    const given = name.given?.join(' ') || '';
-    const family = name.family || '';
-
-    return `${given} ${family}`.trim() || 'Unknown Patient';
-  }
-
-  /**
-   * Navigate to main app
-   */
-  navigateToApp(): void {
-    this.router.navigate(['/dashboard']);
-  }
-
-  /**
    * Navigate to test mode
    */
   navigateToTestMode(): void {

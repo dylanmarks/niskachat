@@ -108,9 +108,7 @@ describe('SmartLaunchComponent', () => {
 
     it('should handle standalone launch failure', async () => {
       const error = new Error('Launch failed');
-      mockFhirClient.initializeSmartLaunch.and.rejectWith(
-        error,
-      );
+      mockFhirClient.initializeSmartLaunch.and.rejectWith(error);
 
       await component.handleStandaloneLaunch();
 
@@ -119,47 +117,7 @@ describe('SmartLaunchComponent', () => {
     });
   });
 
-  describe('getPatientName', () => {
-    it('should return formatted patient name', () => {
-      component.context = {
-        authenticated: true,
-        patient: {
-          id: 'test-123',
-          name: [
-            {
-              family: 'Doe',
-              given: ['John', 'William'],
-            },
-          ],
-        },
-      };
-
-      expect(component.getPatientName()).toBe('John William Doe');
-    });
-
-    it('should handle missing patient name', () => {
-      component.context = {
-        authenticated: true,
-        patient: { id: 'test-123' },
-      };
-
-      expect(component.getPatientName()).toBe('Unknown Patient');
-    });
-
-    it('should handle no patient', () => {
-      component.context = { authenticated: false };
-
-      expect(component.getPatientName()).toBe('Unknown Patient');
-    });
-  });
-
   describe('Navigation', () => {
-    it('should navigate to app', () => {
-      component.navigateToApp();
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard']);
-    });
-
     it('should navigate to test mode', () => {
       component.navigateToTestMode();
 
