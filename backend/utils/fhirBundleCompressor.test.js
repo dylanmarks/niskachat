@@ -1,3 +1,5 @@
+/* eslint-env jest */
+import { describe, test, expect } from '@jest/globals';
 import { compressFHIRBundle } from './fhirBundleCompressor.js';
 
 describe('FHIR Bundle Compressor', () => {

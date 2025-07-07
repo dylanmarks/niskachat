@@ -86,7 +86,9 @@ describe('ObservationsChartComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ObservationsChartComponent],
-      providers: [{ provide: FhirClientService, useValue: spy }],
+      providers: [
+        { provide: FhirClientService, useValue: spy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ObservationsChartComponent);

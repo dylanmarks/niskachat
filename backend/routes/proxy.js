@@ -89,8 +89,9 @@ function authenticate(req, res, next) {
 async function proxyFhirRequest(req, res) {
   try {
     const { path } = req.params;
-    const { sessionId, ...otherParams } = req.query;
     const { tokenData } = req;
+    const otherParams = { ...req.query };
+    delete otherParams.sessionId;
     
     // Build target URL
     const fhirBaseUrl = tokenData.iss;

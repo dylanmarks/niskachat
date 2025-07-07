@@ -414,7 +414,7 @@ function getObservationDisplay(obs) {
     'Red blood cell count': 'RBC',
     'Platelet count': 'PLT',
     'Hemoglobin': 'Hgb',
-    'Hematocrit': 'Hct'
+    'Hematocrit': 'Hct' // cspell:disable-line
   };
   
   return abbreviations[display] || display;
@@ -549,7 +549,7 @@ function formatDate(dateString) {
   try {
     const date = new Date(dateString);
     return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-  } catch (e) {
+  } catch {
     return dateString; // Return original if parsing fails
   }
 }
