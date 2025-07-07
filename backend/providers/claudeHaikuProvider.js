@@ -1,4 +1,5 @@
 import { BaseLLMProvider } from './baseProvider.js';
+import logger from '../utils/logger.js';
 
 /**
  * Claude Haiku Provider
@@ -27,7 +28,7 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
 
   async isAvailable() {
     if (!this.isConfigured()) {
-      console.log('Claude Haiku not configured: missing ANTHROPIC_API_KEY');
+      logger.warn('Claude Haiku not configured: missing ANTHROPIC_API_KEY');
       return false;
     }
 
@@ -53,7 +54,7 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
 
       return response.ok || response.status === 400; // 400 might be rate limit, but API is available
     } catch (error) {
-      console.log(`Claude Haiku unavailable: ${error.message}`);
+      logger.warn(`Claude Haiku unavailable: ${error.message}`);
       return false;
     }
   }
@@ -116,7 +117,7 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
       
       return "No response generated";
     } catch (error) {
-      console.error("Claude Haiku call failed:", error);
+      logger.error("Claude Haiku call failed:", error);
       
       // Provide more specific error messages
       if (error.message.includes('401')) {

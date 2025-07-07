@@ -6,97 +6,98 @@
  */
 
 import { getLLMProviderFactory } from './providers/providerFactory.js';
+import logger from './utils/logger.js';
 
 async function testProviders() {
-  console.log('🧪 Testing LLM Providers...\n');
+  logger.info('🧪 Testing LLM Providers...\n');
 
   const factory = getLLMProviderFactory();
 
   // Test provider status
-  console.log('📊 Provider Status:');
+  logger.info('📊 Provider Status:');
   try {
     const status = await factory.getProvidersStatus();
-    console.log(JSON.stringify(status, null, 2));
+    logger.info(JSON.stringify(status, null, 2));
   } catch (error) {
-    console.error('❌ Failed to get provider status:', error.message);
+    logger.error('❌ Failed to get provider status:', error.message);
   }
 
-  console.log('\n' + '='.repeat(50) + '\n');
+  logger.info('\n' + '='.repeat(50) + '\n');
 
   // Test individual providers
   const providers = factory.getAllProviders();
   
   for (const [name, provider] of providers) {
-    console.log(`🔍 Testing ${name}...`);
+    logger.info(`🔍 Testing ${name}...`);
     
     try {
       // Check if configured
       const configured = provider.isConfigured();
-      console.log(`   Configured: ${configured ? '✅' : '❌'}`);
+      logger.info(`   Configured: ${configured ? '✅' : '❌'}`);
       
       if (!configured) {
         const requiredVars = provider.getRequiredEnvVars();
         if (requiredVars.length > 0) {
-          console.log(`   Missing env vars: ${requiredVars.join(', ')}`);
+          logger.info(`   Missing env vars: ${requiredVars.join(', ')}`);
         }
       }
       
       // Check availability
       const available = await provider.isAvailable();
-      console.log(`   Available: ${available ? '✅' : '❌'}`);
+      logger.info(`   Available: ${available ? '✅' : '❌'}`);
       
       // If available, test a simple request
       if (available && configured) {
-        console.log(`   Testing simple request...`);
+        logger.info(`   Testing simple request...`);
         try {
           const response = await provider.generateResponse(
             'Say hello in exactly 3 words.',
             { maxTokens: 10 }
           );
-          console.log(`   Response: "${response}"`);
-          console.log(`   ${name}: ✅ Working`);
+          logger.info(`   Response: "${response}"`);
+          logger.info(`   ${name}: ✅ Working`);
         } catch (error) {
-          console.log(`   ${name}: ❌ Error - ${error.message}`);
+          logger.info(`   ${name}: ❌ Error - ${error.message}`);
         }
       } else {
-        console.log(`   ${name}: ⏸️  Skipped (not available or configured)`);
+        logger.info(`   ${name}: ⏸️  Skipped (not available or configured)`);
       }
       
     } catch (error) {
-      console.log(`   ${name}: ❌ Error - ${error.message}`);
+      logger.info(`   ${name}: ❌ Error - ${error.message}`);
     }
     
-    console.log('');
+    logger.info('');
   }
 
-  console.log('='.repeat(50) + '\n');
+  logger.info('='.repeat(50) + '\n');
 
   // Test the factory's best provider selection
-  console.log('🎯 Testing Best Provider Selection:');
+  logger.info('🎯 Testing Best Provider Selection:');
   try {
     const hasProvider = await factory.hasAvailableProvider();
-    console.log(`Has available provider: ${hasProvider ? '✅' : '❌'}`);
+    logger.info(`Has available provider: ${hasProvider ? '✅' : '❌'}`);
     
     if (hasProvider) {
       const result = await factory.generateResponse(
         'Respond with exactly the word "SUCCESS" and nothing else.',
         { maxTokens: 5 }
       );
-      console.log(`Best provider: ${result.provider}`);
-      console.log(`Response: "${result.response}"`);
-      console.log('✅ Factory test successful');
+      logger.info(`Best provider: ${result.provider}`);
+      logger.info(`Response: "${result.response}"`);
+      logger.info('✅ Factory test successful');
     } else {
-      console.log('❌ No providers available for testing');
+      logger.info('❌ No providers available for testing');
     }
   } catch (error) {
-    console.log(`❌ Factory test failed: ${error.message}`);
+    logger.info(`❌ Factory test failed: ${error.message}`);
   }
 
-  console.log('\n🎉 Provider testing complete!');
+  logger.info('\n🎉 Provider testing complete!');
 }
 
 // Run the test
 testProviders().catch(error => {
-  console.error('💥 Test script failed:', error);
+  logger.error('💥 Test script failed:', error);
   process.exit(1);
 });
