@@ -100,6 +100,10 @@ npm run dev
 # Set environment variables (update values for production)
 export SESSION_SECRET="replace-this"
 export CORS_ORIGINS="http://localhost:4200"
+# For multiple origins use a comma separated list, e.g.:
+# export CORS_ORIGINS="http://localhost:4200,https://other.example"
+# The server will only set `Access-Control-Allow-Origin` when the
+# request origin matches one of the allowed values.
 
 # For production deployments, configure a persistent session store such as Redis
 # instead of the default in-memory store used in development.
