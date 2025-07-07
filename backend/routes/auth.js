@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import express from "express";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -80,7 +81,7 @@ router.post("/launch", (req, res) => {
       message: "Redirect user to authUrl to begin OAuth2 flow",
     });
   } catch (error) {
-    console.error("Auth launch error:", error);
+    logger.error("Auth launch error:", error);
     res.status(500).json({ error: "Failed to initiate OAuth2 flow" });
   }
 });
@@ -143,7 +144,7 @@ router.get("/callback", async (req, res) => {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
-      console.error("Token exchange failed:", errorData);
+      logger.error("Token exchange failed:", errorData);
       return res.status(400).json({
         error: "Token exchange failed",
         details: errorData,
@@ -173,7 +174,7 @@ router.get("/callback", async (req, res) => {
       expiresIn: tokenData.expires_in,
     });
   } catch (error) {
-    console.error("Auth callback error:", error);
+    logger.error("Auth callback error:", error);
     res.status(500).json({ error: "Authentication failed" });
   }
 });
