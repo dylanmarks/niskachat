@@ -11,6 +11,7 @@ import {
   FhirClientService,
   FhirContext,
 } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 @Component({
   selector: 'app-smart-launch',
@@ -87,7 +88,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
       this.statusMessage = 'Authentication successful!';
     } catch (error) {
       this.errorMessage = `Authentication failed: ${error}`;
-      console.error('OAuth2 callback error:', error);
+      logger.error('OAuth2 callback error:', error);
     }
   }
 
@@ -111,7 +112,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
       await this.fhirClient.initializeSmartLaunch(iss);
     } catch (error) {
       this.errorMessage = `EHR launch failed: ${error}`;
-      console.error('EHR launch error:', error);
+      logger.error('EHR launch error:', error);
     }
   }
 
@@ -127,7 +128,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
       await this.fhirClient.initializeSmartLaunch();
     } catch (error) {
       this.errorMessage = `Standalone launch failed: ${error}`;
-      console.error('Standalone launch error:', error);
+      logger.error('Standalone launch error:', error);
     }
   }
 

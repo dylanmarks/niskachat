@@ -38,6 +38,7 @@ import {
   FhirClientService,
   Observation,
 } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 // Register only the necessary Chart.js components for line charts
 Chart.register(
@@ -441,7 +442,7 @@ export class ObservationsChartComponent
   };
 
   ngOnInit(): void {
-    console.log('ObservationsChartComponent: ngOnInit called');
+    logger.info('ObservationsChartComponent: ngOnInit called');
 
     // Subscribe to context changes to reload observations when patient context is available
     this.fhirService.context$
@@ -458,19 +459,19 @@ export class ObservationsChartComponent
       )
       .subscribe({
         next: (context) => {
-          console.log('ObservationsChartComponent: Context changed', context);
+          logger.info('ObservationsChartComponent: Context changed', context);
 
           if (
             context.patient &&
             (context.authenticated || context.isOfflineMode)
           ) {
-            console.log(
+            logger.info(
               'ObservationsChartComponent: Loading observations for patient',
               context.patient.id,
             );
             this.loadObservations();
           } else {
-            console.log(
+            logger.info(
               'ObservationsChartComponent: No patient context available',
             );
             // No patient context available, show empty state
@@ -485,7 +486,7 @@ export class ObservationsChartComponent
           }
         },
         error: (error) => {
-          console.error('Error subscribing to context changes:', error);
+          logger.error('Error subscribing to context changes:', error);
           this.error = 'Failed to load patient context';
           this.loading = false;
         },
@@ -510,17 +511,17 @@ export class ObservationsChartComponent
   }
 
   loadObservations(): void {
-    console.log('ObservationsChartComponent: loadObservations called');
+    logger.info('ObservationsChartComponent: loadObservations called');
     this.loading = true;
     this.error = '';
 
     this.fhirService.getObservations().subscribe({
       next: (observations) => {
-        console.log(
+        logger.info(
           'ObservationsChartComponent: Received observations',
           observations,
         );
-        console.log(
+        logger.info(
           'ObservationsChartComponent: Number of observations:',
           observations.length,
         );
@@ -539,7 +540,7 @@ export class ObservationsChartComponent
         }
       },
       error: (error) => {
-        console.error(
+        logger.error(
           'ObservationsChartComponent: Error loading observations',
           error,
         );
@@ -558,7 +559,7 @@ export class ObservationsChartComponent
       return;
     }
 
-    console.log(
+    logger.info(
       'Category changed from',
       this.selectedCategory,
       'to',
@@ -602,25 +603,25 @@ export class ObservationsChartComponent
   }
 
   prepareChartData(): void {
-    console.log('prepareChartData called');
-    console.log('selectedCategory:', this.selectedCategory);
-    console.log('total observations:', this.observations.length);
+    logger.info('prepareChartData called');
+    logger.info('selectedCategory:', this.selectedCategory);
+    logger.info('total observations:', this.observations.length);
 
     const filteredObservations = this.filterObservationsByCategory(
       this.observations,
       this.selectedCategory,
     );
 
-    console.log('filtered observations:', filteredObservations.length);
+    logger.info('filtered observations:', filteredObservations.length);
 
     if (filteredObservations.length === 0) {
-      console.log('No observations to chart');
+      logger.info('No observations to chart');
       this.chartData = { datasets: [] };
       return;
     }
 
     const grouped = this.groupObservationsByType(filteredObservations);
-    console.log('grouped observations:', Object.keys(grouped));
+    logger.info('grouped observations:', Object.keys(grouped));
 
     const datasets: ChartDataset[] = [];
     const colors = [
@@ -648,7 +649,7 @@ export class ObservationsChartComponent
           // Validate date is a valid date
           const dateObj = new Date(date);
           if (isNaN(dateObj.getTime())) {
-            console.warn('Invalid date:', date);
+            logger.warn('Invalid date:', date);
             return null;
           }
 
@@ -666,14 +667,14 @@ export class ObservationsChartComponent
           tension: 0.1,
         });
         colorIndex++;
-        console.log(`Created dataset for ${label} with ${data.length} points`);
+        logger.info(`Created dataset for ${label} with ${data.length} points`);
       } else {
-        console.log(`No valid data points for ${label}`);
+        logger.info(`No valid data points for ${label}`);
       }
     }
 
     this.chartData = { datasets };
-    console.log('Final chart data prepared with', datasets.length, 'datasets');
+    logger.info('Final chart data prepared with', datasets.length, 'datasets');
   }
 
   groupObservationsByType(observations: Observation[]): GroupedObservations {
@@ -805,17 +806,17 @@ export class ObservationsChartComponent
   }
 
   renderChart(): void {
-    console.log('renderChart called, chartData:', this.chartData);
-    console.log('datasets:', this.chartData.datasets?.length ?? 0);
+    logger.info('renderChart called, chartData:', this.chartData);
+    logger.info('datasets:', this.chartData.datasets?.length ?? 0);
 
     // Basic validation checks
     if (!this.chartElement?.nativeElement) {
-      console.log('No chart element available');
+      logger.info('No chart element available');
       return;
     }
 
     if (!this.chartData.datasets || this.chartData.datasets.length === 0) {
-      console.log('No chart data available');
+      logger.info('No chart data available');
       return;
     }
 
@@ -825,7 +826,7 @@ export class ObservationsChartComponent
     );
 
     if (!hasValidData) {
-      console.log('No valid data points in datasets');
+      logger.info('No valid data points in datasets');
       return;
     }
 
@@ -834,7 +835,7 @@ export class ObservationsChartComponent
 
     const ctx = this.chartElement.nativeElement.getContext('2d');
     if (!ctx) {
-      console.log('Could not get canvas context');
+      logger.info('Could not get canvas context');
       return;
     }
 
@@ -895,9 +896,9 @@ export class ObservationsChartComponent
       this.ngZone.runOutsideAngular(() => {
         this.chart = new Chart(ctx, config);
       });
-      console.log('Chart created successfully');
+      logger.info('Chart created successfully');
     } catch (error) {
-      console.error('Error creating chart:', error);
+      logger.error('Error creating chart:', error);
       this.error = 'Failed to render chart';
       this.chart = null;
     }
@@ -906,16 +907,16 @@ export class ObservationsChartComponent
   // Add a method to safely render chart with error handling
   private safeRenderChart(): void {
     try {
-      console.log('safeRenderChart called');
+      logger.info('safeRenderChart called');
 
       // Double-check we have everything we need
       if (!this.chartElement?.nativeElement) {
-        console.log('Chart element not available');
+        logger.info('Chart element not available');
         return;
       }
 
       if (!this.chartData.datasets || this.chartData.datasets.length === 0) {
-        console.log('No chart datasets available');
+        logger.info('No chart datasets available');
         this.error = 'No data available for chart';
         return;
       }
@@ -927,17 +928,17 @@ export class ObservationsChartComponent
       );
 
       if (totalDataPoints === 0) {
-        console.log('No data points in datasets');
+        logger.info('No data points in datasets');
         this.error = 'No data points available for chart';
         return;
       }
 
-      console.log(
+      logger.info(
         `Rendering chart with ${this.chartData.datasets.length} datasets and ${totalDataPoints} total points`,
       );
       this.renderChart();
     } catch (error) {
-      console.error('Error in safeRenderChart:', error);
+      logger.error('Error in safeRenderChart:', error);
       this.error = 'Failed to render chart';
       this.destroyChart(); // Clean up on error
     }
@@ -1040,7 +1041,7 @@ export class ObservationsChartComponent
 
   // Add a method to back to table view
   backToTable(): void {
-    console.log('Switching back to table view');
+    logger.info('Switching back to table view');
     this.destroyChart();
     this.selectedCategory = 'all';
     this.error = ''; // Clear any chart errors
@@ -1048,9 +1049,9 @@ export class ObservationsChartComponent
 
   // Add a method to handle observation click
   onObservationClick(obs: Observation): void {
-    console.log('Observation clicked:', obs);
+    logger.info('Observation clicked:', obs);
     const category = this.detectObservationCategory(obs);
-    console.log('Detected category:', category);
+    logger.info('Detected category:', category);
 
     if (category && category !== 'all') {
       this.selectedCategory = category;
@@ -1084,7 +1085,7 @@ export class ObservationsChartComponent
 
   // Simplified chart rendering method
   private renderChartForCategory(): void {
-    console.log('renderChartForCategory called for:', this.selectedCategory);
+    logger.info('renderChartForCategory called for:', this.selectedCategory);
 
     // Clear any existing chart first
     this.destroyChart();
@@ -1099,7 +1100,7 @@ export class ObservationsChartComponent
         this.safeRenderChart();
       }, 50);
     } else {
-      console.log(
+      logger.info(
         'No chart data available for category:',
         this.selectedCategory,
       );
@@ -1114,7 +1115,7 @@ export class ObservationsChartComponent
         try {
           this.chart!.destroy();
         } catch (error) {
-          console.warn('Error destroying chart:', error);
+          logger.warn('Error destroying chart:', error);
         }
       });
       this.chart = null;
