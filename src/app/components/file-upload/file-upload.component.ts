@@ -13,6 +13,7 @@ import {
   Observation,
   Patient,
 } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 interface FhirBundle {
   resourceType: string;
@@ -174,8 +175,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.uploadStatus.success = true;
       this.uploadStatus.isUploading = false;
     } catch (error) {
-      console.error('Error processing FHIR bundle:', error);
-      this.uploadStatus.error = `Failed to process bundle: ${error}`;
+      logger.error('Error processing FHIR bundle:', error);
+      this.uploadStatus.error = `Failed to process file: ${error}`;
       this.uploadStatus.isUploading = false;
       this.uploadStatus.progress = 0;
     }
@@ -328,11 +329,11 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     observations: Observation[];
     medicationRequests: MedicationRequest[];
   }): Promise<void> {
-    console.log(
+    logger.info(
       'FileUploadComponent: loadResourcesIntoService called with resources:',
       resources,
     );
-    console.log(
+    logger.info(
       'FileUploadComponent: Number of observations:',
       resources.observations.length,
     );
@@ -340,7 +341,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     // For now, we'll focus on the first patient if available
     if (resources.patients.length > 0) {
       const patient: Patient = resources.patients[0]!;
-      console.log(
+      logger.info(
         'FileUploadComponent: Setting offline mode for patient:',
         patient,
       );
@@ -353,7 +354,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         medicationRequests: resources.medicationRequests,
       });
 
-      console.log('FileUploadComponent: Offline mode set successfully');
+      logger.info('FileUploadComponent: Offline mode set successfully');
     } else {
       throw new Error('No Patient resources found in the bundle');
     }
@@ -425,9 +426,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.uploadStatus.fileName = `${patientId}_example_data.json`;
       this.uploadStatus.extractedResources = extractedResources;
 
-      console.log(`Successfully loaded example data for patient: ${patientId}`);
+      logger.info(`Successfully loaded example data for patient: ${patientId}`);
     } catch (error) {
-      console.error('Error loading example data:', error);
+      logger.error('Error loading example data:', error);
       this.uploadStatus.isUploading = false;
       this.uploadStatus.error = `Failed to load example data: ${error}`;
     }

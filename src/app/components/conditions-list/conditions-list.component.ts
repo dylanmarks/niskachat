@@ -13,6 +13,7 @@ import {
   FhirClientService,
   FhirContext,
 } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 @Component({
   selector: 'app-conditions-list',
@@ -89,8 +90,8 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
 
       this.conditions = this.sortConditionsByDate(conditions || []);
     } catch (error) {
+      logger.error('Error loading conditions:', error);
       this.errorMessage = `Failed to load conditions: ${error}`;
-      console.error('Error loading conditions:', error);
     } finally {
       this.isLoading = false;
     }
@@ -227,8 +228,8 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
         day: 'numeric',
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid Date';
+      logger.error('Error formatting date:', error);
+      return 'Invalid date';
     }
   }
 

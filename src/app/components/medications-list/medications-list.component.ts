@@ -13,6 +13,7 @@ import {
   FhirContext,
   MedicationRequest,
 } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 @Component({
   selector: 'app-medications-list',
@@ -76,8 +77,8 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
         .toPromise();
       this.medications = this.sortMedicationsByDate(medications || []);
     } catch (error) {
+      logger.error('Error loading medications:', error);
       this.errorMessage = `Failed to load medications: ${error}`;
-      console.error('Error loading medications:', error);
     } finally {
       this.isLoading = false;
     }
@@ -183,8 +184,8 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
         day: 'numeric',
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid Date';
+      logger.error('Error formatting date:', error);
+      return 'Invalid date';
     }
   }
 
