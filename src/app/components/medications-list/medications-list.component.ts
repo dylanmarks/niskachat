@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   FhirClientService,
@@ -72,9 +72,9 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
     this.errorMessage = null;
 
     try {
-      const medications = await this.fhirClient
-        .getMedicationRequests()
-        .toPromise();
+      const medications = await firstValueFrom(
+        this.fhirClient.getMedicationRequests(),
+      );
       this.medications = this.sortMedicationsByDate(medications || []);
     } catch (error) {
       logger.error('Error loading medications:', error);

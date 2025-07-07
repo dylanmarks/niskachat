@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { firstValueFrom } from 'rxjs';
 import { FhirClientService } from '../../services/fhir-client.service';
 import { logger } from '../../utils/logger';
 
@@ -110,9 +111,9 @@ export class ChatComponent {
       logger.debug('Sending chat request', { phi: true });
 
       // Call the backend
-      const response = await this.http
-        .post<ChatResponse>('/api/llm', chatRequest)
-        .toPromise();
+      const response = await firstValueFrom(
+        this.http.post<ChatResponse>('/api/llm', chatRequest),
+      );
 
       // Replace loading message with response
       this.updateLoadingMessage(
