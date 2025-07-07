@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  firstValueFrom,
+  from,
+  of,
+  throwError,
+} from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 // Import FHIR client
@@ -820,7 +827,7 @@ export class FhirClientService {
       } else {
         // Fetch all available resources using the existing methods
         try {
-          const conditions = await this.getConditions().toPromise();
+          const conditions = await firstValueFrom(this.getConditions());
           conditions?.forEach((condition) => {
             bundle.entry.push({
               resource: {
@@ -834,7 +841,7 @@ export class FhirClientService {
         }
 
         try {
-          const observations = await this.getObservations().toPromise();
+          const observations = await firstValueFrom(this.getObservations());
           observations?.forEach((observation) => {
             bundle.entry.push({
               resource: {
@@ -848,8 +855,9 @@ export class FhirClientService {
         }
 
         try {
-          const medicationRequests =
-            await this.getMedicationRequests().toPromise();
+          const medicationRequests = await firstValueFrom(
+            this.getMedicationRequests(),
+          );
           medicationRequests?.forEach((medicationRequest) => {
             bundle.entry.push({
               resource: {
@@ -864,9 +872,11 @@ export class FhirClientService {
 
         // Try to fetch other common resource types that might be available
         try {
-          const allergyResponse = await this.search('AllergyIntolerance', {
-            patient: currentPatient.id,
-          }).toPromise();
+          const allergyResponse = await firstValueFrom(
+            this.search('AllergyIntolerance', {
+              patient: currentPatient.id,
+            }),
+          );
           if (allergyResponse?.entry) {
             allergyResponse.entry.forEach((entry: any) => {
               if (entry.resource) {
@@ -879,9 +889,11 @@ export class FhirClientService {
         }
 
         try {
-          const procedureResponse = await this.search('Procedure', {
-            patient: currentPatient.id,
-          }).toPromise();
+          const procedureResponse = await firstValueFrom(
+            this.search('Procedure', {
+              patient: currentPatient.id,
+            }),
+          );
           if (procedureResponse?.entry) {
             procedureResponse.entry.forEach((entry: any) => {
               if (entry.resource) {
@@ -894,9 +906,11 @@ export class FhirClientService {
         }
 
         try {
-          const diagnosticResponse = await this.search('DiagnosticReport', {
-            patient: currentPatient.id,
-          }).toPromise();
+          const diagnosticResponse = await firstValueFrom(
+            this.search('DiagnosticReport', {
+              patient: currentPatient.id,
+            }),
+          );
           if (diagnosticResponse?.entry) {
             diagnosticResponse.entry.forEach((entry: any) => {
               if (entry.resource) {
@@ -909,9 +923,11 @@ export class FhirClientService {
         }
 
         try {
-          const encounterResponse = await this.search('Encounter', {
-            patient: currentPatient.id,
-          }).toPromise();
+          const encounterResponse = await firstValueFrom(
+            this.search('Encounter', {
+              patient: currentPatient.id,
+            }),
+          );
           if (encounterResponse?.entry) {
             encounterResponse.entry.forEach((entry: any) => {
               if (entry.resource) {
@@ -924,9 +940,11 @@ export class FhirClientService {
         }
 
         try {
-          const immunizationResponse = await this.search('Immunization', {
-            patient: currentPatient.id,
-          }).toPromise();
+          const immunizationResponse = await firstValueFrom(
+            this.search('Immunization', {
+              patient: currentPatient.id,
+            }),
+          );
           if (immunizationResponse?.entry) {
             immunizationResponse.entry.forEach((entry: any) => {
               if (entry.resource) {
@@ -939,7 +957,11 @@ export class FhirClientService {
         }
       }
 
-      logger.debug('Completed FHIR bundle with', bundle.entry.length, 'entries');
+      logger.debug(
+        'Completed FHIR bundle with',
+        bundle.entry.length,
+        'entries',
+      );
       return bundle;
     } catch (error) {
       logger.error('Error building comprehensive FHIR bundle:', error);

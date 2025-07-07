@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   Condition,
@@ -82,11 +82,11 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
 
     try {
       // Fetch active conditions only
-      const conditions = await this.fhirClient
-        .getConditions({
+      const conditions = await firstValueFrom(
+        this.fhirClient.getConditions({
           'clinical-status': 'active',
-        })
-        .toPromise();
+        }),
+      );
 
       this.conditions = this.sortConditionsByDate(conditions || []);
     } catch (error) {
