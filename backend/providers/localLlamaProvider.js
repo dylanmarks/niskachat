@@ -1,4 +1,5 @@
 import { BaseLLMProvider } from './baseProvider.js';
+import logger from '../utils/logger.js';
 
 /**
  * Local Llama.cpp Provider
@@ -31,7 +32,7 @@ export class LocalLlamaProvider extends BaseLLMProvider {
       });
       return response.ok;
     } catch (error) {
-      console.log(`Local Llama unavailable: ${error.message}`);
+      logger.warn(`Local Llama unavailable: ${error.message}`);
       return false;
     }
   }
@@ -70,7 +71,7 @@ export class LocalLlamaProvider extends BaseLLMProvider {
       const result = await response.json();
       return result.choices?.[0]?.message?.content || "No response generated";
     } catch (error) {
-      console.error("Local Llama call failed:", error);
+      logger.error("Local Llama call failed:", error);
       throw new Error(`Local Llama error: ${error.message}`);
     }
   }

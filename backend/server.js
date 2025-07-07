@@ -7,6 +7,7 @@ import cors from "cors";
 import express from "express";
 import session from "express-session";
 import helmet from "helmet";
+import logger from "./utils/logger.js";
 import { resetLLMProviderFactory } from "./providers/providerFactory.js";
 import authRouter from "./routes/auth.js";
 import llmRouter from "./routes/llm.js";
@@ -81,14 +82,14 @@ app.use("*", (req, res) => {
 
 // Error handler
 app.use((err, req, res) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).json({ error: "Something went wrong!" });
 });
 
 // Start server
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {
-    console.log(`🚀 NiskaChat API server running on port ${PORT}`);
+    logger.info(`🚀 NiskaChat API server running on port ${PORT}`);
   });
 }
 

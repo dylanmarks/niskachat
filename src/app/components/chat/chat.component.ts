@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FhirClientService } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 export interface ChatMessage {
   id: string;
@@ -97,7 +98,7 @@ export class ChatComponent {
     try {
       // Get current patient data for context
       const patientData = await this.gatherPatientContext();
-      console.log('Gathered patient data:', patientData);
+      logger.debug('Gathered patient data');
 
       // Prepare request
       const chatRequest: ChatRequest = {
@@ -106,7 +107,7 @@ export class ChatComponent {
         patientData: patientData,
       };
 
-      console.log('Sending chat request:', chatRequest);
+      logger.debug('Sending chat request', { phi: true });
 
       // Call the backend
       const response = await this.http
@@ -119,7 +120,7 @@ export class ChatComponent {
         response?.summary || 'No response received',
       );
     } catch (error: unknown) {
-      console.error('Chat error:', error);
+      logger.error('Chat error:', error);
 
       // Handle different types of errors
       let errorMessage = 'Sorry, I encountered an error. Please try again.';
@@ -226,7 +227,7 @@ export class ChatComponent {
         element.scrollTop = element.scrollHeight;
       }
     } catch (error) {
-      console.warn('Could not scroll to bottom:', error);
+      logger.warn('Could not scroll to bottom:', error);
     }
   }
 
@@ -235,24 +236,24 @@ export class ChatComponent {
    */
   private async gatherPatientContext(): Promise<any> {
     const context = this.fhirClientService.getCurrentContext();
-    console.log('Current FHIR context:', context);
+    logger.debug('Current FHIR context retrieved');
 
     if (!context.authenticated || !context.patient) {
-      console.log('Not authenticated or no patient available');
+      logger.debug('Not authenticated or no patient available');
       return null;
     }
 
     try {
       // Build a comprehensive FHIR bundle with all available patient data
-      console.log('Building comprehensive FHIR bundle...');
+      logger.debug('Building comprehensive FHIR bundle...');
       const fhirBundle =
         await this.fhirClientService.buildComprehensiveFhirBundle();
-      console.log('Successfully built FHIR bundle:', fhirBundle);
+      logger.debug('Successfully built FHIR bundle');
       return fhirBundle;
     } catch (error) {
-      console.error('Error gathering patient context:', error);
+      logger.error('Error gathering patient context:', error);
       // Fallback to basic patient data if bundle building fails
-      console.log('Falling back to basic patient data');
+      logger.debug('Falling back to basic patient data');
       return {
         patient: context.patient,
       };

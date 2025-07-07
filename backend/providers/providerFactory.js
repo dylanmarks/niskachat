@@ -1,5 +1,6 @@
 import { ClaudeHaikuProvider } from "./claudeHaikuProvider.js";
 import { LocalLlamaProvider } from "./localLlamaProvider.js";
+import logger from "../utils/logger.js";
 
 /**
  * LLM Provider Factory
@@ -26,11 +27,11 @@ export class LLMProviderFactory {
     const llamaProvider = new LocalLlamaProvider();
     this.providers.set("local-llama", llamaProvider);
 
-    console.log(
+    logger.info(
       `LLM Provider Factory initialized with providers: ${Array.from(this.providers.keys()).join(", ")}`,
     );
-    console.log(`Preferred provider: ${this.preferredProvider}`);
-    console.log(`Fallback provider: ${this.fallbackProvider}`);
+    logger.info(`Preferred provider: ${this.preferredProvider}`);
+    logger.info(`Fallback provider: ${this.fallbackProvider}`);
   }
 
   /**
@@ -62,7 +63,7 @@ export class LLMProviderFactory {
       preferred.isConfigured() &&
       (await preferred.isAvailable())
     ) {
-      console.log(`Using preferred provider: ${this.preferredProvider}`);
+      logger.info(`Using preferred provider: ${this.preferredProvider}`);
       return preferred;
     }
 
@@ -74,7 +75,7 @@ export class LLMProviderFactory {
         fallback.isConfigured() &&
         (await fallback.isAvailable())
       ) {
-        console.log(`Using fallback provider: ${this.fallbackProvider}`);
+        logger.info(`Using fallback provider: ${this.fallbackProvider}`);
         return fallback;
       }
     }
@@ -83,13 +84,13 @@ export class LLMProviderFactory {
     for (const [name, provider] of this.providers) {
       if (name !== this.preferredProvider && name !== this.fallbackProvider) {
         if (provider.isConfigured() && (await provider.isAvailable())) {
-          console.log(`Using alternative provider: ${name}`);
+          logger.info(`Using alternative provider: ${name}`);
           return provider;
         }
       }
     }
 
-    console.log("No LLM providers are available");
+    logger.warn("No LLM providers are available");
     return null;
   }
 
@@ -114,14 +115,14 @@ export class LLMProviderFactory {
       };
     } catch (error) {
       // If the provider fails, try another one
-      console.log(`Provider ${provider.getName()} failed: ${error.message}`);
+      logger.warn(`Provider ${provider.getName()} failed: ${error.message}`);
 
       // Try other providers
       for (const [name, fallbackProvider] of this.providers) {
         if (name !== provider.getName() && fallbackProvider.isConfigured()) {
           try {
             if (await fallbackProvider.isAvailable()) {
-              console.log(`Trying fallback provider: ${name}`);
+              logger.info(`Trying fallback provider: ${name}`);
               const response = await fallbackProvider.generateResponse(
                 prompt,
                 options,
@@ -132,7 +133,7 @@ export class LLMProviderFactory {
               };
             }
           } catch (fallbackError) {
-            console.log(
+            logger.warn(
               `Fallback provider ${name} also failed: ${fallbackError.message}`,
             );
           }
