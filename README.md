@@ -101,6 +101,9 @@ npm run dev
 export SESSION_SECRET="replace-this"
 export CORS_ORIGINS="http://localhost:4200"
 
+# For production deployments, configure a persistent session store such as Redis
+# instead of the default in-memory store used in development.
+
 # Run frontend
 cd ../frontend
 npm install

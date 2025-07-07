@@ -1,6 +1,11 @@
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
-const LEVELS: Record<LogLevel, number> = { error: 0, warn: 1, info: 2, debug: 3 };
+const LEVELS: Record<LogLevel, number> = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  debug: 3,
+};
 
 let currentLevel: LogLevel = 'info';
 let logPHI = false;
@@ -35,13 +40,14 @@ function log(level: LogLevel, args: unknown[]): void {
     return;
   }
 
-  const method = level === 'error'
-    ? console.error
-    : level === 'warn'
-      ? console.warn
-      : level === 'debug'
-        ? console.debug
-        : console.log;
+  const method =
+    level === 'error'
+      ? console.error
+      : level === 'warn'
+        ? console.warn
+        : level === 'debug'
+          ? console.debug
+          : console.log;
 
   method(...args);
 }
@@ -49,8 +55,16 @@ function log(level: LogLevel, args: unknown[]): void {
 export const logger = {
   setLevel: setLogLevel,
   enablePHILogging,
-  error: (...args: unknown[]) => log('error', args),
-  warn: (...args: unknown[]) => log('warn', args),
-  info: (...args: unknown[]) => log('info', args),
-  debug: (...args: unknown[]) => log('debug', args),
+  error: (...args: unknown[]) => {
+    log('error', args);
+  },
+  warn: (...args: unknown[]) => {
+    log('warn', args);
+  },
+  info: (...args: unknown[]) => {
+    log('info', args);
+  },
+  debug: (...args: unknown[]) => {
+    log('debug', args);
+  },
 };
