@@ -4,6 +4,7 @@ import { catchError, map } from 'rxjs/operators';
 
 // Import FHIR client
 import { oauth2 } from 'fhirclient';
+import { logger } from '../utils/logger';
 
 export interface Patient {
   id: string;
@@ -338,7 +339,7 @@ export class FhirClientService {
       this.fhirClient = client;
       await this.loadPatientContext();
     } catch (error) {
-      console.error('SMART launch initialization failed:', error);
+      logger.error('SMART launch initialization failed:', error);
       throw error;
     }
   }
@@ -352,7 +353,7 @@ export class FhirClientService {
       this.fhirClient = client;
       await this.loadPatientContext();
     } catch (error) {
-      console.error('OAuth2 ready failed:', error);
+      logger.error('OAuth2 ready failed:', error);
       this.contextSubject.next({ authenticated: false });
       throw error;
     }
@@ -380,7 +381,7 @@ export class FhirClientService {
 
       this.contextSubject.next(context);
     } catch (error) {
-      console.error('Failed to load patient context:', error);
+      logger.error('Failed to load patient context:', error);
       this.contextSubject.next({ authenticated: false });
       throw error;
     }
@@ -409,7 +410,7 @@ export class FhirClientService {
     return from(this.getPatientAsync(patientId)).pipe(
       map((patient) => this.mapFhirPatient(patient)),
       catchError((error) => {
-        console.error('Error fetching patient:', error);
+        logger.error('Error fetching patient:', error);
         return throwError(() => error);
       }),
     );
@@ -436,7 +437,7 @@ export class FhirClientService {
   ): Observable<any> {
     return from(this.searchAsync(resourceType, params)).pipe(
       catchError((error) => {
-        console.error(`Error searching ${resourceType}:`, error);
+        logger.error(`Error searching ${resourceType}:`, error);
         return throwError(() => error);
       }),
     );
@@ -526,7 +527,7 @@ export class FhirClientService {
         return [];
       }),
       catchError((error) => {
-        console.error('Error fetching conditions:', error);
+        logger.error('Error fetching conditions:', error);
         return throwError(() => error);
       }),
     );
@@ -595,7 +596,7 @@ export class FhirClientService {
         return [];
       }),
       catchError((error) => {
-        console.error('Error fetching observations:', error);
+        logger.error('Error fetching observations:', error);
         return throwError(() => error);
       }),
     );
@@ -666,7 +667,7 @@ export class FhirClientService {
         return [];
       }),
       catchError((error) => {
-        console.error('Error fetching medication requests:', error);
+        logger.error('Error fetching medication requests:', error);
         return throwError(() => error);
       }),
     );
@@ -745,14 +746,14 @@ export class FhirClientService {
    * @returns {Promise<any>} Complete FHIR Bundle
    */
   async buildComprehensiveFhirBundle(): Promise<any> {
-    console.log('buildComprehensiveFhirBundle called');
+    logger.debug('buildComprehensiveFhirBundle called');
 
     const currentPatient = this.getCurrentPatient();
     if (!currentPatient) {
       throw new Error('No current patient available');
     }
 
-    console.log('Current patient:', currentPatient);
+    logger.debug('Current patient retrieved');
 
     const bundle: any = {
       resourceType: 'Bundle',
@@ -769,14 +770,14 @@ export class FhirClientService {
         },
       });
 
-      console.log('Added patient resource to bundle');
+      logger.debug('Added patient resource to bundle');
 
       // If in offline mode, use offline data
       if (this.isOfflineMode() && this.offlineData) {
-        console.log('Using offline data, offlineData:', this.offlineData);
+        logger.debug('Using offline data');
 
         // Add conditions
-        console.log(
+        logger.debug(
           'Adding conditions:',
           this.offlineData.conditions?.length || 0,
         );
@@ -790,7 +791,7 @@ export class FhirClientService {
         });
 
         // Add observations
-        console.log(
+        logger.debug(
           'Adding observations:',
           this.offlineData.observations?.length || 0,
         );
@@ -804,7 +805,7 @@ export class FhirClientService {
         });
 
         // Add medication requests
-        console.log(
+        logger.debug(
           'Adding medication requests:',
           this.offlineData.medicationRequests?.length || 0,
         );
@@ -829,7 +830,7 @@ export class FhirClientService {
             });
           });
         } catch (error) {
-          console.warn('Could not fetch conditions:', error);
+          logger.warn('Could not fetch conditions:', error);
         }
 
         try {
@@ -843,7 +844,7 @@ export class FhirClientService {
             });
           });
         } catch (error) {
-          console.warn('Could not fetch observations:', error);
+          logger.warn('Could not fetch observations:', error);
         }
 
         try {
@@ -858,7 +859,7 @@ export class FhirClientService {
             });
           });
         } catch (error) {
-          console.warn('Could not fetch medication requests:', error);
+          logger.warn('Could not fetch medication requests:', error);
         }
 
         // Try to fetch other common resource types that might be available
@@ -874,7 +875,7 @@ export class FhirClientService {
             });
           }
         } catch (error) {
-          console.warn('Could not fetch allergies:', error);
+          logger.warn('Could not fetch allergies:', error);
         }
 
         try {
@@ -889,7 +890,7 @@ export class FhirClientService {
             });
           }
         } catch (error) {
-          console.warn('Could not fetch procedures:', error);
+          logger.warn('Could not fetch procedures:', error);
         }
 
         try {
@@ -904,7 +905,7 @@ export class FhirClientService {
             });
           }
         } catch (error) {
-          console.warn('Could not fetch diagnostic reports:', error);
+          logger.warn('Could not fetch diagnostic reports:', error);
         }
 
         try {
@@ -919,7 +920,7 @@ export class FhirClientService {
             });
           }
         } catch (error) {
-          console.warn('Could not fetch encounters:', error);
+          logger.warn('Could not fetch encounters:', error);
         }
 
         try {
@@ -934,14 +935,14 @@ export class FhirClientService {
             });
           }
         } catch (error) {
-          console.warn('Could not fetch immunizations:', error);
+          logger.warn('Could not fetch immunizations:', error);
         }
       }
 
-      console.log('Completed FHIR bundle with', bundle.entry.length, 'entries');
+      logger.debug('Completed FHIR bundle with', bundle.entry.length, 'entries');
       return bundle;
     } catch (error) {
-      console.error('Error building comprehensive FHIR bundle:', error);
+      logger.error('Error building comprehensive FHIR bundle:', error);
       throw error;
     }
   }

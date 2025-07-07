@@ -13,6 +13,7 @@ import {
   FhirContext,
   Patient,
 } from '../../services/fhir-client.service';
+import { logger } from '../../utils/logger';
 
 @Component({
   selector: 'app-patient-summary',
@@ -97,7 +98,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       this.errorMessage = `Failed to load patient: ${String(error)}`;
-      console.error('Error loading patient:', error);
+      logger.error('Error loading patient:', error);
     } finally {
       this.isLoading = false;
     }
@@ -314,7 +315,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
             });
           }
         } catch (fetchError) {
-          console.warn('Could not fetch additional resources:', fetchError);
+          logger.warn('Could not fetch additional resources:', fetchError);
           // Continue with just patient data
         }
       }
@@ -331,10 +332,10 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
       // Show warning if LLM failed
       if (response.warning) {
-        console.warn('⚠️ LLM Warning:', response.warning);
+        logger.warn('⚠️ LLM Warning:', response.warning);
       }
     } catch (error: any) {
-      console.error('Error generating summary:', error);
+      logger.error('Error generating summary:', error);
       this.summaryError =
         error.error?.error || error.message || 'Failed to generate summary';
     } finally {
@@ -396,7 +397,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
             });
           }
         } catch (fetchError) {
-          console.warn('Could not fetch additional resources:', fetchError);
+          logger.warn('Could not fetch additional resources:', fetchError);
           // Continue with just patient data
         }
       }
@@ -408,7 +409,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
       this.compressedSummary = response.compressedSummary || null;
     } catch (error: any) {
-      console.warn('Could not generate compressed summary:', error);
+      logger.warn('Could not generate compressed summary:', error);
       // Create a basic summary from patient data
       this.compressedSummary = this.createBasicSummary();
     }

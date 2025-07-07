@@ -1,6 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { getAccessToken } from "./auth.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -27,12 +28,12 @@ function logRequest(req, res, next) {
 
   res.send = function (data) {
     const duration = Date.now() - start;
-    console.log(`[FHIR Proxy] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
+    logger.info(`[FHIR Proxy] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
     
     // Log errors for debugging
     if (res.statusCode >= 400) {
-      console.error(`[FHIR Proxy Error] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
-      console.error(`Response: ${data}`);
+      logger.error(`[FHIR Proxy Error] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
+      logger.debug(`Response: ${data}`, { phi: true });
     }
     
     return originalSend.call(this, data);
@@ -161,7 +162,7 @@ async function proxyFhirRequest(req, res) {
     res.status(response.status).send(responseData);
     
   } catch (error) {
-    console.error("FHIR proxy error:", error);
+    logger.error("FHIR proxy error:", error);
     
     // Handle network errors
     if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED") {
