@@ -22,7 +22,7 @@
 
       <!-- Back to table button when in chart view -->
       <button
-        *ngIf="selectedCategory !== 'all'"
+        *ngIf="isInChartView()"
         mat-stroked-button
         color="primary"
         (click)="backToTable()"
@@ -124,10 +124,18 @@
               <td
                 mat-cell
                 *matCellDef="let obs"
-                class="obs-type clickable"
-                (click)="onObservationClick(obs)"
+                [class]="
+                  isObservationChartable(obs)
+                    ? 'obs-type clickable'
+                    : 'obs-type'
+                "
+                (click)="
+                  isObservationChartable(obs) ? onObservationClick(obs) : null
+                "
                 [matTooltip]="
-                  'Click to view chart for ' + getObservationLabel(obs)
+                  isObservationChartable(obs)
+                    ? 'Click to view chart for ' + getObservationLabel(obs)
+                    : getObservationLabel(obs) + ' (no chart available)'
                 "
               >
                 {{ getObservationLabel(obs) }}
@@ -167,6 +175,7 @@
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let obs" class="obs-actions">
                 <button
+                  *ngIf="isObservationChartable(obs)"
                   mat-icon-button
                   (click)="onObservationClick(obs)"
                   matTooltip="View chart"
@@ -195,12 +204,7 @@
 
     <!-- Chart view for filtered observations -->
     <mat-card
-      *ngIf="
-        !loading &&
-        !error &&
-        observations.length > 0 &&
-        selectedCategory !== 'all'
-      "
+      *ngIf="!loading && !error && observations.length > 0 && isInChartView()"
       class="chart-container"
     >
       <mat-card-header>
