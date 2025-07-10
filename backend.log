@@ -1,0 +1,26 @@
+
+> start:backend
+> node backend/server.js
+
+[dotenv@17.0.1] injecting env (4) from .env – [tip] encrypt with dotenvx: https://dotenvx.com
+🚀 NiskaChat API server running on port 3000
+LLM Provider Factory initialized with providers: claude-haiku
+Preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+✅ LLM call successful, using AI-generated summary
+Using preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+✅ LLM call successful, using AI-generated summary
+Using preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+✅ LLM call successful, using AI-generated summary
+Using preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+✅ LLM call successful, using AI-generated summary
+Using preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+✅ LLM call successful, using AI-generated summary
+Using preferred provider: claude-haiku
+Using preferred provider: claude-haiku
+✅ LLM call successful, using AI-generated summary

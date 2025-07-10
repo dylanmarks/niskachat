@@ -67,34 +67,19 @@
 
       <!-- Patient Details Content -->
       <mat-card-content>
-        <!-- Medical Record Section -->
-        <div class="info-section" *ngIf="getMedicalRecordNumber()">
-          <h3>Medical Record</h3>
-          <div class="info-item">
-            <span class="label">MRN:</span>
-            <span class="value">{{ getMedicalRecordNumber() }}</span>
+        <!-- Contact Information -->
+        <div class="contact-info" *ngIf="hasContactInfo()">
+          <div class="contact-item" *ngFor="let contact of getContactInfo()">
+            <span class="contact-type">{{ contact.type }}:</span>
+            <span class="contact-value">{{ contact.value }}</span>
           </div>
         </div>
 
-        <!-- Contact Information Section -->
-        <div class="info-section" *ngIf="hasContactInfo()">
-          <h3>Contact Information</h3>
-          <div class="contact-list">
-            <div class="contact-item" *ngFor="let contact of getContactInfo()">
-              <span class="contact-type">{{ contact.type }}:</span>
-              <span class="contact-value">{{ contact.value }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Address Section -->
-        <div class="info-section" *ngIf="hasAddresses()">
-          <h3>Address</h3>
-          <div class="address-list">
-            <div class="address-item" *ngFor="let address of getAddresses()">
-              <div class="address-type">{{ address.type }}</div>
-              <div class="address-text">{{ address.text }}</div>
-            </div>
+        <!-- Address -->
+        <div class="address-info" *ngIf="hasAddresses()">
+          <div class="address-item" *ngFor="let address of getAddresses()">
+            <span class="address-type">{{ address.type }}:</span>
+            <span class="address-text">{{ address.text }}</span>
           </div>
         </div>
       </mat-card-content>
@@ -120,7 +105,7 @@
       </mat-card-header>
       <mat-card-content>
         <div class="summary-content">
-          <pre>{{ summary }}</pre>
+          <pre [innerHTML]="convertMarkdownToHtml(summary)"></pre>
         </div>
         <div class="summary-warning" *ngIf="summaryWarning">
           <mat-icon color="warn">warning</mat-icon>
@@ -147,29 +132,5 @@
         </button>
       </mat-card-actions>
     </mat-card>
-
-    <!-- Technical Details Expansion Panel -->
-    <mat-expansion-panel *ngIf="hasMetadata()" class="metadata-panel">
-      <mat-expansion-panel-header>
-        <mat-panel-title>
-          <mat-icon>settings</mat-icon>
-          Technical Details
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <div class="metadata-content">
-        <div class="metadata-item" *ngIf="context?.clientId">
-          <span class="label">FHIR Client ID:</span>
-          <span class="value">{{ context?.clientId }}</span>
-        </div>
-        <div class="metadata-item" *ngIf="context?.serverUrl">
-          <span class="label">FHIR Server:</span>
-          <span class="value">{{ context?.serverUrl }}</span>
-        </div>
-        <div class="metadata-item" *ngIf="context?.scope">
-          <span class="label">OAuth Scope:</span>
-          <span class="value">{{ context?.scope }}</span>
-        </div>
-      </div>
-    </mat-expansion-panel>
   </div>
 </div>

@@ -201,7 +201,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
     }
 
     return this.patient.telecom.map((contact) => ({
-      type: contact.system ?? 'unknown',
+      type: contact.system ?? 'Contact',
       value: contact.value ?? 'N/A',
     }));
   }
@@ -231,7 +231,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
       ].filter(Boolean);
 
       return {
-        type: addr.use ?? 'unknown',
+        type: addr.use ?? 'Address',
         text: parts.join(', '),
       };
     });

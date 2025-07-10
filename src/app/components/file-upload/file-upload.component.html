@@ -1,14 +1,4 @@
 <div class="file-upload-container" *ngIf="!context?.patient">
-  <div class="upload-header">
-    <h2>
-      <mat-icon>folder_open</mat-icon>
-      Upload FHIR Bundle
-    </h2>
-    <p class="upload-subtitle">
-      Upload a FHIR Bundle JSON file to view patient data offline
-    </p>
-  </div>
-
   <!-- Error State -->
   <mat-card *ngIf="uploadStatus.error" class="error-card">
     <mat-card-header>
@@ -120,11 +110,6 @@
       </mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p>
-        Upload a FHIR Bundle to view patient data without connecting to a FHIR
-        server.
-      </p>
-
       <!-- Example Data Buttons -->
       <div class="example-data-section">
         <h4>Upload Options:</h4>
@@ -175,13 +160,5 @@
         </div>
       </div>
     </mat-card-content>
-
-    <!-- Authentication Section -->
-    <mat-card-actions class="auth-section">
-      <button mat-flat-button color="primary" (click)="navigateToAuth()">
-        <mat-icon>login</mat-icon>
-        Start Authentication
-      </button>
-    </mat-card-actions>
   </mat-card>
 </div>

@@ -20,7 +20,7 @@ rules:
     3. Minimal, Contained Changes
     - Write only the code required to satisfy the task.
     - Do not add logging, comments, tests, TODOs, or cleanup unless directly necessary.
-    - Avoid speculative changes or “while we’re here” edits.
+    - Avoid speculative changes or “while we are here” edits.
     - Ensure logic is isolated and does not disrupt existing flows.
     - Focus on stable, granular points to commit, ensuring rollback is easy if needed.
 
