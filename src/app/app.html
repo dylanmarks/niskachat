@@ -1,11 +1,42 @@
 <div class="niska-chat-app">
   <header class="app-header">
-    <div class="header-content">
+    <!-- Default Niska Chat Header - Show when no patient -->
+    <div class="header-content" *ngIf="!context?.patient">
       <div class="brand-container">
         <img src="niska-logo.svg" alt="Niska Chat Logo" class="app-logo" />
         <div class="brand-text">
           <h1 class="app-title">Niska Chat</h1>
           <p class="app-subtitle">SMART on FHIR Clinical Data Viewer</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient Header - Show when patient is loaded -->
+    <div class="patient-header-content" *ngIf="context?.patient">
+      <div class="patient-header-info">
+        <img
+          src="niska-logo.svg"
+          alt="Niska Chat Logo"
+          class="patient-header-logo"
+        />
+        <div class="patient-header-text">
+          <h1 class="patient-name">{{ getPatientDisplayName() }}</h1>
+          <p class="patient-details">{{ getPatientHeaderDetails() }}</p>
+        </div>
+        <div class="header-spacer"></div>
+        <div class="header-actions">
+          <button
+            mat-raised-button
+            color="accent"
+            *ngIf="context?.patient"
+            (click)="onSummarizeClick()"
+            [disabled]="isSummarizing"
+          >
+            <mat-icon *ngIf="!isSummarizing">auto_awesome</mat-icon>
+            <mat-icon *ngIf="isSummarizing">hourglass_empty</mat-icon>
+            <span *ngIf="!isSummarizing">Summarize</span>
+            <span *ngIf="isSummarizing">Generating...</span>
+          </button>
         </div>
       </div>
     </div>
@@ -24,6 +55,23 @@
 
     <!-- Patient Information Section -->
     <div class="patient-section" *ngIf="context?.patient">
+      <!-- Patient Card with Contact Info - Full width, no margin -->
+      <div class="patient-card">
+        <div class="contact-info" *ngIf="hasContactInfo()">
+          <div class="contact-item" *ngFor="let contact of getContactInfo()">
+            <span class="contact-type">{{ contact.type }}:</span>
+            <span class="contact-value">{{ contact.value }}</span>
+          </div>
+        </div>
+
+        <div class="address-info" *ngIf="hasAddresses()">
+          <div class="address-item" *ngFor="let address of getAddresses()">
+            <span class="address-type">{{ address.type }}:</span>
+            <span class="address-text">{{ address.text }}</span>
+          </div>
+        </div>
+      </div>
+
       <app-patient-summary></app-patient-summary>
     </div>
 

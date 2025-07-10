@@ -68,10 +68,15 @@
 }
 
 .upload-section,
-.patient-section,
 .clinical-section,
 .chat-section {
   margin-bottom: 2rem;
+}
+
+// Patient section - no top margin/padding to connect seamlessly with header
+.patient-section {
+  margin: -2rem -1rem 2rem -1rem; // Negative margins to connect with header
+  padding: 0;
 }
 
 .chat-section {
@@ -117,6 +122,143 @@
 
   .app-main {
     padding: 1rem 0.5rem;
+  }
+}
+
+// Patient header styles
+.patient-header-content {
+  margin: 0 auto;
+  padding: 0 1rem;
+  max-width: 1200px;
+}
+
+.patient-header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.patient-header-logo {
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+  width: auto;
+  height: 50px;
+}
+
+.patient-header-text {
+  flex: 1;
+  text-align: left;
+}
+
+.patient-name {
+  margin: 0 0 0.25rem 0;
+  color: var(--color-surface);
+  font-weight: 600;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.patient-details {
+  opacity: 0.9;
+  margin: 0;
+  color: var(--color-surface);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
+
+// Patient card styles - full width with no margin
+.patient-card {
+  margin: 0; // No margin for seamless connection
+  box-shadow: none; // Remove shadow for seamless connection
+  border-bottom: 1px solid var(--color-outline);
+  border-radius: 0; // Remove border radius to connect with header
+  background: var(--color-surface);
+  padding: 1.5rem;
+}
+
+.contact-info,
+.address-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.contact-item,
+.address-item {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.contact-type,
+.address-type {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.contact-value,
+.address-text {
+  color: var(--color-text-primary);
+}
+
+// Responsive styles for patient header
+@media (max-width: 768px) {
+  .patient-header-info {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .patient-header-text {
+    text-align: center;
+  }
+
+  .patient-name {
+    font-size: 1.6rem;
+  }
+
+  .patient-details {
+    font-size: 0.9rem;
+  }
+
+  .header-spacer {
+    display: none;
+  }
+
+  .header-actions {
+    align-self: center;
+  }
+
+  .patient-card {
+    margin: 0;
+    padding: 1rem;
+  }
+
+  .patient-section {
+    margin: -2rem -0.5rem 2rem -0.5rem;
+  }
+
+  .contact-info,
+  .address-info {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .contact-item,
+  .address-item {
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: unset;
   }
 }
 

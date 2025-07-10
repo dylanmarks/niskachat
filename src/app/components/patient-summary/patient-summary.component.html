@@ -33,57 +33,7 @@
 
   <!-- Patient Information -->
   <div *ngIf="patient && !isLoading && !errorMessage" class="patient-content">
-    <!-- Main Patient Card -->
-    <mat-card class="patient-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>person</mat-icon>
-          {{ getPatientName() }}
-        </mat-card-title>
-        <mat-card-subtitle>
-          <div *ngIf="compressedSummary" class="compressed-summary">
-            {{ compressedSummary }}
-          </div>
-          <div *ngIf="patient.id" class="patient-id">
-            Patient ID: {{ patient.id }}
-          </div>
-        </mat-card-subtitle>
-        <div class="card-header-spacer"></div>
-        <div class="header-actions">
-          <button
-            mat-raised-button
-            color="accent"
-            *ngIf="patient"
-            (click)="generateSummary()"
-            [disabled]="isSummarizing"
-          >
-            <mat-icon *ngIf="!isSummarizing">auto_awesome</mat-icon>
-            <mat-icon *ngIf="isSummarizing">hourglass_empty</mat-icon>
-            <span *ngIf="!isSummarizing">Summarize</span>
-            <span *ngIf="isSummarizing">Generating...</span>
-          </button>
-        </div>
-      </mat-card-header>
-
-      <!-- Patient Details Content -->
-      <mat-card-content>
-        <!-- Contact Information -->
-        <div class="contact-info" *ngIf="hasContactInfo()">
-          <div class="contact-item" *ngFor="let contact of getContactInfo()">
-            <span class="contact-type">{{ contact.type }}:</span>
-            <span class="contact-value">{{ contact.value }}</span>
-          </div>
-        </div>
-
-        <!-- Address -->
-        <div class="address-info" *ngIf="hasAddresses()">
-          <div class="address-item" *ngFor="let address of getAddresses()">
-            <span class="address-type">{{ address.type }}:</span>
-            <span class="address-text">{{ address.text }}</span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <!-- Patient card content is now moved to the header -->
 
     <!-- Summary Card -->
     <mat-card *ngIf="summary" class="summary-card">
