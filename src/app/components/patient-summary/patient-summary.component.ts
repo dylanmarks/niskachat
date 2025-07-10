@@ -249,6 +249,14 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Convert markdown-style bold text (**text**) to HTML
+   */
+  convertMarkdownToHtml(text: string | null): string {
+    if (!text) return '';
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  /**
    * Navigate to authentication
    */
   navigateToAuth(): void {
@@ -439,12 +447,6 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
     // Add birth date
     if (this.patient.birthDate) {
       parts.push(`DOB ${this.patient.birthDate}`);
-    }
-
-    // Add MRN
-    const mrn = this.getMedicalRecordNumber();
-    if (mrn) {
-      parts.push(`MRN ${mrn}`);
     }
 
     return parts.join(', ');

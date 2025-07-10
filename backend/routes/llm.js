@@ -1,8 +1,11 @@
 import express from "express";
 import { getLLMProviderFactory } from "../providers/providerFactory.js";
-import { compressFHIRBundle } from "../utils/fhirBundleCompressor.js";
-import { getFormattedPrompt } from "../utils/promptLoader.js";
+import {
+  compressFHIRBundle,
+  compressFHIRBundleForHeader,
+} from "../utils/fhirBundleCompressor.js";
 import logger from "../utils/logger.js";
+import { getFormattedPrompt } from "../utils/promptLoader.js";
 
 const router = express.Router();
 
@@ -156,15 +159,13 @@ function generatePrompt(context, data, userQuery = null) {
   switch (context) {
     case CONTEXT_TYPES.CLINICAL_CHAT: {
       // For chat interactions, check if we have a full FHIR bundle
-      let promptData;
-
       if (data && data.resourceType === "Bundle" && data.entry) {
         logger.debug("Processing FHIR bundle", { count: data.entry.length });
-        // We have a full FHIR bundle - pass it directly as JSON
-        promptData = JSON.stringify(data, null, 2);
+        // Use compressed FHIR bundle instead of full JSON for token efficiency
+        const compressedData = compressFHIRBundle(data);
         return getFormattedPrompt("clinical-chat", {
-          fhirBundle: promptData,
-          patientData: "", // Empty string for legacy compatibility
+          fhirBundle: "", // Empty string for legacy compatibility
+          patientData: compressedData,
           userQuery: userQuery || "Please provide an overview of this patient.",
         });
       } else {
@@ -202,11 +203,10 @@ function generatePrompt(context, data, userQuery = null) {
     default: {
       // For summaries, check if we have a full FHIR bundle
       if (data && data.resourceType === "Bundle" && data.entry) {
-        // Extract clinical data from the bundle
-        const clinicalData = extractClinicalData(data);
-        const formattedData = formatClinicalData(clinicalData);
+        // Use compressed FHIR bundle instead of extracted/formatted data for token efficiency
+        const compressedData = compressFHIRBundle(data);
         return getFormattedPrompt("clinical-summary", {
-          fhirData: formattedData,
+          fhirData: compressedData,
         });
       } else {
         // Legacy handling for structured data
@@ -533,8 +533,8 @@ router.post("/compress", async (req, res) => {
       });
     }
 
-    // Compress the FHIR bundle
-    const compressedSummary = compressFHIRBundle(bundle);
+    // Compress the FHIR bundle for header display (basic patient info only)
+    const compressedSummary = compressFHIRBundleForHeader(bundle);
 
     res.json({
       success: true,

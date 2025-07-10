@@ -117,26 +117,6 @@
           </td>
         </ng-container>
 
-        <!-- Recorded Date Column -->
-        <ng-container matColumnDef="recorded">
-          <th mat-header-cell *matHeaderCellDef>Recorded Date</th>
-          <td mat-cell *matCellDef="let condition" class="condition-recorded">
-            {{ formatDate(condition.recordedDate) || "N/A" }}
-          </td>
-        </ng-container>
-
-        <!-- Verification Column -->
-        <ng-container matColumnDef="verification">
-          <th mat-header-cell *matHeaderCellDef>Verification</th>
-          <td
-            mat-cell
-            *matCellDef="let condition"
-            class="condition-verification"
-          >
-            {{ getVerificationStatus(condition) || "N/A" }}
-          </td>
-        </ng-container>
-
         <!-- Actions Column -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef>Actions</th>
