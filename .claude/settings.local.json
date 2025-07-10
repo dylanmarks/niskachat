@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:backend:*)",
+      "Bash(npm run test:ci:*)",
+      "Bash(npm run start:dev:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(npm run test-providers:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(npm run start:backend:*)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(node:*)",
+      "Bash(kill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npx cspell:*)",
+      "Bash(git push:*)",
+      "Bash(rg:*)",
+      "Bash(npm run lint:*)"
+    ],
+    "deny": []
+  }
+}

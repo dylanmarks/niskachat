@@ -2,14 +2,14 @@
 @use "../../../themes/theme";
 
 .patient-summary-container {
-  margin: var(--niska-spacing-sm) auto;
-  padding: var(--niska-spacing-md);
+  margin: 0 auto;
+  padding: var(--niska-spacing-sm);
   max-width: 800px;
   font-family: var(--niska-font-family);
 
-  // Space between cards
+  // Reduced space between cards
   > * + * {
-    margin-top: var(--niska-spacing-lg);
+    margin-top: var(--niska-spacing-md);
   }
 }
 
@@ -57,21 +57,21 @@
 .patient-content {
   display: flex;
   flex-direction: column;
-  gap: var(--niska-spacing-lg);
+  gap: var(--niska-spacing-sm);
 }
 
 // Main Patient Card
 .patient-card {
   mat-card-header {
     margin: 0;
-    margin-bottom: var(--niska-spacing-md);
+    margin-bottom: 0;
     border-radius: var(--niska-radius-md) var(--niska-radius-md) 0 0;
     background: linear-gradient(
       135deg,
       var(--niska-primary-500) 0%,
       var(--niska-primary-700) 100%
     );
-    padding: var(--niska-spacing-lg);
+    padding: var(--niska-spacing-md);
     color: white;
 
     mat-card-title {
@@ -133,26 +133,17 @@
   }
 
   mat-card-content {
-    padding: var(--niska-spacing-lg);
+    padding: var(--niska-spacing-md);
   }
 }
 
-// Info Sections
-.info-section {
-  margin-bottom: var(--niska-spacing-xl);
-  border-bottom: 1px solid var(--niska-primary-100);
-  padding-bottom: var(--niska-spacing-lg);
+// Contact and Address Info (simplified)
+.contact-info,
+.address-info {
+  margin-bottom: var(--niska-spacing-sm);
 
   &:last-child {
     margin-bottom: 0;
-    border-bottom: none;
-  }
-
-  h3 {
-    margin: 0 0 var(--niska-spacing-md);
-    color: var(--niska-primary-700);
-    font-weight: var(--niska-font-weight-semibold);
-    font-size: var(--niska-font-size-lg);
   }
 }
 
@@ -189,47 +180,43 @@
   }
 }
 
-// Contact and Address Lists
-.contact-list,
-.address-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--niska-spacing-sm);
-}
-
+// Contact Items (simplified)
 .contact-item {
-  display: flex;
-  justify-content: space-between;
-  border-radius: var(--niska-radius-md);
-  background: var(--niska-surface-variant);
-  padding: var(--niska-spacing-sm) var(--niska-spacing-md);
+  padding: var(--niska-spacing-xs) 0;
+  font-size: var(--niska-font-size-sm);
 
   .contact-type {
+    display: block;
+    margin-bottom: var(--niska-spacing-xs);
     color: var(--niska-on-surface-variant);
     font-weight: var(--niska-font-weight-medium);
     text-transform: capitalize;
   }
 
   .contact-value {
+    display: block;
+    padding-left: var(--niska-spacing-sm);
     color: var(--niska-on-surface);
     font-weight: var(--niska-font-weight-regular);
   }
 }
 
+// Address Items (simplified)
 .address-item {
-  border-radius: var(--niska-radius-md);
-  background: var(--niska-surface-variant);
-  padding: var(--niska-spacing-md);
+  padding: var(--niska-spacing-xs) 0;
+  font-size: var(--niska-font-size-sm);
 
   .address-type {
+    display: block;
+    margin-bottom: var(--niska-spacing-xs);
     color: var(--niska-on-surface-variant);
     font-weight: var(--niska-font-weight-medium);
-    font-size: var(--niska-font-size-sm);
     text-transform: capitalize;
   }
 
   .address-text {
-    margin-top: var(--niska-spacing-xs);
+    display: block;
+    padding-left: var(--niska-spacing-sm);
     color: var(--niska-on-surface);
     line-height: var(--niska-line-height-normal);
   }
@@ -318,46 +305,6 @@
         font-weight: var(--niska-font-weight-medium);
         font-size: var(--niska-font-size-sm);
       }
-    }
-  }
-}
-
-// Technical Details Expansion Panel
-.metadata-panel {
-  /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-  ::ng-deep {
-    .mat-expansion-panel-header-title {
-      display: flex;
-      align-items: center;
-      gap: var(--niska-spacing-sm);
-
-      mat-icon {
-        color: var(--niska-on-surface-variant);
-        font-size: 1.2rem;
-      }
-    }
-  }
-
-  .metadata-content {
-    padding: var(--niska-spacing-md) 0;
-  }
-
-  .metadata-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--niska-spacing-sm) 0;
-    font-size: var(--niska-font-size-sm);
-
-    .label {
-      color: var(--niska-on-surface-variant);
-      font-weight: var(--niska-font-weight-medium);
-    }
-
-    .value {
-      color: var(--niska-on-surface);
-      font-size: var(--niska-font-size-xs);
-      font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
     }
   }
 }

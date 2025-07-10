@@ -102,6 +102,7 @@ export default config(
     files: ["backend/**/*.test.js"],
     languageOptions: {
       globals: {
+        ...globals.jest,
         describe: "readonly",
         it: "readonly",
         expect: "readonly",
@@ -129,6 +130,8 @@ export default config(
         URLSearchParams: "readonly",
       },
     },
-    rules: {},
+    rules: {
+      "no-unused-vars": "warn",
+    },
   },
 );

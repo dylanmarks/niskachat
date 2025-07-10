@@ -31,10 +31,22 @@ export class App {
   protected title = 'NiskaChat';
 
   context: FhirContext | null = null;
+  isSmartSsoActive = false;
 
   private fhirClient = inject(FhirClientService);
 
   constructor() {
     this.fhirClient.context$.subscribe((ctx) => (this.context = ctx));
+    this.checkForSmartSso();
+  }
+
+  private checkForSmartSso(): void {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isCallback = window.location.pathname.includes('callback');
+    const hasLaunch = urlParams.has('launch');
+    const hasCode = urlParams.has('code');
+    const hasIss = urlParams.has('iss');
+
+    this.isSmartSsoActive = isCallback || hasLaunch || hasCode || hasIss;
   }
 }

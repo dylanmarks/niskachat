@@ -32,7 +32,7 @@
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
 ::ng-deep .observations-controls {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-md);
 
   .category-select-field {

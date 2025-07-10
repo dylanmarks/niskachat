@@ -12,28 +12,30 @@
   </header>
 
   <main class="app-main">
-    <!-- SMART Launch Component -->
-    <app-smart-launch></app-smart-launch>
+    <!-- SMART Launch Component - Only show during active SMART SSO flow and no patient data -->
+    <app-smart-launch
+      *ngIf="isSmartSsoActive && !context?.patient"
+    ></app-smart-launch>
 
-    <!-- File Upload Component for Offline Mode -->
-    <div class="upload-section" *ngIf="!context?.patient">
+    <!-- File Upload Component for Offline Mode - Show when no SMART SSO and no patient -->
+    <div class="upload-section" *ngIf="!isSmartSsoActive && !context?.patient">
       <app-file-upload></app-file-upload>
     </div>
 
     <!-- Patient Information Section -->
-    <div class="patient-section">
+    <div class="patient-section" *ngIf="context?.patient">
       <app-patient-summary></app-patient-summary>
     </div>
 
     <!-- Clinical Data Section -->
-    <div class="clinical-section">
+    <div class="clinical-section" *ngIf="context?.patient">
       <app-conditions-list></app-conditions-list>
       <app-medications-list></app-medications-list>
       <app-observations-chart></app-observations-chart>
     </div>
 
     <!-- Chat Section -->
-    <div class="chat-section">
+    <div class="chat-section" *ngIf="context?.patient">
       <app-chat></app-chat>
     </div>
   </main>
