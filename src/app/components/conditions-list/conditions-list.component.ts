@@ -39,14 +39,7 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
   context: FhirContext | null = null;
   selectedConditionId: string | null = null;
   selectedCondition: Condition | null = null;
-  displayedColumns: string[] = [
-    'name',
-    'status',
-    'onset',
-    'recorded',
-    'verification',
-    'actions',
-  ];
+  displayedColumns: string[] = ['name', 'status', 'onset', 'actions'];
 
   constructor(private fhirClient: FhirClientService) {}
 
