@@ -1019,15 +1019,43 @@ export class ObservationsChartComponent
       height: 'Height',
     };
 
+    // Handle custom categories
+    if (category.startsWith('custom-')) {
+      const obsId = category.replace('custom-', '');
+      const obs = this.observations.find((o) => o.id === obsId);
+      return obs
+        ? this.getObservationLabel(obs) || 'Custom Observation'
+        : 'Custom Observation';
+    }
+
     return categoryNames[category] || 'Unknown';
   }
 
   // Get filtered observations for current category
   getFilteredObservations(): Observation[] {
+    // Handle custom categories
+    if (this.selectedCategory.startsWith('custom-')) {
+      const obsId = this.selectedCategory.replace('custom-', '');
+      const obs = this.observations.find((o) => o.id === obsId);
+      if (obs) {
+        const observationType = this.getObservationLabel(obs);
+        return this.observations.filter(
+          (observation) =>
+            this.getObservationLabel(observation) === observationType,
+        );
+      }
+      return [];
+    }
+
     return this.filterObservationsByCategory(
       this.observations,
       this.selectedCategory,
     );
+  }
+
+  // Check if we're currently in chart view (not table view)
+  isInChartView(): boolean {
+    return this.selectedCategory !== 'all';
   }
 
   // Get current context information
@@ -1057,6 +1085,11 @@ export class ObservationsChartComponent
       this.selectedCategory = category;
       // Only render chart if we have a valid canvas element
       this.renderChartForCategory();
+    } else if (this.isObservationChartable(obs)) {
+      // For observations not in predefined categories but still chartable
+      const observationType = this.getObservationLabel(obs) || 'Unknown';
+      this.selectedCategory = `custom-${obs.id}`;
+      this.renderCustomChart(observationType);
     }
   }
 
@@ -1120,5 +1153,75 @@ export class ObservationsChartComponent
       });
       this.chart = null;
     }
+  }
+
+  // Check if an observation has numeric data that can be charted
+  isObservationChartable(obs: Observation): boolean {
+    const hasDate = this.extractObservationDate(obs) !== null;
+    const hasNumericValue = this.extractObservationValue(obs) !== null;
+
+    return hasDate && hasNumericValue;
+  }
+
+  // Render chart for a single observation type (custom category)
+  private renderCustomChart(observationType: string): void {
+    logger.info('Rendering custom chart for:', observationType);
+
+    // Find all observations of the same type
+    const sameTypeObservations = this.observations.filter(
+      (observation) =>
+        this.getObservationLabel(observation) === observationType,
+    );
+
+    if (sameTypeObservations.length === 0) {
+      logger.info('No observations of this type found');
+      return;
+    }
+
+    // Create chart data for this single observation type
+    const sortedObs = this.sortObservationsByDate(sameTypeObservations);
+    const data: ChartDataPoint[] = sortedObs
+      .map((observation) => {
+        const date = this.extractObservationDate(observation);
+        const value = this.extractObservationValue(observation);
+
+        if (!date || value === null || isNaN(value)) {
+          return null;
+        }
+
+        const dateObj = new Date(date);
+        if (isNaN(dateObj.getTime())) {
+          logger.warn('Invalid date:', date);
+          return null;
+        }
+
+        return { x: date, y: value };
+      })
+      .filter((point): point is ChartDataPoint => point !== null);
+
+    if (data.length === 0) {
+      logger.info('No valid data points for custom chart');
+      this.error = 'No valid data points available for chart';
+      return;
+    }
+
+    // Create dataset for this observation type
+    const dataset: ChartDataset = {
+      label: observationType,
+      data,
+      borderColor: '#3b82f6',
+      backgroundColor: '#3b82f620',
+      tension: 0.1,
+    };
+
+    this.chartData = { datasets: [dataset] };
+
+    // Clear any existing chart first
+    this.destroyChart();
+
+    // Render the chart
+    setTimeout(() => {
+      this.safeRenderChart();
+    }, 50);
   }
 }
