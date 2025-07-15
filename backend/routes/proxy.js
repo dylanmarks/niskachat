@@ -1,7 +1,8 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { getAccessToken } from "./auth.js";
 import logger from "../utils/logger.js";
+import { sanitizePath } from "../utils/sanitize-path.js";
+import { getAccessToken } from "./auth.js";
 
 const router = express.Router();
 
@@ -28,17 +29,20 @@ function logRequest(req, res, next) {
 
   res.send = function (data) {
     const duration = Date.now() - start;
-    logger.info(`[FHIR Proxy] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
-    
+    logger.info(
+      `[FHIR Proxy] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`,
+    );
+
     // Log errors for debugging
     if (res.statusCode >= 400) {
-      logger.error(`[FHIR Proxy Error] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
-      logger.debug(`Response: ${data}`, { phi: true });
+      logger.error(
+        `[FHIR Proxy Error] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`,
+      );
     }
-    
+
     return originalSend.call(this, data);
   };
-  
+
   next();
 }
 
@@ -49,21 +53,22 @@ router.use(logRequest);
  */
 function validateFhirRequest(req, res, next) {
   const { sessionId } = req.query;
-  
+
   if (!sessionId) {
     return res.status(400).json({
       error: "Missing required parameter: sessionId",
     });
   }
-  
-  // Validate path doesn't contain dangerous characters
-  const path = req.params.path;
-  if (path && (path.includes("../") || path.includes("..\\") || path.includes("~"))) {
+
+  // Sanitize path to prevent traversal
+  const sanitizedPath = sanitizePath(req.params.path, "/");
+  if (!sanitizedPath) {
     return res.status(400).json({
       error: "Invalid path parameter",
     });
   }
-  
+  req.params.path = sanitizedPath;
+
   next();
 }
 
@@ -73,13 +78,13 @@ function validateFhirRequest(req, res, next) {
 function authenticate(req, res, next) {
   const { sessionId } = req.query;
   const tokenData = getAccessToken(req, sessionId);
-  
+
   if (!tokenData) {
     return res.status(401).json({
       error: "Authentication required or token expired",
     });
   }
-  
+
   req.tokenData = tokenData;
   next();
 }
@@ -92,45 +97,52 @@ async function proxyFhirRequest(req, res) {
     const { path } = req.params;
     const { sessionId, ...otherParams } = req.query;
     const { tokenData } = req;
-    
+
     // Build target URL
     const fhirBaseUrl = tokenData.iss;
     let targetUrl = `${fhirBaseUrl}/${path}`;
-    
+
     // Add query parameters (excluding sessionId)
     const queryParams = new URLSearchParams(otherParams);
     if (queryParams.toString()) {
       targetUrl += `?${queryParams.toString()}`;
     }
-    
+
     // Prepare headers
     const headers = {
-      "Authorization": `${tokenData.type} ${tokenData.token}`,
-      "Accept": "application/fhir+json",
+      Authorization: `${tokenData.type} ${tokenData.token}`,
+      Accept: "application/fhir+json",
       "Content-Type": "application/fhir+json",
     };
-    
+
     // Copy specific headers from original request
-    const allowedHeaders = ["accept", "accept-language", "cache-control", "if-none-match"];
-    allowedHeaders.forEach(header => {
+    const allowedHeaders = [
+      "accept",
+      "accept-language",
+      "cache-control",
+      "if-none-match",
+      "if-modified-since",
+      "prefer",
+    ];
+    allowedHeaders.forEach((header) => {
       if (req.headers[header]) {
         headers[header] = req.headers[header];
       }
     });
-    
+
     // Make the request
     const fetchOptions = {
       method: req.method,
       headers,
     };
-    
+
     // Add body for POST/PUT/PATCH requests
     if (["POST", "PUT", "PATCH"].includes(req.method) && req.body) {
       fetchOptions.body = JSON.stringify(req.body);
     }
-    
+
     const response = await fetch(targetUrl, fetchOptions);
-    
+
     // Handle authentication errors
     if (response.status === 401) {
       return res.status(401).json({
@@ -138,32 +150,28 @@ async function proxyFhirRequest(req, res) {
         details: "Token may be expired or invalid",
       });
     }
-    
-    // Set CORS headers
-    res.set({
-      "Access-Control-Allow-Origin": req.headers.origin || "*",
-      "Access-Control-Allow-Credentials": "true",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    });
-    
+
     // Copy response headers
-    const responseHeaders = ["content-type", "cache-control", "etag", "last-modified"];
-    responseHeaders.forEach(header => {
+    const responseHeaders = [
+      "content-type",
+      "cache-control",
+      "etag",
+      "last-modified",
+    ];
+    responseHeaders.forEach((header) => {
       if (response.headers.get(header)) {
         res.set(header, response.headers.get(header));
       }
     });
-    
+
     // Get response data
     const responseData = await response.text();
-    
+
     // Return response with same status code
     res.status(response.status).send(responseData);
-    
   } catch (error) {
     logger.error("FHIR proxy error:", error);
-    
+
     // Handle network errors
     if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED") {
       return res.status(503).json({
@@ -171,7 +179,7 @@ async function proxyFhirRequest(req, res) {
         details: "Unable to connect to FHIR server",
       });
     }
-    
+
     // Handle timeout errors
     if (error.code === "ETIMEDOUT") {
       return res.status(504).json({
@@ -179,7 +187,7 @@ async function proxyFhirRequest(req, res) {
         details: "Request to FHIR server timed out",
       });
     }
-    
+
     res.status(500).json({
       error: "Internal server error",
       details: "An unexpected error occurred while proxying the request",
@@ -191,38 +199,57 @@ async function proxyFhirRequest(req, res) {
  * Handle OPTIONS requests for CORS preflight
  */
 router.options("*", (req, res) => {
-  res.set({
-    "Access-Control-Allow-Origin": req.headers.origin || "*",
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-  });
   res.sendStatus(200);
 });
 
 /**
  * GET /proxy/fhir/:path - Proxy FHIR GET requests
  */
-router.get("/fhir/:path(*)", validateFhirRequest, authenticate, proxyFhirRequest);
+router.get(
+  "/fhir/:path(*)",
+  validateFhirRequest,
+  authenticate,
+  proxyFhirRequest,
+);
 
 /**
  * POST /proxy/fhir/:path - Proxy FHIR POST requests
  */
-router.post("/fhir/:path(*)", validateFhirRequest, authenticate, proxyFhirRequest);
+router.post(
+  "/fhir/:path(*)",
+  validateFhirRequest,
+  authenticate,
+  proxyFhirRequest,
+);
 
 /**
  * PUT /proxy/fhir/:path - Proxy FHIR PUT requests
  */
-router.put("/fhir/:path(*)", validateFhirRequest, authenticate, proxyFhirRequest);
+router.put(
+  "/fhir/:path(*)",
+  validateFhirRequest,
+  authenticate,
+  proxyFhirRequest,
+);
 
 /**
  * DELETE /proxy/fhir/:path - Proxy FHIR DELETE requests
  */
-router.delete("/fhir/:path(*)", validateFhirRequest, authenticate, proxyFhirRequest);
+router.delete(
+  "/fhir/:path(*)",
+  validateFhirRequest,
+  authenticate,
+  proxyFhirRequest,
+);
 
 /**
  * PATCH /proxy/fhir/:path - Proxy FHIR PATCH requests
  */
-router.patch("/fhir/:path(*)", validateFhirRequest, authenticate, proxyFhirRequest);
+router.patch(
+  "/fhir/:path(*)",
+  validateFhirRequest,
+  authenticate,
+  proxyFhirRequest,
+);
 
 export default router;
