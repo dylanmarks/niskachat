@@ -35,13 +35,13 @@ describe('MedicationsListComponent', () => {
       resourceType: 'Patient' as const,
       id: 'patient-123',
       name: [{ family: 'Doe', given: ['John'] }],
-    } as any,
+    },
   };
 
   beforeEach(async () => {
-    const spy = jasmine.createSpyObj('FhirClientService', [
+    const spy = jasmine.createSpyObj<FhirClientService>('FhirClientService', [
       'getMedicationRequests',
-    ]) as jasmine.SpyObj<FhirClientService>;
+    ]);
     spy.context$ = of(mockContext);
 
     await TestBed.configureTestingModule({

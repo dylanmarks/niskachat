@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import {
+  FhirBundle,
   FhirClientService,
   FhirContext,
 } from '../../services/fhir-client.service';
@@ -60,7 +61,9 @@ describe('FileUploadComponent', () => {
   };
 
   beforeEach(async () => {
-    const spy = jasmine.createSpyObj('FhirClientService', ['setOfflineMode']);
+    const spy = jasmine.createSpyObj<FhirClientService>('FhirClientService', [
+      'setOfflineMode',
+    ]);
     spy.context$ = of(mockContext);
 
     await TestBed.configureTestingModule({
@@ -133,37 +136,39 @@ describe('FileUploadComponent', () => {
 
   describe('Bundle Validation', () => {
     it('should validate correct FHIR Bundle', () => {
-      expect(() => { component.validateBundle(mockBundle); }).not.toThrow();
+      expect(() => {
+        component.validateBundle(mockBundle);
+      }).not.toThrow();
     });
 
     it('should reject invalid JSON', () => {
-      expect(() => { component.validateBundle(null as any); }).toThrowError(
-        'Invalid JSON format',
-      );
+      expect(() => {
+        component.validateBundle(null as unknown as FhirBundle);
+      }).toThrowError('Invalid JSON format');
     });
 
     it('should reject non-Bundle resource', () => {
       const invalidBundle = { resourceType: 'Patient', id: 'test' };
 
-      expect(() => { component.validateBundle(invalidBundle); }).toThrowError(
-        'File is not a FHIR Bundle resource',
-      );
+      expect(() => {
+        component.validateBundle(invalidBundle);
+      }).toThrowError('File is not a FHIR Bundle resource');
     });
 
     it('should reject bundle without entries', () => {
       const emptyBundle = { resourceType: 'Bundle', id: 'test' };
 
-      expect(() => { component.validateBundle(emptyBundle); }).toThrowError(
-        'Bundle must contain an entry array',
-      );
+      expect(() => {
+        component.validateBundle(emptyBundle);
+      }).toThrowError('Bundle must contain an entry array');
     });
 
     it('should reject bundle with empty entries', () => {
       const emptyBundle = { resourceType: 'Bundle', id: 'test', entry: [] };
 
-      expect(() => { component.validateBundle(emptyBundle); }).toThrowError(
-        'Bundle is empty - no resources found',
-      );
+      expect(() => {
+        component.validateBundle(emptyBundle);
+      }).toThrowError('Bundle is empty - no resources found');
     });
   });
 

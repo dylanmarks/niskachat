@@ -89,6 +89,7 @@ describe('FhirClientService', () => {
       spyOn(service, 'getCurrentContext').and.returnValue({
         authenticated: true,
         patient: {
+          resourceType: 'Patient',
           id: 'test-patient-123',
           name: [{ family: 'Doe', given: ['John'] }],
         },
@@ -217,7 +218,11 @@ describe('FhirClientService', () => {
     });
 
     it('should search for resources without parameters', (done) => {
-      const mockBundle = { resourceType: 'Bundle', entry: [] };
+      const mockBundle = {
+        resourceType: 'Bundle' as const,
+        type: 'searchset',
+        entry: [],
+      };
       mockFhirClient.request.and.resolveTo(mockBundle);
 
       service.search('Observation').subscribe({
@@ -234,7 +239,11 @@ describe('FhirClientService', () => {
     });
 
     it('should search for resources with parameters', (done) => {
-      const mockBundle = { resourceType: 'Bundle', entry: [] };
+      const mockBundle = {
+        resourceType: 'Bundle' as const,
+        type: 'searchset',
+        entry: [],
+      };
       mockFhirClient.request.and.resolveTo(mockBundle);
 
       const params = { patient: 'test-patient-123', category: 'vital-signs' };
@@ -312,7 +321,7 @@ describe('FhirClientService', () => {
       });
 
       // Trigger authentication
-      service.handleOAuth2Ready();
+      void service.handleOAuth2Ready();
     });
   });
 });

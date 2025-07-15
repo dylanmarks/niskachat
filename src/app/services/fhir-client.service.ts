@@ -31,7 +31,7 @@ interface FhirError {
 }
 
 // FHIR Bundle Interface
-interface FhirBundle extends FhirResource {
+export interface FhirBundle extends FhirResource {
   resourceType: 'Bundle';
   type: string;
   entry?: FhirBundleEntry[];
@@ -93,7 +93,7 @@ interface FhirCoding {
 }
 
 // Application Patient Interface (for our components)
-export interface Patient {
+export interface Patient extends FhirResource {
   resourceType: 'Patient';
   id: string;
   name?: FhirHumanName[];
@@ -198,7 +198,7 @@ export interface Observation {
 }
 
 // FHIR MedicationRequest Resource Interface
-interface FhirMedicationRequest extends FhirResource {
+export interface FhirMedicationRequest extends FhirResource {
   resourceType: 'MedicationRequest';
   status?: string;
   intent?: string;
@@ -213,6 +213,10 @@ interface FhirMedicationRequest extends FhirResource {
   reasonCode?: FhirCodeableConcept[];
   reasonReference?: FhirReference[];
   dosageInstruction?: FhirDosage[];
+  dispenseRequest?: {
+    quantity?: FhirQuantity;
+  };
+  substitution?: unknown;
 }
 
 interface FhirDosage {
@@ -423,8 +427,11 @@ export class FhirClientService {
       catchError((error: unknown) => {
         logger.error('Error fetching patient:', error);
         const fhirError: FhirError = {
-          message: error instanceof Error ? error.message : 'Unknown error fetching patient',
-          details: error
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error fetching patient',
+          details: error,
         };
         return throwError(() => fhirError);
       }),
@@ -472,8 +479,11 @@ export class FhirClientService {
       catchError((error: unknown) => {
         logger.error(`Error searching ${resourceType}:`, error);
         const fhirError: FhirError = {
-          message: error instanceof Error ? error.message : `Unknown error searching ${resourceType}`,
-          details: error
+          message:
+            error instanceof Error
+              ? error.message
+              : `Unknown error searching ${resourceType}`,
+          details: error,
         };
         return throwError(() => fhirError);
       }),
@@ -491,7 +501,7 @@ export class FhirClientService {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (Array.isArray(value)) {
-        value.forEach(v => {
+        value.forEach((v) => {
           searchParams.append(key, String(v));
         });
       } else {
@@ -568,7 +578,9 @@ export class FhirClientService {
         if (bundle?.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
-            .filter((condition: unknown): condition is FhirResource => !!condition)
+            .filter(
+              (condition: unknown): condition is FhirResource => !!condition,
+            )
             .map((condition: unknown) => this.mapFhirCondition(condition));
         }
         return [];
@@ -576,8 +588,11 @@ export class FhirClientService {
       catchError((error: unknown) => {
         logger.error('Error fetching conditions:', error);
         const fhirError: FhirError = {
-          message: error instanceof Error ? error.message : 'Unknown error fetching conditions',
-          details: error
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error fetching conditions',
+          details: error,
         };
         return throwError(() => fhirError);
       }),
@@ -610,14 +625,19 @@ export class FhirClientService {
       resourceType: 'Condition',
       id: fhirCondition.id ?? 'unknown',
     };
-    if (fhirCondition.clinicalStatus) mapped.clinicalStatus = fhirCondition.clinicalStatus;
-    if (fhirCondition.verificationStatus) mapped.verificationStatus = fhirCondition.verificationStatus;
+    if (fhirCondition.clinicalStatus)
+      mapped.clinicalStatus = fhirCondition.clinicalStatus;
+    if (fhirCondition.verificationStatus)
+      mapped.verificationStatus = fhirCondition.verificationStatus;
     if (fhirCondition.code) mapped.code = fhirCondition.code;
     if (fhirCondition.subject) mapped.subject = fhirCondition.subject;
-    if (fhirCondition.onsetDateTime) mapped.onsetDateTime = fhirCondition.onsetDateTime;
-    if (fhirCondition.onsetPeriod) mapped.onsetPeriod = fhirCondition.onsetPeriod;
+    if (fhirCondition.onsetDateTime)
+      mapped.onsetDateTime = fhirCondition.onsetDateTime;
+    if (fhirCondition.onsetPeriod)
+      mapped.onsetPeriod = fhirCondition.onsetPeriod;
     if (fhirCondition.onsetAge) mapped.onsetAge = fhirCondition.onsetAge;
-    if (fhirCondition.recordedDate) mapped.recordedDate = fhirCondition.recordedDate;
+    if (fhirCondition.recordedDate)
+      mapped.recordedDate = fhirCondition.recordedDate;
     if (fhirCondition.recorder) mapped.recorder = fhirCondition.recorder;
     if (fhirCondition.asserter) mapped.asserter = fhirCondition.asserter;
     return mapped;
@@ -626,7 +646,9 @@ export class FhirClientService {
   /**
    * Get observations for current patient
    */
-  getObservations(params: Record<string, string> = {}): Observable<Observation[]> {
+  getObservations(
+    params: Record<string, string> = {},
+  ): Observable<Observation[]> {
     const currentPatient = this.getCurrentPatient();
 
     if (!currentPatient) {
@@ -642,7 +664,9 @@ export class FhirClientService {
         const codeFilter = params['code'].split(',');
         observations = observations.filter((observation) => {
           const codes =
-            observation.code?.coding?.map((coding) => coding.code).filter(Boolean) ?? [];
+            observation.code?.coding
+              ?.map((coding) => coding.code)
+              .filter(Boolean) ?? [];
           return codes.some((code) => code && codeFilter.includes(code));
         });
       }
@@ -660,16 +684,24 @@ export class FhirClientService {
         if (bundle?.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
-            .filter((observation: unknown): observation is FhirResource => !!observation)
-            .map((observation: unknown) => this.mapFhirObservation(observation));
+            .filter(
+              (observation: unknown): observation is FhirResource =>
+                !!observation,
+            )
+            .map((observation: unknown) =>
+              this.mapFhirObservation(observation),
+            );
         }
         return [];
       }),
       catchError((error: unknown) => {
         logger.error('Error fetching observations:', error);
         const fhirError: FhirError = {
-          message: error instanceof Error ? error.message : 'Unknown error fetching observations',
-          details: error
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error fetching observations',
+          details: error,
         };
         return throwError(() => fhirError);
       }),
@@ -705,11 +737,16 @@ export class FhirClientService {
     if (fhirObservation.status) mapped.status = fhirObservation.status;
     if (fhirObservation.code) mapped.code = fhirObservation.code;
     if (fhirObservation.subject) mapped.subject = fhirObservation.subject;
-    if (fhirObservation.effectiveDateTime) mapped.effectiveDateTime = fhirObservation.effectiveDateTime;
-    if (fhirObservation.effectivePeriod) mapped.effectivePeriod = fhirObservation.effectivePeriod;
-    if (fhirObservation.valueQuantity) mapped.valueQuantity = fhirObservation.valueQuantity;
-    if (fhirObservation.valueString) mapped.valueString = fhirObservation.valueString;
-    if (fhirObservation.valueCodeableConcept) mapped.valueCodeableConcept = fhirObservation.valueCodeableConcept;
+    if (fhirObservation.effectiveDateTime)
+      mapped.effectiveDateTime = fhirObservation.effectiveDateTime;
+    if (fhirObservation.effectivePeriod)
+      mapped.effectivePeriod = fhirObservation.effectivePeriod;
+    if (fhirObservation.valueQuantity)
+      mapped.valueQuantity = fhirObservation.valueQuantity;
+    if (fhirObservation.valueString)
+      mapped.valueString = fhirObservation.valueString;
+    if (fhirObservation.valueCodeableConcept)
+      mapped.valueCodeableConcept = fhirObservation.valueCodeableConcept;
     if (fhirObservation.component) mapped.component = fhirObservation.component;
     if (fhirObservation.issued) mapped.issued = fhirObservation.issued;
     if (fhirObservation.performer) mapped.performer = fhirObservation.performer;
@@ -752,7 +789,10 @@ export class FhirClientService {
         if (bundle?.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
-            .filter((medicationRequest: unknown): medicationRequest is FhirResource => !!medicationRequest)
+            .filter(
+              (medicationRequest: unknown): medicationRequest is FhirResource =>
+                !!medicationRequest,
+            )
             .map((medicationRequest: unknown) =>
               this.mapFhirMedicationRequest(medicationRequest),
             );
@@ -762,8 +802,11 @@ export class FhirClientService {
       catchError((error: unknown) => {
         logger.error('Error fetching medication requests:', error);
         const fhirError: FhirError = {
-          message: error instanceof Error ? error.message : 'Unknown error fetching medication requests',
-          details: error
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error fetching medication requests',
+          details: error,
         };
         return throwError(() => fhirError);
       }),
@@ -778,7 +821,8 @@ export class FhirClientService {
       typeof obj === 'object' &&
       obj !== null &&
       'resourceType' in obj &&
-      (obj as Record<string, unknown>)['resourceType'] === 'MedicationRequest' &&
+      (obj as Record<string, unknown>)['resourceType'] ===
+        'MedicationRequest' &&
       'id' in obj &&
       typeof (obj as Record<string, unknown>)['id'] === 'string'
     );
@@ -798,23 +842,38 @@ export class FhirClientService {
       resourceType: 'MedicationRequest',
       id: fhirMedicationRequest.id ?? 'unknown',
     };
-    if (fhirMedicationRequest.status) mapped.status = fhirMedicationRequest.status;
-    if (fhirMedicationRequest.intent) mapped.intent = fhirMedicationRequest.intent;
-    if (fhirMedicationRequest.category) mapped.category = fhirMedicationRequest.category;
-    if (fhirMedicationRequest.priority) mapped.priority = fhirMedicationRequest.priority;
-    if (fhirMedicationRequest.medicationCodeableConcept) mapped.medicationCodeableConcept = fhirMedicationRequest.medicationCodeableConcept;
-    if (fhirMedicationRequest.medicationReference) mapped.medicationReference = fhirMedicationRequest.medicationReference;
-    if (fhirMedicationRequest.subject) mapped.subject = fhirMedicationRequest.subject;
-    if (fhirMedicationRequest.encounter) mapped.encounter = fhirMedicationRequest.encounter;
-    if (fhirMedicationRequest.authoredOn) mapped.authoredOn = fhirMedicationRequest.authoredOn;
-    if (fhirMedicationRequest.requester) mapped.requester = fhirMedicationRequest.requester;
-    if (fhirMedicationRequest.reasonCode) mapped.reasonCode = fhirMedicationRequest.reasonCode;
-    if (fhirMedicationRequest.reasonReference) mapped.reasonReference = fhirMedicationRequest.reasonReference;
-    if (fhirMedicationRequest.dosageInstruction) mapped.dosageInstruction = fhirMedicationRequest.dosageInstruction;
+    if (fhirMedicationRequest.status)
+      mapped.status = fhirMedicationRequest.status;
+    if (fhirMedicationRequest.intent)
+      mapped.intent = fhirMedicationRequest.intent;
+    if (fhirMedicationRequest.category)
+      mapped.category = fhirMedicationRequest.category;
+    if (fhirMedicationRequest.priority)
+      mapped.priority = fhirMedicationRequest.priority;
+    if (fhirMedicationRequest.medicationCodeableConcept)
+      mapped.medicationCodeableConcept =
+        fhirMedicationRequest.medicationCodeableConcept;
+    if (fhirMedicationRequest.medicationReference)
+      mapped.medicationReference = fhirMedicationRequest.medicationReference;
+    if (fhirMedicationRequest.subject)
+      mapped.subject = fhirMedicationRequest.subject;
+    if (fhirMedicationRequest.encounter)
+      mapped.encounter = fhirMedicationRequest.encounter;
+    if (fhirMedicationRequest.authoredOn)
+      mapped.authoredOn = fhirMedicationRequest.authoredOn;
+    if (fhirMedicationRequest.requester)
+      mapped.requester = fhirMedicationRequest.requester;
+    if (fhirMedicationRequest.reasonCode)
+      mapped.reasonCode = fhirMedicationRequest.reasonCode;
+    if (fhirMedicationRequest.reasonReference)
+      mapped.reasonReference = fhirMedicationRequest.reasonReference;
+    if (fhirMedicationRequest.dosageInstruction)
+      mapped.dosageInstruction = fhirMedicationRequest.dosageInstruction;
     // Add fields that might exist in FHIR but not in our interface
-    const anyResource = fhirMedicationRequest as any;
-    if (anyResource.dispenseRequest) mapped.dispenseRequest = anyResource.dispenseRequest;
-    if (anyResource.substitution) mapped.substitution = anyResource.substitution;
+    if (fhirMedicationRequest.dispenseRequest)
+      mapped.dispenseRequest = fhirMedicationRequest.dispenseRequest;
+    if (fhirMedicationRequest.substitution)
+      mapped.substitution = fhirMedicationRequest.substitution;
     return mapped;
   }
 

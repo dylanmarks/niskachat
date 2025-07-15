@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/dot-notation */
+import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -166,7 +166,7 @@ describe('ChatComponent', () => {
               resourceType: 'Patient' as const,
               id: 'test-patient',
               name: [{ given: ['John'], family: 'Doe' }],
-            } as any,
+            } as Patient,
           },
         ],
       });
@@ -367,7 +367,7 @@ describe('ChatComponent', () => {
           id: 'test-patient',
           name: [{ given: ['John'], family: 'Doe' }],
           birthDate: '1980-01-01',
-        } as any,
+        },
       };
 
       fhirClientService.getCurrentContext.and.returnValue(mockContext);
@@ -385,9 +385,12 @@ describe('ChatComponent', () => {
       const context = await component['gatherPatientContext']();
 
       expect(context).toBeDefined();
-      expect(context.resourceType).toBe('Bundle');
-      expect(context.entry).toBeDefined();
-      expect(context.entry[0].resource).toEqual(mockContext.patient);
+      expect(context).not.toBeNull();
+      if (context) {
+        expect(context.resourceType).toBe('Bundle');
+        expect(context.entry).toBeDefined();
+        expect(context.entry?.[0]?.resource).toEqual(mockContext.patient);
+      }
     });
 
     it('should return null when not authenticated', async () => {

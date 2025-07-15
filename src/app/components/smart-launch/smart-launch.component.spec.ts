@@ -19,7 +19,7 @@ describe('SmartLaunchComponent', () => {
     contextSubject = new BehaviorSubject<FhirContext>({ authenticated: false });
 
     // Create spies
-    mockFhirClient = jasmine.createSpyObj(
+    mockFhirClient = jasmine.createSpyObj<FhirClientService>(
       'FhirClientService',
       ['handleOAuth2Ready', 'initializeSmartLaunch', 'clearSession'],
       {
@@ -27,7 +27,7 @@ describe('SmartLaunchComponent', () => {
       },
     );
 
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockRouter = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
       imports: [SmartLaunchComponent],
@@ -63,6 +63,7 @@ describe('SmartLaunchComponent', () => {
     const newContext: FhirContext = {
       authenticated: true,
       patient: {
+        resourceType: 'Patient',
         id: 'test-123',
         name: [{ family: 'Doe', given: ['John'] }],
       },

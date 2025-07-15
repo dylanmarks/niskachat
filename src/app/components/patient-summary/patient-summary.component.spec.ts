@@ -14,6 +14,7 @@ describe('PatientSummaryComponent', () => {
   let contextSubject: BehaviorSubject<FhirContext>;
 
   const mockPatient: Patient = {
+    resourceType: 'Patient',
     id: 'patient-123',
     name: [
       {
@@ -61,7 +62,7 @@ describe('PatientSummaryComponent', () => {
   beforeEach(async () => {
     contextSubject = new BehaviorSubject<FhirContext>({ authenticated: false });
 
-    mockFhirClient = jasmine.createSpyObj(
+    mockFhirClient = jasmine.createSpyObj<FhirClientService>(
       'FhirClientService',
       ['isAuthenticated', 'getPatient'],
       {
@@ -172,6 +173,7 @@ describe('PatientSummaryComponent', () => {
 
     it('should handle patient with only family name', () => {
       component.patient = {
+        resourceType: 'Patient',
         id: 'test',
         name: [{ family: 'Smith' }],
       };
@@ -181,6 +183,7 @@ describe('PatientSummaryComponent', () => {
 
     it('should handle patient with only given names', () => {
       component.patient = {
+        resourceType: 'Patient',
         id: 'test',
         name: [{ given: ['Jane', 'Marie'] }],
       };
@@ -189,7 +192,7 @@ describe('PatientSummaryComponent', () => {
     });
 
     it('should return "Unknown Patient" for missing name', () => {
-      component.patient = { id: 'test' };
+      component.patient = { resourceType: 'Patient', id: 'test' };
 
       expect(component.getPatientName()).toBe('Unknown Patient');
     });
@@ -225,7 +228,7 @@ describe('PatientSummaryComponent', () => {
     });
 
     it('should return null for missing birth date', () => {
-      component.patient = { id: 'test' };
+      component.patient = { resourceType: 'Patient', id: 'test' };
 
       expect(component.getAge()).toBeNull();
     });
@@ -268,6 +271,7 @@ describe('PatientSummaryComponent', () => {
 
     it('should return null when no MRN found', () => {
       component.patient = {
+        resourceType: 'Patient',
         id: 'test',
         identifier: [
           {
@@ -281,7 +285,7 @@ describe('PatientSummaryComponent', () => {
     });
 
     it('should return null when no identifiers', () => {
-      component.patient = { id: 'test' };
+      component.patient = { resourceType: 'Patient', id: 'test' };
 
       expect(component.getMedicalRecordNumber()).toBeNull();
     });
@@ -306,7 +310,7 @@ describe('PatientSummaryComponent', () => {
     });
 
     it('should handle missing contact info', () => {
-      component.patient = { id: 'test' };
+      component.patient = { resourceType: 'Patient', id: 'test' };
 
       expect(component.hasContactInfo()).toBeFalse();
       expect(component.getContactInfo()).toEqual([]);
@@ -334,7 +338,7 @@ describe('PatientSummaryComponent', () => {
     });
 
     it('should handle missing addresses', () => {
-      component.patient = { id: 'test' };
+      component.patient = { resourceType: 'Patient', id: 'test' };
 
       expect(component.hasAddresses()).toBeFalse();
       expect(component.getAddresses()).toEqual([]);
@@ -386,7 +390,7 @@ describe('PatientSummaryComponent', () => {
     });
 
     it('should handle missing fields gracefully', () => {
-      component.patient = { id: 'minimal-patient' };
+      component.patient = { resourceType: 'Patient', id: 'minimal-patient' };
       component.isLoading = false;
       component.errorMessage = '';
 
