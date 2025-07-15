@@ -82,7 +82,9 @@ describe('ObservationsChartComponent', () => {
   ];
 
   beforeEach(async () => {
-    const spy = jasmine.createSpyObj('FhirClientService', ['getObservations']);
+    const spy = jasmine.createSpyObj<FhirClientService>('FhirClientService', [
+      'getObservations',
+    ]);
 
     await TestBed.configureTestingModule({
       imports: [ObservationsChartComponent],

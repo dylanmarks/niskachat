@@ -8,7 +8,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
-import { FhirClientService } from '../../services/fhir-client.service';
+import {
+  FhirBundle,
+  FhirClientService,
+} from '../../services/fhir-client.service';
 import { logger } from '../../utils/logger';
 
 export interface ChatMessage {
@@ -22,7 +25,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   query: string;
   context: string;
-  patientData?: Record<string, unknown>;
+  patientData?: FhirBundle | Record<string, unknown> | null;
 }
 
 export interface ChatResponse {
@@ -235,7 +238,7 @@ export class ChatComponent {
   /**
    * Gather comprehensive patient context for the LLM
    */
-  private async gatherPatientContext(): Promise<any> {
+  private async gatherPatientContext(): Promise<FhirBundle | null> {
     const context = this.fhirClientService.getCurrentContext();
     logger.debug('Current FHIR context retrieved');
 
@@ -256,7 +259,13 @@ export class ChatComponent {
       // Fallback to basic patient data if bundle building fails
       logger.debug('Falling back to basic patient data');
       return {
-        patient: context.patient,
+        resourceType: 'Bundle',
+        type: 'collection',
+        entry: [
+          {
+            resource: context.patient,
+          },
+        ],
       };
     }
   }
