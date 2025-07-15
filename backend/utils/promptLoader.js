@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,12 +20,12 @@ export function loadPrompt(promptName) {
   }
 
   try {
-    const promptPath = path.join(__dirname, '../prompts', `${promptName}.txt`);
-    const promptContent = fs.readFileSync(promptPath, 'utf-8');
-    
+    const promptPath = path.join(__dirname, "../prompts", `${promptName}.txt`);
+    const promptContent = fs.readFileSync(promptPath, "utf-8");
+
     // Cache the prompt for future use
     promptCache.set(promptName, promptContent);
-    
+
     return promptContent;
   } catch (error) {
     console.error(`Failed to load prompt '${promptName}':`, error.message);
@@ -41,13 +41,13 @@ export function loadPrompt(promptName) {
  */
 export function formatPrompt(template, variables = {}) {
   let formatted = template;
-  
+
   // Replace all placeholders in the format {variableName}
   for (const [key, value] of Object.entries(variables)) {
     const placeholder = `{${key}}`;
-    formatted = formatted.replace(new RegExp(placeholder, 'g'), value || '');
+    formatted = formatted.replace(new RegExp(placeholder, "g"), value || "");
   }
-  
+
   return formatted;
 }
 

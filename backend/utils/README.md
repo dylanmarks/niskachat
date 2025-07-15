@@ -16,13 +16,13 @@ A TypeScript/Node.js utility that converts FHIR R4-compliant bundles into charac
 ## Usage
 
 ```javascript
-import { compressFHIRBundle } from './fhirBundleCompressor.js';
+import { compressFHIRBundle } from "./fhirBundleCompressor.js";
 
 const fhirBundle = {
-  resourceType: 'Bundle',
+  resourceType: "Bundle",
   entry: [
     // ... FHIR resources
-  ]
+  ],
 };
 
 const compressed = compressFHIRBundle(fhirBundle);
@@ -32,11 +32,13 @@ console.log(compressed);
 ## Output Format
 
 The compressed output follows this structure:
+
 ```
 Pt: [Name], [Gender], DOB [Date], MRN [Number]; Dx: [Conditions]; Rx: [Medications]; Labs: [Observations]; Allergies: [Allergies]; Vax: [Immunizations]; Proc: [Procedures]; Reports: [DiagnosticReports]
 ```
 
 ### Example Output
+
 ```
 Pt: Jane Doe, F, DOB 1972-01-01, MRN MRN123456; Dx: T2DM (2010-01-01), HTN (2020-01-01); Rx: Metformin 500mg BID, Lisinopril 10mg QD; Labs: HbA1c 8.2% (2024-06-01), LDL Cholesterol 130mg/dL (2024-04-15), Blood Pressure 142/90 (2024-06-01); Allergies: Penicillin (Skin rash); Vax: Flu Vax (2023-10-01)
 ```
@@ -50,16 +52,16 @@ Pt: Jane Doe, F, DOB 1972-01-01, MRN MRN123456; Dx: T2DM (2010-01-01), HTN (2020
 
 ## Resource Type Mapping
 
-| FHIR Resource | Prefix | Includes |
-|---------------|--------|----------|
-| Patient | `Pt:` | Name, gender, DOB, MRN |
-| Condition | `Dx:` | Code/display, onset date (active only) |
-| MedicationRequest | `Rx:` | Name, dose, frequency (active only) |
-| Observation | `Labs:` | Value, date, units (max 10 per type) |
-| AllergyIntolerance | `Allergies:` | Substance, reaction |
-| Immunization | `Vax:` | Vaccine, date |
-| Procedure | `Proc:` | Type, date |
-| DiagnosticReport | `Reports:` | Name, date |
+| FHIR Resource      | Prefix       | Includes                               |
+| ------------------ | ------------ | -------------------------------------- |
+| Patient            | `Pt:`        | Name, gender, DOB, MRN                 |
+| Condition          | `Dx:`        | Code/display, onset date (active only) |
+| MedicationRequest  | `Rx:`        | Name, dose, frequency (active only)    |
+| Observation        | `Labs:`      | Value, date, units (max 10 per type)   |
+| AllergyIntolerance | `Allergies:` | Substance, reaction                    |
+| Immunization       | `Vax:`       | Vaccine, date                          |
+| Procedure          | `Proc:`      | Type, date                             |
+| DiagnosticReport   | `Reports:`   | Name, date                             |
 
 ## Medical Abbreviations
 
@@ -83,6 +85,7 @@ The compressor uses common medical abbreviations:
 ## Testing
 
 Run the comprehensive test suite:
+
 ```bash
 npm run test:backend -- --testNamePattern="FHIR Bundle Compressor"
 ```
@@ -90,6 +93,7 @@ npm run test:backend -- --testNamePattern="FHIR Bundle Compressor"
 ## Examples
 
 See `fhirBundleCompressor.example.js` for complete usage examples:
+
 ```bash
 node backend/utils/fhirBundleCompressor.example.js
 ```
@@ -99,24 +103,28 @@ node backend/utils/fhirBundleCompressor.example.js
 ### `compressFHIRBundle(bundle)`
 
 **Parameters:**
+
 - `bundle` (Object): FHIR R4-compliant Bundle JSON object
 
 **Returns:**
+
 - `string`: Compressed clinical summary
 
 **Example:**
+
 ```javascript
 const result = compressFHIRBundle({
-  resourceType: 'Bundle',
+  resourceType: "Bundle",
   entry: [
     // ... FHIR resources
-  ]
+  ],
 });
 ```
 
 ## Error Handling
 
 The compressor gracefully handles:
+
 - Missing or null bundle
 - Empty bundles
 - Missing resource fields

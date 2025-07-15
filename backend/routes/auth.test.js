@@ -1,7 +1,7 @@
 import express from "express";
+import session from "express-session";
 import request from "supertest";
 import authRouter from "./auth.js";
-import session from "express-session";
 
 // Create a test app
 const app = express();
@@ -61,10 +61,7 @@ describe("OAuth2 SMART Authentication Routes", () => {
     });
 
     it("should work with minimal parameters", async () => {
-      const response = await agent
-        .post("/auth/launch")
-        .send({})
-        .expect(200);
+      const response = await agent.post("/auth/launch").send({}).expect(200);
 
       expect(response.body).toHaveProperty("authUrl");
       expect(response.body).toHaveProperty("state");

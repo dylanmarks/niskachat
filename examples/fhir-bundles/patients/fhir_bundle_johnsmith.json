@@ -10,9 +10,7 @@
           {
             "use": "official",
             "family": "Smith",
-            "given": [
-              "John"
-            ]
+            "given": ["John"]
           }
         ],
         "gender": "male",

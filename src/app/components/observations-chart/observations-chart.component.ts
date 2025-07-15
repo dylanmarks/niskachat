@@ -558,7 +558,8 @@ export class ObservationsChartComponent
     } else if (event && typeof event === 'object' && 'value' in event) {
       newCategory = (event as { value: string }).value;
     } else {
-      newCategory = (event as Event & { target: { value: string } }).target?.value ?? '';
+      newCategory =
+        (event as Event & { target: { value: string } }).target?.value ?? '';
     }
 
     // Prevent unnecessary processing if category hasn't changed
@@ -591,7 +592,9 @@ export class ObservationsChartComponent
       return observations;
     }
 
-    const categoryLoincCodes = this.LOINC_CATEGORIES[category as keyof typeof this.LOINC_CATEGORIES] as string[] | undefined;
+    const categoryLoincCodes = this.LOINC_CATEGORIES[
+      category as keyof typeof this.LOINC_CATEGORIES
+    ] as string[] | undefined;
     if (!categoryLoincCodes) {
       return [];
     }
@@ -673,7 +676,9 @@ export class ObservationsChartComponent
           tension: 0.1,
         });
         colorIndex++;
-        logger.info(`Created dataset for ${label} with ${String(data.length)} points`);
+        logger.info(
+          `Created dataset for ${label} with ${String(data.length)} points`,
+        );
       } else {
         logger.info(`No valid data points for ${label}`);
       }

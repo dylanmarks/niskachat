@@ -224,7 +224,7 @@ Branch naming format: `feature/<phase-name>` (e.g. `feature/patient-summary`)
 - "Summarize" button with sparkle icon at the top of the page
 - Component sends structured summary to LLM with the full bundle payload
 - Plugin system for pluggable LLM providers
-- Store secret credentials for API properly 
+- Store secret credentials for API properly
 - Prompt stored in external file to allow refinement and evaluation
 - Logging of interactions
 

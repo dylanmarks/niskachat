@@ -10,9 +10,7 @@
           {
             "use": "official",
             "family": "Johnson",
-            "given": [
-              "Maria"
-            ]
+            "given": ["Maria"]
           }
         ],
         "gender": "female",
