@@ -9,6 +9,7 @@ import {
   Condition,
   FhirClientService,
   FhirContext,
+  FhirMedicationRequest,
   MedicationRequest,
   Observation,
   Patient,
@@ -184,7 +185,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.uploadStatus.isUploading = false;
     } catch (error) {
       logger.error('Error processing FHIR bundle:', error);
-      this.uploadStatus.error = `Failed to process file: ${error}`;
+      this.uploadStatus.error = `Failed to process file: ${error instanceof Error ? error.message : String(error)}`;
       this.uploadStatus.isUploading = false;
       this.uploadStatus.progress = 0;
     }
@@ -270,7 +271,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     if (patientResource.name) mapped.name = patientResource.name;
     if (patientResource.birthDate) mapped.birthDate = patientResource.birthDate;
     if (patientResource.gender) mapped.gender = patientResource.gender;
-    if (patientResource.identifier) mapped.identifier = patientResource.identifier;
+    if (patientResource.identifier)
+      mapped.identifier = patientResource.identifier;
     if (patientResource.telecom) mapped.telecom = patientResource.telecom;
     if (patientResource.address) mapped.address = patientResource.address;
     return mapped;
@@ -282,16 +284,24 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       resourceType: 'Condition',
       id: conditionResource.id || '',
     };
-    if (conditionResource.clinicalStatus) mapped.clinicalStatus = conditionResource.clinicalStatus;
-    if (conditionResource.verificationStatus) mapped.verificationStatus = conditionResource.verificationStatus;
+    if (conditionResource.clinicalStatus)
+      mapped.clinicalStatus = conditionResource.clinicalStatus;
+    if (conditionResource.verificationStatus)
+      mapped.verificationStatus = conditionResource.verificationStatus;
     if (conditionResource.code) mapped.code = conditionResource.code;
     if (conditionResource.subject) mapped.subject = conditionResource.subject;
-    if (conditionResource.onsetDateTime) mapped.onsetDateTime = conditionResource.onsetDateTime;
-    if (conditionResource.onsetPeriod) mapped.onsetPeriod = conditionResource.onsetPeriod;
-    if (conditionResource.onsetAge) mapped.onsetAge = conditionResource.onsetAge;
-    if (conditionResource.recordedDate) mapped.recordedDate = conditionResource.recordedDate;
-    if (conditionResource.recorder) mapped.recorder = conditionResource.recorder;
-    if (conditionResource.asserter) mapped.asserter = conditionResource.asserter;
+    if (conditionResource.onsetDateTime)
+      mapped.onsetDateTime = conditionResource.onsetDateTime;
+    if (conditionResource.onsetPeriod)
+      mapped.onsetPeriod = conditionResource.onsetPeriod;
+    if (conditionResource.onsetAge)
+      mapped.onsetAge = conditionResource.onsetAge;
+    if (conditionResource.recordedDate)
+      mapped.recordedDate = conditionResource.recordedDate;
+    if (conditionResource.recorder)
+      mapped.recorder = conditionResource.recorder;
+    if (conditionResource.asserter)
+      mapped.asserter = conditionResource.asserter;
     return mapped;
   }
 
@@ -303,39 +313,63 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     };
     if (observationResource.status) mapped.status = observationResource.status;
     if (observationResource.code) mapped.code = observationResource.code;
-    if (observationResource.subject) mapped.subject = observationResource.subject;
-    if (observationResource.effectiveDateTime) mapped.effectiveDateTime = observationResource.effectiveDateTime;
-    if (observationResource.effectivePeriod) mapped.effectivePeriod = observationResource.effectivePeriod;
-    if (observationResource.valueQuantity) mapped.valueQuantity = observationResource.valueQuantity;
-    if (observationResource.valueString) mapped.valueString = observationResource.valueString;
-    if (observationResource.valueCodeableConcept) mapped.valueCodeableConcept = observationResource.valueCodeableConcept;
-    if (observationResource.component) mapped.component = observationResource.component;
+    if (observationResource.subject)
+      mapped.subject = observationResource.subject;
+    if (observationResource.effectiveDateTime)
+      mapped.effectiveDateTime = observationResource.effectiveDateTime;
+    if (observationResource.effectivePeriod)
+      mapped.effectivePeriod = observationResource.effectivePeriod;
+    if (observationResource.valueQuantity)
+      mapped.valueQuantity = observationResource.valueQuantity;
+    if (observationResource.valueString)
+      mapped.valueString = observationResource.valueString;
+    if (observationResource.valueCodeableConcept)
+      mapped.valueCodeableConcept = observationResource.valueCodeableConcept;
+    if (observationResource.component)
+      mapped.component = observationResource.component;
     if (observationResource.issued) mapped.issued = observationResource.issued;
-    if (observationResource.performer) mapped.performer = observationResource.performer;
+    if (observationResource.performer)
+      mapped.performer = observationResource.performer;
     return mapped;
   }
 
   private mapMedicationRequest(resource: FhirResource): MedicationRequest {
-    const medicationResource = resource as any; // Use any to access all FHIR fields
-    return {
+    const medicationResource = resource as unknown as FhirMedicationRequest;
+    const mapped: MedicationRequest = {
       resourceType: 'MedicationRequest',
-      id: medicationResource.id || '',
-      status: medicationResource.status || undefined,
-      intent: medicationResource.intent || undefined,
-      category: medicationResource.category || undefined,
-      priority: medicationResource.priority || undefined,
-      medicationCodeableConcept: medicationResource.medicationCodeableConcept || undefined,
-      medicationReference: medicationResource.medicationReference || undefined,
-      subject: medicationResource.subject || undefined,
-      encounter: medicationResource.encounter || undefined,
-      authoredOn: medicationResource.authoredOn || undefined,
-      requester: medicationResource.requester || undefined,
-      reasonCode: medicationResource.reasonCode || undefined,
-      reasonReference: medicationResource.reasonReference || undefined,
-      dosageInstruction: medicationResource.dosageInstruction || undefined,
-      dispenseRequest: medicationResource.dispenseRequest || undefined,
-      substitution: medicationResource.substitution || undefined,
+      id: medicationResource.id ?? '',
     };
+
+    if (medicationResource.status) mapped.status = medicationResource.status;
+    if (medicationResource.intent) mapped.intent = medicationResource.intent;
+    if (medicationResource.category)
+      mapped.category = medicationResource.category;
+    if (medicationResource.priority)
+      mapped.priority = medicationResource.priority;
+    if (medicationResource.medicationCodeableConcept)
+      mapped.medicationCodeableConcept =
+        medicationResource.medicationCodeableConcept;
+    if (medicationResource.medicationReference)
+      mapped.medicationReference = medicationResource.medicationReference;
+    if (medicationResource.subject) mapped.subject = medicationResource.subject;
+    if (medicationResource.encounter)
+      mapped.encounter = medicationResource.encounter;
+    if (medicationResource.authoredOn)
+      mapped.authoredOn = medicationResource.authoredOn;
+    if (medicationResource.requester)
+      mapped.requester = medicationResource.requester;
+    if (medicationResource.reasonCode)
+      mapped.reasonCode = medicationResource.reasonCode;
+    if (medicationResource.reasonReference)
+      mapped.reasonReference = medicationResource.reasonReference;
+    if (medicationResource.dosageInstruction)
+      mapped.dosageInstruction = medicationResource.dosageInstruction;
+    if (medicationResource.dispenseRequest)
+      mapped.dispenseRequest = medicationResource.dispenseRequest;
+    if (medicationResource.substitution)
+      mapped.substitution = medicationResource.substitution;
+
+    return mapped;
   }
 
   loadResourcesIntoService(resources: {
@@ -427,7 +461,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.uploadStatus.progress = 50;
 
       const bundleText = await response.text();
-      const bundle: FhirBundle = JSON.parse(bundleText);
+      const bundle: FhirBundle = JSON.parse(bundleText) as FhirBundle;
 
       this.uploadStatus.progress = 75;
 
@@ -448,7 +482,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     } catch (error) {
       logger.error('Error loading example data:', error);
       this.uploadStatus.isUploading = false;
-      this.uploadStatus.error = `Failed to load example data: ${error}`;
+      this.uploadStatus.error = `Failed to load example data: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 }

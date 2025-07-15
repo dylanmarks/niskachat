@@ -9,8 +9,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
+  Condition,
   FhirClientService,
   FhirContext,
+  MedicationRequest,
+  Observation,
   Patient,
 } from '../../services/fhir-client.service';
 import { logger } from '../../utils/logger';
@@ -20,6 +23,19 @@ export interface LLMSummaryResponse {
   llmUsed: boolean;
   warning?: string;
   error?: string;
+}
+
+type FhirBundleResource = Patient | Condition | Observation | MedicationRequest;
+
+interface BundleEntry {
+  resource: FhirBundleResource;
+}
+
+interface FhirBundle {
+  resourceType: 'Bundle';
+  id: string;
+  type: string;
+  entry: BundleEntry[];
 }
 
 export interface HttpErrorResponse {
@@ -298,7 +314,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
     try {
       // Create a basic FHIR Bundle with patient data
-      const bundle = {
+      const bundle: FhirBundle = {
         resourceType: 'Bundle',
         id: `bundle-${this.patient.id || 'unknown'}`,
         type: 'collection',
@@ -306,7 +322,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           {
             resource: this.patient,
           },
-        ] as { resource: any }[],
+        ] as BundleEntry[],
       };
 
       // If we have a FHIR client, try to fetch additional resources
@@ -318,7 +334,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           );
           if (conditions) {
             conditions.forEach((condition) => {
-              bundle.entry.push({ resource: condition as any });
+              bundle.entry.push({ resource: condition });
             });
           }
 
@@ -328,7 +344,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           );
           if (observations) {
             observations.forEach((observation) => {
-              bundle.entry.push({ resource: observation as any });
+              bundle.entry.push({ resource: observation });
             });
           }
 
@@ -338,7 +354,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           );
           if (medications) {
             medications.forEach((medication) => {
-              bundle.entry.push({ resource: medication as any });
+              bundle.entry.push({ resource: medication });
             });
           }
         } catch (fetchError) {
@@ -365,7 +381,9 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
       logger.error('Error generating summary:', error);
       const httpError = error as HttpErrorResponse;
       this.summaryError =
-        httpError.error?.error || httpError.message || 'Failed to generate summary';
+        httpError.error?.error ||
+        httpError.message ||
+        'Failed to generate summary';
     } finally {
       this.isSummarizing = false;
     }
@@ -381,7 +399,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
     try {
       // Create a basic FHIR Bundle with patient data
-      const bundle = {
+      const bundle: FhirBundle = {
         resourceType: 'Bundle',
         id: `bundle-${this.patient.id || 'unknown'}`,
         type: 'collection',
@@ -389,7 +407,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           {
             resource: this.patient,
           },
-        ] as { resource: any }[],
+        ] as BundleEntry[],
       };
 
       // If we have a FHIR client, try to fetch additional resources
@@ -401,7 +419,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           );
           if (conditions) {
             conditions.forEach((condition) => {
-              bundle.entry.push({ resource: condition as any });
+              bundle.entry.push({ resource: condition });
             });
           }
 
@@ -411,7 +429,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           );
           if (observations) {
             observations.forEach((observation) => {
-              bundle.entry.push({ resource: observation as any });
+              bundle.entry.push({ resource: observation });
             });
           }
 
@@ -421,7 +439,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           );
           if (medications) {
             medications.forEach((medication) => {
-              bundle.entry.push({ resource: medication as any });
+              bundle.entry.push({ resource: medication });
             });
           }
         } catch (fetchError) {
@@ -432,7 +450,9 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
       // Call the backend to get the compressed summary
       const response = await firstValueFrom(
-        this.http.post<CompressedSummaryResponse>('/api/llm/compress', { bundle }),
+        this.http.post<CompressedSummaryResponse>('/api/llm/compress', {
+          bundle,
+        }),
       );
 
       this.compressedSummary = response.compressedSummary || null;

@@ -4,14 +4,17 @@
 
 ## 🌐 Project Overview
 
+![Niska Chat logo](src/assets/niska-logo.png)
+
+Niska Chat draws its name from the Indigenous Cree word niska (“goose”). Just as geese fly in cooperative V-formation, the app promotes shared direction and mutual support among clinicians and patients. Geese navigate with an innate magnetic compass, mirroring the platform’s goal of steering users confidently through complex health data. Niska Chat was built in Calgary on the traditional territories of Treaty 7: the Blackfoot Confederacy (Siksika, Piikani, Kainai), the Tsuut’ina Nation, the Stoney Nakoda Nations, and the Métis Nation of Alberta, Region 3.
+
 NiskaChat is designed for:
 
 - **Clinicians** reviewing longitudinal patient data
 - **Care coordinators** managing multi-provider care plans
-- **Patients** wanting to view and interact with their full medical record
 - **Future agentic capabilities** for interpreting and guiding health actions
 
-Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, with future support for the Google Cloud Healthcare API.
+Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, with future support for the Google Cloud Healthcare API, Aidbox, or integration into SMART compliant EHRs such as Epic and Oracle.
 
 ---
 
@@ -91,25 +94,29 @@ cd niska-chat
 
 # Install dependencies
 npm install
+```
 
-# Run backend
-cd backend
-npm install
-npm run dev
+### Configuration
 
-# Set environment variables (update values for production)
-export SESSION_SECRET="replace-this"
-export CORS_ORIGINS="http://localhost:4200"
-# For multiple origins use a comma separated list, e.g.:
-# export CORS_ORIGINS="http://localhost:4200,https://other.example"
-# The server will only set `Access-Control-Allow-Origin` when the
-# request origin matches one of the allowed values.
+NiskaChat is configured using environment variables. For local development, create a `.env` file in the project root by copying the example file:
 
-# For production deployments, configure a persistent session store such as Redis
-# instead of the default in-memory store used in development.
+```bash
+cp .env.example .env
+```
 
-# Run frontend
-cd ../frontend
-npm install
-ng serve
+Next, open the `.env` file and configure the following variables:
+
+- **`LLM_PROVIDER`**: Set this to `claude-haiku` to use the Anthropic API.
+- **`ANTHROPIC_API_KEY`**: Your Anthropic API key. This is required if you're using the `claude-haiku` provider.
+- **`SESSION_SECRET`**: A long, random string used to secure user sessions. You can generate one using a tool like `openssl rand -hex 32`.
+- **`CORS_ORIGINS`**: A comma-separated list of allowed origins for CORS requests. For local development, this should be `http://localhost:4200`.
+
+### Running the Application
+
+```bash
+# Run the backend server
+npm run start:backend
+
+# In a separate terminal, run the frontend application
+npm run start
 ```

@@ -23,7 +23,9 @@
       "Bash(npm run lint:*)",
       "Bash(npx eslint:*)",
       "Bash(npm run build:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npm test:*)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }
