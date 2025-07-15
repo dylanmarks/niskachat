@@ -5,6 +5,7 @@ This file contains examples of how to customize the clinical chat prompt for dif
 ## Basic Clinical Questions
 
 ### Example Interactions:
+
 - "What are this patient's active conditions?"
 - "Show me the latest lab results"
 - "What medications is the patient currently taking?"
@@ -13,7 +14,9 @@ This file contains examples of how to customize the clinical chat prompt for dif
 ## Specialized Prompts for Different Departments
 
 ### Emergency Department Focus
+
 Add to the clinical-chat.txt prompt:
+
 ```
 ### EMERGENCY DEPARTMENT PRIORITIES
 - Identify acute/urgent conditions requiring immediate attention
@@ -23,7 +26,9 @@ Add to the clinical-chat.txt prompt:
 ```
 
 ### Primary Care Focus
+
 Add to the clinical-chat.txt prompt:
+
 ```
 ### PRIMARY CARE PRIORITIES
 - Focus on preventive care opportunities
@@ -33,7 +38,9 @@ Add to the clinical-chat.txt prompt:
 ```
 
 ### Cardiology Focus
+
 Add to the clinical-chat.txt prompt:
+
 ```
 ### CARDIOLOGY FOCUS
 - Prioritize cardiovascular conditions and risk factors
@@ -45,7 +52,9 @@ Add to the clinical-chat.txt prompt:
 ## Response Style Customization
 
 ### More Concise Responses
+
 Replace the response structure section with:
+
 ```
 ### 4. RESPONSE STRUCTURE
 - Provide direct, bullet-point answers
@@ -55,7 +64,9 @@ Replace the response structure section with:
 ```
 
 ### More Detailed Analysis
+
 Replace the response structure section with:
+
 ```
 ### 4. RESPONSE STRUCTURE
 - Provide comprehensive clinical analysis
@@ -74,6 +85,7 @@ Replace the response structure section with:
 ## Testing Different Prompts
 
 You can create specialty-specific prompt files:
+
 - `clinical-chat-ed.txt` for Emergency Department
 - `clinical-chat-cardio.txt` for Cardiology
 - `clinical-chat-primary.txt` for Primary Care

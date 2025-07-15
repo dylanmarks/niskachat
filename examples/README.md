@@ -4,8 +4,6 @@ This directory contains example FHIR bundles and resources for development, test
 
 ## 📁 Folder Structure
 
-
-
 ## 🎯 Usage
 
 ### For Development
