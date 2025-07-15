@@ -24,11 +24,16 @@ function shouldLog(level: LogLevel): boolean {
   return LEVELS[level] <= LEVELS[currentLevel];
 }
 
+interface LogOptions {
+  phi?: boolean;
+}
+
 function log(level: LogLevel, args: unknown[]): void {
   let phi = false;
   const last = args[args.length - 1];
-  if (typeof last === 'object' && last !== null && 'phi' in (last as any)) {
-    phi = Boolean((last as any).phi);
+  if (typeof last === 'object' && last !== null && 'phi' in last) {
+    const options = last as LogOptions;
+    phi = Boolean(options.phi);
     args = args.slice(0, -1);
   }
 

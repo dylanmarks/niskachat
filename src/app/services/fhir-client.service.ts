@@ -13,281 +13,254 @@ import { catchError, map } from 'rxjs/operators';
 import { oauth2 } from 'fhirclient';
 import { logger } from '../utils/logger';
 
-export interface Patient {
-  id: string;
-  name?: {
-    family?: string;
-    given?: string[];
-    use?: string;
-  }[];
+// FHIR Resource Base Interface
+interface FhirResource {
+  resourceType: string;
+  id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+  };
+}
+
+// Error interfaces for type safety
+interface FhirError {
+  message: string;
+  status?: number;
+  details?: unknown;
+}
+
+// FHIR Bundle Interface
+interface FhirBundle extends FhirResource {
+  resourceType: 'Bundle';
+  type: string;
+  entry?: FhirBundleEntry[];
+}
+
+interface FhirBundleEntry {
+  resource?: FhirResource;
+  fullUrl?: string;
+}
+
+// FHIR Patient Resource Interface
+interface FhirPatient extends FhirResource {
+  resourceType: 'Patient';
+  name?: FhirHumanName[];
   birthDate?: string;
   gender?: string;
-  identifier?: {
-    system?: string;
-    value?: string;
-    type?: {
-      coding?: {
-        system?: string;
-        code?: string;
-        display?: string;
-      }[];
-    };
-  }[];
-  telecom?: {
-    system?: string;
-    value?: string;
-    use?: string;
-  }[];
-  address?: {
-    use?: string;
-    text?: string;
-    line?: string[];
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  }[];
+  identifier?: FhirIdentifier[];
+  telecom?: FhirContactPoint[];
+  address?: FhirAddress[];
 }
 
-export interface Condition {
+interface FhirHumanName {
+  family?: string;
+  given?: string[];
+  use?: string;
+}
+
+interface FhirIdentifier {
+  system?: string;
+  value?: string;
+  type?: FhirCodeableConcept;
+}
+
+interface FhirContactPoint {
+  system?: string;
+  value?: string;
+  use?: string;
+}
+
+interface FhirAddress {
+  use?: string;
+  text?: string;
+  line?: string[];
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+interface FhirCodeableConcept {
+  coding?: FhirCoding[];
+  text?: string;
+}
+
+interface FhirCoding {
+  system?: string;
+  code?: string;
+  display?: string;
+}
+
+// Application Patient Interface (for our components)
+export interface Patient {
+  resourceType: 'Patient';
   id: string;
-  clinicalStatus?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-  };
-  verificationStatus?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-  };
-  code?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-    text?: string;
-  };
-  subject?: {
-    reference?: string;
-    display?: string;
-  };
-  onsetDateTime?: string;
-  onsetPeriod?: {
-    start?: string;
-    end?: string;
-  };
-  onsetAge?: {
-    value?: number;
-    unit?: string;
-  };
-  recordedDate?: string;
-  recorder?: {
-    reference?: string;
-    display?: string;
-  };
-  asserter?: {
-    reference?: string;
-    display?: string;
-  };
+  name?: FhirHumanName[];
+  birthDate?: string;
+  gender?: string;
+  identifier?: FhirIdentifier[];
+  telecom?: FhirContactPoint[];
+  address?: FhirAddress[];
 }
 
+// FHIR Condition Resource Interface
+interface FhirCondition extends FhirResource {
+  resourceType: 'Condition';
+  clinicalStatus?: FhirCodeableConcept;
+  verificationStatus?: FhirCodeableConcept;
+  code?: FhirCodeableConcept;
+  subject?: FhirReference;
+  onsetDateTime?: string;
+  onsetPeriod?: FhirPeriod;
+  onsetAge?: FhirAge;
+  recordedDate?: string;
+  recorder?: FhirReference;
+  asserter?: FhirReference;
+}
+
+interface FhirReference {
+  reference?: string;
+  display?: string;
+}
+
+interface FhirPeriod {
+  start?: string;
+  end?: string;
+}
+
+interface FhirAge {
+  value?: number;
+  unit?: string;
+}
+
+// Application Condition Interface (for our components)
+export interface Condition {
+  resourceType: 'Condition';
+  id: string;
+  clinicalStatus?: FhirCodeableConcept;
+  verificationStatus?: FhirCodeableConcept;
+  code?: FhirCodeableConcept;
+  subject?: FhirReference;
+  onsetDateTime?: string;
+  onsetPeriod?: FhirPeriod;
+  onsetAge?: FhirAge;
+  recordedDate?: string;
+  recorder?: FhirReference;
+  asserter?: FhirReference;
+}
+
+// FHIR Observation Resource Interface
+interface FhirObservation extends FhirResource {
+  resourceType: 'Observation';
+  status?: string;
+  code?: FhirCodeableConcept;
+  subject?: FhirReference;
+  effectiveDateTime?: string;
+  effectivePeriod?: FhirPeriod;
+  valueQuantity?: FhirQuantity;
+  valueString?: string;
+  valueCodeableConcept?: FhirCodeableConcept;
+  component?: FhirObservationComponent[];
+  issued?: string;
+  performer?: FhirReference[];
+}
+
+interface FhirQuantity {
+  value?: number;
+  unit?: string;
+  system?: string;
+  code?: string;
+}
+
+interface FhirObservationComponent {
+  code?: FhirCodeableConcept;
+  valueQuantity?: FhirQuantity;
+  valueString?: string;
+  valueCodeableConcept?: FhirCodeableConcept;
+}
+
+// Application Observation Interface (for our components)
 export interface Observation {
+  resourceType: 'Observation';
   id: string;
   status?: string;
-  code?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-    text?: string;
-  };
-  subject?: {
-    reference?: string;
-    display?: string;
-  };
+  code?: FhirCodeableConcept;
+  subject?: FhirReference;
   effectiveDateTime?: string;
-  effectivePeriod?: {
-    start?: string;
-    end?: string;
-  };
-  valueQuantity?: {
-    value?: number;
-    unit?: string;
-    system?: string;
-    code?: string;
-  };
+  effectivePeriod?: FhirPeriod;
+  valueQuantity?: FhirQuantity;
   valueString?: string;
-  valueCodeableConcept?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-    text?: string;
-  };
-  component?: {
-    code?: {
-      coding?: {
-        system?: string;
-        code?: string;
-        display?: string;
-      }[];
-      text?: string;
-    };
-    valueQuantity?: {
-      value?: number;
-      unit?: string;
-      system?: string;
-      code?: string;
-    };
-    valueString?: string;
-    valueCodeableConcept?: {
-      coding?: {
-        system?: string;
-        code?: string;
-        display?: string;
-      }[];
-      text?: string;
-    };
-  }[];
+  valueCodeableConcept?: FhirCodeableConcept;
+  component?: FhirObservationComponent[];
   issued?: string;
-  performer?: {
-    reference?: string;
-    display?: string;
-  }[];
+  performer?: FhirReference[];
 }
 
+// FHIR MedicationRequest Resource Interface
+interface FhirMedicationRequest extends FhirResource {
+  resourceType: 'MedicationRequest';
+  status?: string;
+  intent?: string;
+  category?: FhirCodeableConcept[];
+  priority?: string;
+  medicationCodeableConcept?: FhirCodeableConcept;
+  medicationReference?: FhirReference;
+  subject?: FhirReference;
+  encounter?: FhirReference;
+  authoredOn?: string;
+  requester?: FhirReference;
+  reasonCode?: FhirCodeableConcept[];
+  reasonReference?: FhirReference[];
+  dosageInstruction?: FhirDosage[];
+}
+
+interface FhirDosage {
+  text?: string;
+  timing?: FhirTiming;
+  route?: FhirCodeableConcept;
+  doseAndRate?: FhirDoseAndRate[];
+}
+
+interface FhirTiming {
+  repeat?: {
+    frequency?: number;
+    period?: number;
+    periodUnit?: string;
+  };
+}
+
+interface FhirDoseAndRate {
+  doseQuantity?: FhirQuantity;
+  doseRange?: FhirRange;
+}
+
+interface FhirRange {
+  low?: FhirQuantity;
+  high?: FhirQuantity;
+}
+
+// Application MedicationRequest Interface (for our components)
 export interface MedicationRequest {
+  resourceType: 'MedicationRequest';
   id: string;
   status?: string;
   intent?: string;
-  category?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-    text?: string;
-  }[];
+  category?: FhirCodeableConcept[];
   priority?: string;
-  medicationCodeableConcept?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-    text?: string;
-  };
-  medicationReference?: {
-    reference?: string;
-    display?: string;
-  };
-  subject?: {
-    reference?: string;
-    display?: string;
-  };
-  encounter?: {
-    reference?: string;
-    display?: string;
-  };
+  medicationCodeableConcept?: FhirCodeableConcept;
+  medicationReference?: FhirReference;
+  subject?: FhirReference;
+  encounter?: FhirReference;
   authoredOn?: string;
-  requester?: {
-    reference?: string;
-    display?: string;
-  };
-  reasonCode?: {
-    coding?: {
-      system?: string;
-      code?: string;
-      display?: string;
-    }[];
-    text?: string;
-  }[];
-  reasonReference?: {
-    reference?: string;
-    display?: string;
-  }[];
-  dosageInstruction?: {
-    text?: string;
-    timing?: {
-      repeat?: {
-        frequency?: number;
-        period?: number;
-        periodUnit?: string;
-      };
-    };
-    route?: {
-      coding?: {
-        system?: string;
-        code?: string;
-        display?: string;
-      }[];
-      text?: string;
-    };
-    doseAndRate?: {
-      doseQuantity?: {
-        value?: number;
-        unit?: string;
-        system?: string;
-        code?: string;
-      };
-      doseRange?: {
-        low?: {
-          value?: number;
-          unit?: string;
-          system?: string;
-          code?: string;
-        };
-        high?: {
-          value?: number;
-          unit?: string;
-          system?: string;
-          code?: string;
-        };
-      };
-    }[];
-  }[];
+  requester?: FhirReference;
+  reasonCode?: FhirCodeableConcept[];
+  reasonReference?: FhirReference[];
+  dosageInstruction?: FhirDosage[];
   dispenseRequest?: {
-    numberOfRepeatsAllowed?: number;
-    quantity?: {
-      value?: number;
-      unit?: string;
-      system?: string;
-      code?: string;
-    };
-    expectedSupplyDuration?: {
-      value?: number;
-      unit?: string;
-      system?: string;
-      code?: string;
-    };
+    quantity?: FhirQuantity;
   };
-  substitution?: {
-    allowedBoolean?: boolean;
-    allowedCodeableConcept?: {
-      coding?: {
-        system?: string;
-        code?: string;
-        display?: string;
-      }[];
-      text?: string;
-    };
-    reason?: {
-      coding?: {
-        system?: string;
-        code?: string;
-        display?: string;
-      }[];
-      text?: string;
-    };
-  };
+  substitution?: unknown;
 }
 
 export interface FhirContext {
@@ -295,7 +268,7 @@ export interface FhirContext {
   clientId?: string;
   scope?: string;
   serverUrl?: string;
-  tokenResponse?: any;
+  tokenResponse?: Record<string, unknown>;
   authenticated: boolean;
   isOfflineMode?: boolean;
 }
@@ -314,13 +287,20 @@ export class FhirClientService {
   private contextSubject = new BehaviorSubject<FhirContext>({
     authenticated: false,
   });
-  private fhirClient: any = null;
+  private fhirClient: {
+    patient: { read: () => Promise<unknown> };
+    request: (url: string) => Promise<unknown>;
+    getClientId?: () => unknown;
+    getScope?: () => unknown;
+    getServerUrl?: () => unknown;
+    getState?: (key: string) => unknown;
+  } | null = null;
   private offlineData: OfflineModeData | null = null;
 
   public context$ = this.contextSubject.asObservable();
 
   constructor() {
-    this.loadFhirClient();
+    void this.loadFhirClient();
   }
 
   /**
@@ -337,8 +317,8 @@ export class FhirClientService {
   async initializeSmartLaunch(iss?: string, clientId?: string): Promise<void> {
     try {
       const client = await oauth2.init({
-        iss: iss || 'https://launch.smarthealthit.org/v/r4/fhir',
-        clientId: clientId || 'your-client-id',
+        iss: iss ?? 'https://launch.smarthealthit.org/v/r4/fhir',
+        clientId: clientId ?? 'your-client-id',
         scope: 'openid profile patient/*.read',
         redirectUri: window.location.origin + '/callback',
       });
@@ -377,12 +357,17 @@ export class FhirClientService {
 
       const patient = await this.fhirClient.patient.read();
 
+      const clientId = this.fhirClient.getClientId?.();
+      const scope = this.fhirClient.getScope?.();
+      const serverUrl = this.fhirClient.getServerUrl?.();
+      const tokenResponse = this.fhirClient.getState?.('tokenResponse');
+
       const context: FhirContext = {
         patient: this.mapFhirPatient(patient),
-        clientId: this.fhirClient.getClientId?.() || 'unknown',
-        scope: this.fhirClient.getScope?.() || 'unknown',
-        serverUrl: this.fhirClient.getServerUrl?.() || 'unknown',
-        tokenResponse: this.fhirClient.getState?.('tokenResponse'),
+        clientId: typeof clientId === 'string' ? clientId : 'unknown',
+        scope: typeof scope === 'string' ? scope : 'unknown',
+        serverUrl: typeof serverUrl === 'string' ? serverUrl : 'unknown',
+        tokenResponse: tokenResponse as Record<string, unknown>,
         authenticated: true,
       };
 
@@ -395,19 +380,38 @@ export class FhirClientService {
   }
 
   /**
+   * Type guard to check if object is a FHIR Patient
+   */
+  private isFhirPatient(obj: unknown): obj is FhirPatient {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'Patient' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
+    );
+  }
+
+  /**
    * Map FHIR Patient resource to our interface
    */
-  private mapFhirPatient(fhirPatient: any): Patient {
-    return {
+  private mapFhirPatient(fhirPatient: unknown): Patient {
+    if (!this.isFhirPatient(fhirPatient)) {
+      throw new Error('Invalid FHIR Patient resource');
+    }
+
+    const mapped: Patient = {
       resourceType: 'Patient',
-      id: fhirPatient.id,
-      name: fhirPatient.name,
-      birthDate: fhirPatient.birthDate,
-      gender: fhirPatient.gender,
-      identifier: fhirPatient.identifier,
-      telecom: fhirPatient.telecom,
-      address: fhirPatient.address,
-    } as any;
+      id: fhirPatient.id ?? 'unknown',
+    };
+    if (fhirPatient.name) mapped.name = fhirPatient.name;
+    if (fhirPatient.birthDate) mapped.birthDate = fhirPatient.birthDate;
+    if (fhirPatient.gender) mapped.gender = fhirPatient.gender;
+    if (fhirPatient.identifier) mapped.identifier = fhirPatient.identifier;
+    if (fhirPatient.telecom) mapped.telecom = fhirPatient.telecom;
+    if (fhirPatient.address) mapped.address = fhirPatient.address;
+    return mapped;
   }
 
   /**
@@ -416,14 +420,18 @@ export class FhirClientService {
   getPatient(patientId?: string): Observable<Patient> {
     return from(this.getPatientAsync(patientId)).pipe(
       map((patient) => this.mapFhirPatient(patient)),
-      catchError((error) => {
+      catchError((error: unknown) => {
         logger.error('Error fetching patient:', error);
-        return throwError(() => error);
+        const fhirError: FhirError = {
+          message: error instanceof Error ? error.message : 'Unknown error fetching patient',
+          details: error
+        };
+        return throwError(() => fhirError);
       }),
     );
   }
 
-  private async getPatientAsync(patientId?: string): Promise<any> {
+  private async getPatientAsync(patientId?: string): Promise<unknown> {
     if (!this.fhirClient) {
       throw new Error('FHIR client not initialized');
     }
@@ -438,27 +446,59 @@ export class FhirClientService {
   /**
    * Search for resources
    */
+  /**
+   * Type guard to check if object is a FHIR Bundle
+   */
+  private isFhirBundle(obj: unknown): obj is FhirBundle {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'Bundle'
+    );
+  }
+
   search(
     resourceType: string,
-    params: Record<string, any> = {},
-  ): Observable<any> {
+    params: Record<string, unknown> = {},
+  ): Observable<FhirBundle> {
     return from(this.searchAsync(resourceType, params)).pipe(
-      catchError((error) => {
+      map((result: unknown) => {
+        if (!this.isFhirBundle(result)) {
+          throw new Error('Invalid FHIR Bundle response');
+        }
+        return result;
+      }),
+      catchError((error: unknown) => {
         logger.error(`Error searching ${resourceType}:`, error);
-        return throwError(() => error);
+        const fhirError: FhirError = {
+          message: error instanceof Error ? error.message : `Unknown error searching ${resourceType}`,
+          details: error
+        };
+        return throwError(() => fhirError);
       }),
     );
   }
 
   private async searchAsync(
     resourceType: string,
-    params: Record<string, any>,
-  ): Promise<any> {
+    params: Record<string, unknown>,
+  ): Promise<unknown> {
     if (!this.fhirClient) {
       throw new Error('FHIR client not initialized');
     }
 
-    const query = new URLSearchParams(params).toString();
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => {
+          searchParams.append(key, String(v));
+        });
+      } else {
+        searchParams.append(key, String(value));
+      }
+    });
+    const query = searchParams.toString();
     const url = query ? `${resourceType}?${query}` : resourceType;
 
     return await this.fhirClient.request(url);
@@ -496,7 +536,7 @@ export class FhirClientService {
   /**
    * Get conditions for current patient
    */
-  getConditions(params: Record<string, any> = {}): Observable<Condition[]> {
+  getConditions(params: Record<string, string> = {}): Observable<Condition[]> {
     const currentPatient = this.getCurrentPatient();
     if (!currentPatient) {
       return throwError(() => new Error('No current patient'));
@@ -511,7 +551,7 @@ export class FhirClientService {
         const statusFilter = params['status'].split(',');
         conditions = conditions.filter((condition) => {
           const clinicalStatus = condition.clinicalStatus?.coding?.[0]?.code;
-          return statusFilter.includes(clinicalStatus);
+          return clinicalStatus && statusFilter.includes(clinicalStatus);
         });
       }
 
@@ -527,43 +567,66 @@ export class FhirClientService {
       map((bundle) => {
         if (bundle?.entry) {
           return bundle.entry
-            .map((entry: any) => entry.resource)
-            .filter((condition: any) => condition)
-            .map((condition: any) => this.mapFhirCondition(condition));
+            .map((entry: FhirBundleEntry) => entry.resource)
+            .filter((condition: unknown): condition is FhirResource => !!condition)
+            .map((condition: unknown) => this.mapFhirCondition(condition));
         }
         return [];
       }),
-      catchError((error) => {
+      catchError((error: unknown) => {
         logger.error('Error fetching conditions:', error);
-        return throwError(() => error);
+        const fhirError: FhirError = {
+          message: error instanceof Error ? error.message : 'Unknown error fetching conditions',
+          details: error
+        };
+        return throwError(() => fhirError);
       }),
+    );
+  }
+
+  /**
+   * Type guard to check if object is a FHIR Condition
+   */
+  private isFhirCondition(obj: unknown): obj is FhirCondition {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'Condition' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
     );
   }
 
   /**
    * Map FHIR Condition resource to our interface
    */
-  private mapFhirCondition(fhirCondition: any): Condition {
-    return {
+  private mapFhirCondition(fhirCondition: unknown): Condition {
+    if (!this.isFhirCondition(fhirCondition)) {
+      throw new Error('Invalid FHIR Condition resource');
+    }
+
+    const mapped: Condition = {
       resourceType: 'Condition',
-      id: fhirCondition.id,
-      clinicalStatus: fhirCondition.clinicalStatus,
-      verificationStatus: fhirCondition.verificationStatus,
-      code: fhirCondition.code,
-      subject: fhirCondition.subject,
-      onsetDateTime: fhirCondition.onsetDateTime,
-      onsetPeriod: fhirCondition.onsetPeriod,
-      onsetAge: fhirCondition.onsetAge,
-      recordedDate: fhirCondition.recordedDate,
-      recorder: fhirCondition.recorder,
-      asserter: fhirCondition.asserter,
-    } as any;
+      id: fhirCondition.id ?? 'unknown',
+    };
+    if (fhirCondition.clinicalStatus) mapped.clinicalStatus = fhirCondition.clinicalStatus;
+    if (fhirCondition.verificationStatus) mapped.verificationStatus = fhirCondition.verificationStatus;
+    if (fhirCondition.code) mapped.code = fhirCondition.code;
+    if (fhirCondition.subject) mapped.subject = fhirCondition.subject;
+    if (fhirCondition.onsetDateTime) mapped.onsetDateTime = fhirCondition.onsetDateTime;
+    if (fhirCondition.onsetPeriod) mapped.onsetPeriod = fhirCondition.onsetPeriod;
+    if (fhirCondition.onsetAge) mapped.onsetAge = fhirCondition.onsetAge;
+    if (fhirCondition.recordedDate) mapped.recordedDate = fhirCondition.recordedDate;
+    if (fhirCondition.recorder) mapped.recorder = fhirCondition.recorder;
+    if (fhirCondition.asserter) mapped.asserter = fhirCondition.asserter;
+    return mapped;
   }
 
   /**
    * Get observations for current patient
    */
-  getObservations(params: Record<string, any> = {}): Observable<Observation[]> {
+  getObservations(params: Record<string, string> = {}): Observable<Observation[]> {
     const currentPatient = this.getCurrentPatient();
 
     if (!currentPatient) {
@@ -579,8 +642,8 @@ export class FhirClientService {
         const codeFilter = params['code'].split(',');
         observations = observations.filter((observation) => {
           const codes =
-            observation.code?.coding?.map((coding) => coding.code) || [];
-          return codes.some((code) => codeFilter.includes(code));
+            observation.code?.coding?.map((coding) => coding.code).filter(Boolean) ?? [];
+          return codes.some((code) => code && codeFilter.includes(code));
         });
       }
 
@@ -596,45 +659,68 @@ export class FhirClientService {
       map((bundle) => {
         if (bundle?.entry) {
           return bundle.entry
-            .map((entry: any) => entry.resource)
-            .filter((observation: any) => observation)
-            .map((observation: any) => this.mapFhirObservation(observation));
+            .map((entry: FhirBundleEntry) => entry.resource)
+            .filter((observation: unknown): observation is FhirResource => !!observation)
+            .map((observation: unknown) => this.mapFhirObservation(observation));
         }
         return [];
       }),
-      catchError((error) => {
+      catchError((error: unknown) => {
         logger.error('Error fetching observations:', error);
-        return throwError(() => error);
+        const fhirError: FhirError = {
+          message: error instanceof Error ? error.message : 'Unknown error fetching observations',
+          details: error
+        };
+        return throwError(() => fhirError);
       }),
+    );
+  }
+
+  /**
+   * Type guard to check if object is a FHIR Observation
+   */
+  private isFhirObservation(obj: unknown): obj is FhirObservation {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'Observation' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
     );
   }
 
   /**
    * Map FHIR Observation resource to our interface
    */
-  private mapFhirObservation(fhirObservation: any): Observation {
-    return {
+  private mapFhirObservation(fhirObservation: unknown): Observation {
+    if (!this.isFhirObservation(fhirObservation)) {
+      throw new Error('Invalid FHIR Observation resource');
+    }
+
+    const mapped: Observation = {
       resourceType: 'Observation',
-      id: fhirObservation.id,
-      status: fhirObservation.status,
-      code: fhirObservation.code,
-      subject: fhirObservation.subject,
-      effectiveDateTime: fhirObservation.effectiveDateTime,
-      effectivePeriod: fhirObservation.effectivePeriod,
-      valueQuantity: fhirObservation.valueQuantity,
-      valueString: fhirObservation.valueString,
-      valueCodeableConcept: fhirObservation.valueCodeableConcept,
-      component: fhirObservation.component,
-      issued: fhirObservation.issued,
-      performer: fhirObservation.performer,
-    } as any;
+      id: fhirObservation.id ?? 'unknown',
+    };
+    if (fhirObservation.status) mapped.status = fhirObservation.status;
+    if (fhirObservation.code) mapped.code = fhirObservation.code;
+    if (fhirObservation.subject) mapped.subject = fhirObservation.subject;
+    if (fhirObservation.effectiveDateTime) mapped.effectiveDateTime = fhirObservation.effectiveDateTime;
+    if (fhirObservation.effectivePeriod) mapped.effectivePeriod = fhirObservation.effectivePeriod;
+    if (fhirObservation.valueQuantity) mapped.valueQuantity = fhirObservation.valueQuantity;
+    if (fhirObservation.valueString) mapped.valueString = fhirObservation.valueString;
+    if (fhirObservation.valueCodeableConcept) mapped.valueCodeableConcept = fhirObservation.valueCodeableConcept;
+    if (fhirObservation.component) mapped.component = fhirObservation.component;
+    if (fhirObservation.issued) mapped.issued = fhirObservation.issued;
+    if (fhirObservation.performer) mapped.performer = fhirObservation.performer;
+    return mapped;
   }
 
   /**
    * Get medication requests for current patient
    */
   getMedicationRequests(
-    params: Record<string, any> = {},
+    params: Record<string, string> = {},
   ): Observable<MedicationRequest[]> {
     const currentPatient = this.getCurrentPatient();
     if (!currentPatient) {
@@ -649,7 +735,7 @@ export class FhirClientService {
       if (params['status']) {
         const statusFilter = params['status'].split(',');
         medicationRequests = medicationRequests.filter((medRequest) => {
-          return statusFilter.includes(medRequest.status);
+          return medRequest.status && statusFilter.includes(medRequest.status);
         });
       }
 
@@ -665,18 +751,36 @@ export class FhirClientService {
       map((bundle) => {
         if (bundle?.entry) {
           return bundle.entry
-            .map((entry: any) => entry.resource)
-            .filter((medicationRequest: any) => medicationRequest)
-            .map((medicationRequest: any) =>
+            .map((entry: FhirBundleEntry) => entry.resource)
+            .filter((medicationRequest: unknown): medicationRequest is FhirResource => !!medicationRequest)
+            .map((medicationRequest: unknown) =>
               this.mapFhirMedicationRequest(medicationRequest),
             );
         }
         return [];
       }),
-      catchError((error) => {
+      catchError((error: unknown) => {
         logger.error('Error fetching medication requests:', error);
-        return throwError(() => error);
+        const fhirError: FhirError = {
+          message: error instanceof Error ? error.message : 'Unknown error fetching medication requests',
+          details: error
+        };
+        return throwError(() => fhirError);
       }),
+    );
+  }
+
+  /**
+   * Type guard to check if object is a FHIR MedicationRequest
+   */
+  private isFhirMedicationRequest(obj: unknown): obj is FhirMedicationRequest {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'MedicationRequest' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
     );
   }
 
@@ -684,28 +788,34 @@ export class FhirClientService {
    * Map FHIR MedicationRequest resource to our interface
    */
   private mapFhirMedicationRequest(
-    fhirMedicationRequest: any,
+    fhirMedicationRequest: unknown,
   ): MedicationRequest {
-    return {
+    if (!this.isFhirMedicationRequest(fhirMedicationRequest)) {
+      throw new Error('Invalid FHIR MedicationRequest resource');
+    }
+
+    const mapped: MedicationRequest = {
       resourceType: 'MedicationRequest',
-      id: fhirMedicationRequest.id,
-      status: fhirMedicationRequest.status,
-      intent: fhirMedicationRequest.intent,
-      category: fhirMedicationRequest.category,
-      priority: fhirMedicationRequest.priority,
-      medicationCodeableConcept:
-        fhirMedicationRequest.medicationCodeableConcept,
-      medicationReference: fhirMedicationRequest.medicationReference,
-      subject: fhirMedicationRequest.subject,
-      encounter: fhirMedicationRequest.encounter,
-      authoredOn: fhirMedicationRequest.authoredOn,
-      requester: fhirMedicationRequest.requester,
-      reasonCode: fhirMedicationRequest.reasonCode,
-      reasonReference: fhirMedicationRequest.reasonReference,
-      dosageInstruction: fhirMedicationRequest.dosageInstruction,
-      dispenseRequest: fhirMedicationRequest.dispenseRequest,
-      substitution: fhirMedicationRequest.substitution,
-    } as any;
+      id: fhirMedicationRequest.id ?? 'unknown',
+    };
+    if (fhirMedicationRequest.status) mapped.status = fhirMedicationRequest.status;
+    if (fhirMedicationRequest.intent) mapped.intent = fhirMedicationRequest.intent;
+    if (fhirMedicationRequest.category) mapped.category = fhirMedicationRequest.category;
+    if (fhirMedicationRequest.priority) mapped.priority = fhirMedicationRequest.priority;
+    if (fhirMedicationRequest.medicationCodeableConcept) mapped.medicationCodeableConcept = fhirMedicationRequest.medicationCodeableConcept;
+    if (fhirMedicationRequest.medicationReference) mapped.medicationReference = fhirMedicationRequest.medicationReference;
+    if (fhirMedicationRequest.subject) mapped.subject = fhirMedicationRequest.subject;
+    if (fhirMedicationRequest.encounter) mapped.encounter = fhirMedicationRequest.encounter;
+    if (fhirMedicationRequest.authoredOn) mapped.authoredOn = fhirMedicationRequest.authoredOn;
+    if (fhirMedicationRequest.requester) mapped.requester = fhirMedicationRequest.requester;
+    if (fhirMedicationRequest.reasonCode) mapped.reasonCode = fhirMedicationRequest.reasonCode;
+    if (fhirMedicationRequest.reasonReference) mapped.reasonReference = fhirMedicationRequest.reasonReference;
+    if (fhirMedicationRequest.dosageInstruction) mapped.dosageInstruction = fhirMedicationRequest.dosageInstruction;
+    // Add fields that might exist in FHIR but not in our interface
+    const anyResource = fhirMedicationRequest as any;
+    if (anyResource.dispenseRequest) mapped.dispenseRequest = anyResource.dispenseRequest;
+    if (anyResource.substitution) mapped.substitution = anyResource.substitution;
+    return mapped;
   }
 
   /**
@@ -744,15 +854,15 @@ export class FhirClientService {
    * Check if currently in offline mode
    */
   isOfflineMode(): boolean {
-    return this.contextSubject.value.isOfflineMode || false;
+    return this.contextSubject.value.isOfflineMode ?? false;
   }
 
   /**
    * Build a comprehensive FHIR Bundle with all available patient data
    * This method gathers all resources for the current patient and builds a Bundle
-   * @returns {Promise<any>} Complete FHIR Bundle
+   * @returns {Promise<FhirBundle>} Complete FHIR Bundle
    */
-  async buildComprehensiveFhirBundle(): Promise<any> {
+  async buildComprehensiveFhirBundle(): Promise<FhirBundle> {
     logger.debug('buildComprehensiveFhirBundle called');
 
     const currentPatient = this.getCurrentPatient();
@@ -762,19 +872,21 @@ export class FhirClientService {
 
     logger.debug('Current patient retrieved');
 
-    const bundle: any = {
+    const bundle: FhirBundle = {
       resourceType: 'Bundle',
       type: 'collection',
       entry: [],
     };
 
+    // Ensure entry array exists
+    if (!bundle.entry) {
+      bundle.entry = [];
+    }
+
     try {
       // Add patient resource
       bundle.entry.push({
-        resource: {
-          resourceType: 'Patient',
-          ...currentPatient,
-        },
+        resource: currentPatient,
       });
 
       logger.debug('Added patient resource to bundle');
@@ -789,11 +901,8 @@ export class FhirClientService {
           this.offlineData.conditions?.length || 0,
         );
         this.offlineData.conditions?.forEach((condition) => {
-          bundle.entry.push({
-            resource: {
-              resourceType: 'Condition',
-              ...condition,
-            },
+          bundle.entry?.push({
+            resource: condition,
           });
         });
 
@@ -803,11 +912,8 @@ export class FhirClientService {
           this.offlineData.observations?.length || 0,
         );
         this.offlineData.observations?.forEach((observation) => {
-          bundle.entry.push({
-            resource: {
-              resourceType: 'Observation',
-              ...observation,
-            },
+          bundle.entry?.push({
+            resource: observation,
           });
         });
 
@@ -817,11 +923,8 @@ export class FhirClientService {
           this.offlineData.medicationRequests?.length || 0,
         );
         this.offlineData.medicationRequests?.forEach((medicationRequest) => {
-          bundle.entry.push({
-            resource: {
-              resourceType: 'MedicationRequest',
-              ...medicationRequest,
-            },
+          bundle.entry?.push({
+            resource: medicationRequest,
           });
         });
       } else {
@@ -829,11 +932,8 @@ export class FhirClientService {
         try {
           const conditions = await firstValueFrom(this.getConditions());
           conditions?.forEach((condition) => {
-            bundle.entry.push({
-              resource: {
-                resourceType: 'Condition',
-                ...condition,
-              },
+            bundle.entry?.push({
+              resource: condition,
             });
           });
         } catch (error) {
@@ -843,11 +943,8 @@ export class FhirClientService {
         try {
           const observations = await firstValueFrom(this.getObservations());
           observations?.forEach((observation) => {
-            bundle.entry.push({
-              resource: {
-                resourceType: 'Observation',
-                ...observation,
-              },
+            bundle.entry?.push({
+              resource: observation,
             });
           });
         } catch (error) {
@@ -859,11 +956,8 @@ export class FhirClientService {
             this.getMedicationRequests(),
           );
           medicationRequests?.forEach((medicationRequest) => {
-            bundle.entry.push({
-              resource: {
-                resourceType: 'MedicationRequest',
-                ...medicationRequest,
-              },
+            bundle.entry?.push({
+              resource: medicationRequest,
             });
           });
         } catch (error) {
@@ -878,9 +972,9 @@ export class FhirClientService {
             }),
           );
           if (allergyResponse?.entry) {
-            allergyResponse.entry.forEach((entry: any) => {
+            allergyResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry.push({ resource: entry.resource });
+                bundle.entry?.push({ resource: entry.resource });
               }
             });
           }
@@ -895,9 +989,9 @@ export class FhirClientService {
             }),
           );
           if (procedureResponse?.entry) {
-            procedureResponse.entry.forEach((entry: any) => {
+            procedureResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry.push({ resource: entry.resource });
+                bundle.entry?.push({ resource: entry.resource });
               }
             });
           }
@@ -912,9 +1006,9 @@ export class FhirClientService {
             }),
           );
           if (diagnosticResponse?.entry) {
-            diagnosticResponse.entry.forEach((entry: any) => {
+            diagnosticResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry.push({ resource: entry.resource });
+                bundle.entry?.push({ resource: entry.resource });
               }
             });
           }
@@ -929,9 +1023,9 @@ export class FhirClientService {
             }),
           );
           if (encounterResponse?.entry) {
-            encounterResponse.entry.forEach((entry: any) => {
+            encounterResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry.push({ resource: entry.resource });
+                bundle.entry?.push({ resource: entry.resource });
               }
             });
           }
@@ -946,9 +1040,9 @@ export class FhirClientService {
             }),
           );
           if (immunizationResponse?.entry) {
-            immunizationResponse.entry.forEach((entry: any) => {
+            immunizationResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry.push({ resource: entry.resource });
+                bundle.entry?.push({ resource: entry.resource });
               }
             });
           }
@@ -959,7 +1053,7 @@ export class FhirClientService {
 
       logger.debug(
         'Completed FHIR bundle with',
-        bundle.entry.length,
+        bundle.entry?.length ?? 0,
         'entries',
       );
       return bundle;

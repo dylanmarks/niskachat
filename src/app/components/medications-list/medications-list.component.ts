@@ -51,7 +51,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       .subscribe((context) => {
         this.context = context;
         if (context?.authenticated && context.patient) {
-          this.loadMedications();
+          void this.loadMedications();
         }
       });
   }
@@ -75,10 +75,10 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       const medications = await firstValueFrom(
         this.fhirClient.getMedicationRequests(),
       );
-      this.medications = this.sortMedicationsByDate(medications || []);
+      this.medications = this.sortMedicationsByDate(medications ?? []);
     } catch (error) {
       logger.error('Error loading medications:', error);
-      this.errorMessage = `Failed to load medications: ${error}`;
+      this.errorMessage = `Failed to load medications: ${String(error)}`;
     } finally {
       this.isLoading = false;
     }
@@ -146,7 +146,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       case 'unknown':
         return 'Unknown';
       default:
-        return status || 'Unknown';
+        return status ?? 'Unknown';
     }
   }
 
@@ -201,7 +201,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
 
     if (dosageInstruction.doseAndRate?.[0]?.doseQuantity) {
       const dose = dosageInstruction.doseAndRate[0].doseQuantity;
-      parts.push(`${dose.value} ${dose.unit || dose.code || ''}`);
+      parts.push(`${String(dose.value ?? '')} ${dose.unit ?? dose.code ?? ''}`);
     }
 
     return parts.join(' ');
@@ -216,8 +216,8 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
     if (timing.repeat?.frequency && timing.repeat?.period) {
       const frequency = timing.repeat.frequency;
       const period = timing.repeat.period;
-      const periodUnit = timing.repeat.periodUnit || 'day';
-      return `${frequency} times per ${period} ${periodUnit}${period > 1 ? 's' : ''}`;
+      const periodUnit = timing.repeat.periodUnit ?? 'day';
+      return `${String(frequency)} times per ${String(period)} ${periodUnit}${(period ?? 0) > 1 ? 's' : ''}`;
     }
 
     return '';
@@ -225,14 +225,15 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
 
   getRouteText(medication: MedicationRequest): string {
     const route = medication.dosageInstruction?.[0]?.route;
-    return route?.text || route?.coding?.[0]?.display || '';
+    return route?.text ?? route?.coding?.[0]?.display ?? '';
   }
 
   getQuantityText(medication: MedicationRequest): string {
-    const quantity = medication.dispenseRequest?.quantity;
+    const medicationAny = medication as any;
+    const quantity = medicationAny.dispenseRequest?.quantity;
     if (!quantity) return '';
 
-    return `${quantity.value} ${quantity.unit || quantity.code || ''}`;
+    return `${String(quantity.value ?? '')} ${quantity.unit ?? quantity.code ?? ''}`;
   }
 
   getReasonText(medication: MedicationRequest): string {
@@ -262,11 +263,11 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
   getMedicationCodes(
     medication: MedicationRequest,
   ): { system: string; code: string; display?: string }[] {
-    const codings = medication.medicationCodeableConcept?.coding || [];
+    const codings = medication.medicationCodeableConcept?.coding ?? [];
     return codings.map((coding) => {
       const result: { system: string; code: string; display?: string } = {
         system: this.getCodeSystem(coding.system),
-        code: coding.code || '',
+        code: coding.code ?? '',
       };
       if (coding.display) {
         result.display = coding.display;
@@ -281,11 +282,11 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       'http://hl7.org/fhir/sid/ndc': 'NDC',
       'http://snomed.info/sct': 'SNOMED CT',
     };
-    return systems[systemUrl || ''] || systemUrl || 'Unknown';
+    return systems[systemUrl ?? ''] ?? systemUrl ?? 'Unknown';
   }
 
   trackMedication(_index: number, medication: MedicationRequest): string {
-    return medication.id || _index.toString();
+    return medication.id ?? _index.toString();
   }
 
   toggleInactive(): void {

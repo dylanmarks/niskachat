@@ -32,15 +32,16 @@ describe('MedicationsListComponent', () => {
   const mockContext: FhirContext = {
     authenticated: true,
     patient: {
+      resourceType: 'Patient' as const,
       id: 'patient-123',
       name: [{ family: 'Doe', given: ['John'] }],
-    },
+    } as any,
   };
 
   beforeEach(async () => {
     const spy = jasmine.createSpyObj('FhirClientService', [
       'getMedicationRequests',
-    ]);
+    ]) as jasmine.SpyObj<FhirClientService>;
     spy.context$ = of(mockContext);
 
     await TestBed.configureTestingModule({
@@ -83,7 +84,8 @@ describe('MedicationsListComponent', () => {
     const medication = mockMedications[0];
 
     expect(medication).toBeDefined();
-    const name = component.getMedicationName(medication!);
+    if (!medication) return;
+    const name = component.getMedicationName(medication);
 
     expect(name).toBe('Atorvastatin 20 MG Oral Tablet');
   });

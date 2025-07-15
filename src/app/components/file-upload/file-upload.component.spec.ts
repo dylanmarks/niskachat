@@ -198,14 +198,9 @@ describe('FileUploadComponent', () => {
 
       const resources = component.extractResources(bundleWithoutPatient);
 
-      try {
-        await component.loadResourcesIntoService(resources);
-        fail('Should have thrown an error');
-      } catch (error) {
-        expect(error).toEqual(
-          new Error('No Patient resources found in the bundle'),
-        );
-      }
+      expect(() => {
+        component.loadResourcesIntoService(resources);
+      }).toThrow(new Error('No Patient resources found in the bundle'));
     });
   });
 

@@ -15,15 +15,23 @@ import {
 } from '../../services/fhir-client.service';
 import { logger } from '../../utils/logger';
 
+// Define local interfaces for FHIR resources
+interface FhirResource {
+  resourceType: string;
+  id?: string;
+}
+
+interface FhirBundleEntry {
+  fullUrl?: string;
+  resource?: FhirResource;
+}
+
 interface FhirBundle {
   resourceType: string;
   id?: string;
   type?: string;
   total?: number;
-  entry?: {
-    fullUrl?: string;
-    resource?: any;
-  }[];
+  entry?: FhirBundleEntry[];
 }
 
 interface UploadStatus {
@@ -167,7 +175,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.uploadStatus.progress = 90;
 
       // Load extracted resources into the service
-      await this.loadResourcesIntoService(extractedResources);
+      this.loadResourcesIntoService(extractedResources);
       this.uploadStatus.progress = 100;
 
       // Success!
@@ -253,82 +261,89 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     return resources;
   }
 
-  private mapPatient(resource: any): Patient {
-    return {
+  private mapPatient(resource: FhirResource): Patient {
+    const patientResource = resource as Patient;
+    const mapped: Patient = {
       resourceType: 'Patient',
-      id: resource.id,
-      name: resource.name,
-      birthDate: resource.birthDate,
-      gender: resource.gender,
-      identifier: resource.identifier,
-      telecom: resource.telecom,
-      address: resource.address,
-    } as any;
+      id: patientResource.id || '',
+    };
+    if (patientResource.name) mapped.name = patientResource.name;
+    if (patientResource.birthDate) mapped.birthDate = patientResource.birthDate;
+    if (patientResource.gender) mapped.gender = patientResource.gender;
+    if (patientResource.identifier) mapped.identifier = patientResource.identifier;
+    if (patientResource.telecom) mapped.telecom = patientResource.telecom;
+    if (patientResource.address) mapped.address = patientResource.address;
+    return mapped;
   }
 
-  private mapCondition(resource: any): Condition {
-    return {
+  private mapCondition(resource: FhirResource): Condition {
+    const conditionResource = resource as Condition;
+    const mapped: Condition = {
       resourceType: 'Condition',
-      id: resource.id,
-      clinicalStatus: resource.clinicalStatus,
-      verificationStatus: resource.verificationStatus,
-      code: resource.code,
-      subject: resource.subject,
-      onsetDateTime: resource.onsetDateTime,
-      onsetPeriod: resource.onsetPeriod,
-      onsetAge: resource.onsetAge,
-      recordedDate: resource.recordedDate,
-      recorder: resource.recorder,
-      asserter: resource.asserter,
-    } as any;
+      id: conditionResource.id || '',
+    };
+    if (conditionResource.clinicalStatus) mapped.clinicalStatus = conditionResource.clinicalStatus;
+    if (conditionResource.verificationStatus) mapped.verificationStatus = conditionResource.verificationStatus;
+    if (conditionResource.code) mapped.code = conditionResource.code;
+    if (conditionResource.subject) mapped.subject = conditionResource.subject;
+    if (conditionResource.onsetDateTime) mapped.onsetDateTime = conditionResource.onsetDateTime;
+    if (conditionResource.onsetPeriod) mapped.onsetPeriod = conditionResource.onsetPeriod;
+    if (conditionResource.onsetAge) mapped.onsetAge = conditionResource.onsetAge;
+    if (conditionResource.recordedDate) mapped.recordedDate = conditionResource.recordedDate;
+    if (conditionResource.recorder) mapped.recorder = conditionResource.recorder;
+    if (conditionResource.asserter) mapped.asserter = conditionResource.asserter;
+    return mapped;
   }
 
-  private mapObservation(resource: any): Observation {
-    return {
+  private mapObservation(resource: FhirResource): Observation {
+    const observationResource = resource as Observation;
+    const mapped: Observation = {
       resourceType: 'Observation',
-      id: resource.id,
-      status: resource.status,
-      code: resource.code,
-      subject: resource.subject,
-      effectiveDateTime: resource.effectiveDateTime,
-      effectivePeriod: resource.effectivePeriod,
-      valueQuantity: resource.valueQuantity,
-      valueString: resource.valueString,
-      valueCodeableConcept: resource.valueCodeableConcept,
-      component: resource.component,
-      issued: resource.issued,
-      performer: resource.performer,
-    } as any;
+      id: observationResource.id || '',
+    };
+    if (observationResource.status) mapped.status = observationResource.status;
+    if (observationResource.code) mapped.code = observationResource.code;
+    if (observationResource.subject) mapped.subject = observationResource.subject;
+    if (observationResource.effectiveDateTime) mapped.effectiveDateTime = observationResource.effectiveDateTime;
+    if (observationResource.effectivePeriod) mapped.effectivePeriod = observationResource.effectivePeriod;
+    if (observationResource.valueQuantity) mapped.valueQuantity = observationResource.valueQuantity;
+    if (observationResource.valueString) mapped.valueString = observationResource.valueString;
+    if (observationResource.valueCodeableConcept) mapped.valueCodeableConcept = observationResource.valueCodeableConcept;
+    if (observationResource.component) mapped.component = observationResource.component;
+    if (observationResource.issued) mapped.issued = observationResource.issued;
+    if (observationResource.performer) mapped.performer = observationResource.performer;
+    return mapped;
   }
 
-  private mapMedicationRequest(resource: any): MedicationRequest {
+  private mapMedicationRequest(resource: FhirResource): MedicationRequest {
+    const medicationResource = resource as any; // Use any to access all FHIR fields
     return {
       resourceType: 'MedicationRequest',
-      id: resource.id,
-      status: resource.status,
-      intent: resource.intent,
-      category: resource.category,
-      priority: resource.priority,
-      medicationCodeableConcept: resource.medicationCodeableConcept,
-      medicationReference: resource.medicationReference,
-      subject: resource.subject,
-      encounter: resource.encounter,
-      authoredOn: resource.authoredOn,
-      requester: resource.requester,
-      reasonCode: resource.reasonCode,
-      reasonReference: resource.reasonReference,
-      dosageInstruction: resource.dosageInstruction,
-      dispenseRequest: resource.dispenseRequest,
-      substitution: resource.substitution,
-    } as any;
+      id: medicationResource.id || '',
+      status: medicationResource.status || undefined,
+      intent: medicationResource.intent || undefined,
+      category: medicationResource.category || undefined,
+      priority: medicationResource.priority || undefined,
+      medicationCodeableConcept: medicationResource.medicationCodeableConcept || undefined,
+      medicationReference: medicationResource.medicationReference || undefined,
+      subject: medicationResource.subject || undefined,
+      encounter: medicationResource.encounter || undefined,
+      authoredOn: medicationResource.authoredOn || undefined,
+      requester: medicationResource.requester || undefined,
+      reasonCode: medicationResource.reasonCode || undefined,
+      reasonReference: medicationResource.reasonReference || undefined,
+      dosageInstruction: medicationResource.dosageInstruction || undefined,
+      dispenseRequest: medicationResource.dispenseRequest || undefined,
+      substitution: medicationResource.substitution || undefined,
+    };
   }
 
-  async loadResourcesIntoService(resources: {
+  loadResourcesIntoService(resources: {
     patients: Patient[];
     conditions: Condition[];
     observations: Observation[];
     medicationRequests: MedicationRequest[];
-  }): Promise<void> {
+  }): void {
     logger.info(
       'FileUploadComponent: loadResourcesIntoService called with resources:',
       resources,
@@ -340,7 +355,10 @@ export class FileUploadComponent implements OnInit, OnDestroy {
 
     // For now, we'll focus on the first patient if available
     if (resources.patients.length > 0) {
-      const patient: Patient = resources.patients[0]!;
+      const patient = resources.patients[0];
+      if (!patient) {
+        throw new Error('First patient resource is undefined');
+      }
       logger.info(
         'FileUploadComponent: Setting offline mode for patient:',
         patient,
@@ -418,7 +436,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       const extractedResources = this.extractResources(bundle);
 
       // Load into service
-      await this.loadResourcesIntoService(extractedResources);
+      this.loadResourcesIntoService(extractedResources);
 
       this.uploadStatus.progress = 100;
       this.uploadStatus.isUploading = false;

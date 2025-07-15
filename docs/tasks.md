@@ -19,13 +19,25 @@ Follow test-driven development: write tests first, then implement, then validate
 | **Phase 10** | ✅ COMPLETED | LLM Summary Integration (MacBook Air Safe)  | 8/8 ✅   | `current` |
 | **Phase 11** | ⏳ PENDING   | Deployment & Integration Testing            | 0/0 ⏳   | -         |
 | **Phase 12** | ✅ COMPLETED | Custom Chat UI (Provider-Facing)            | 10/10 ✅ | `current` |
-| **Phase 13** | ⏳ PENDING   | Chat UI with Pre-Set Topics                 | 0/0 ⏳   | -         |
-| **Phase 14** | ⏳ PENDING   | Enhanced Security & Compliance              | 0/0 ⏳   | -         |
-| **Phase 15** | ⏳ PENDING   | Performance & Optimization                  | 0/0 ⏳   | -         |
-| **Phase 16** | ⏳ PENDING   | Advanced Features                           | 0/0 ⏳   | -         |
-| **Phase 17** | ⏳ PENDING   | Material Design System Implementation       | 0/12 ⏳  | -         |
+| **Phase 13** | ⏳ PENDING   | Code Quality & Technical Debt Resolution    | 0/12 ⏳  | -         |
+| **Phase 14** | ⏳ PENDING   | Material Design System Implementation       | 0/12 ⏳  | -         |
+| **Phase 15** | ⏳ PENDING   | Chat UI with Pre-Set Topics                 | 0/0 ⏳   | -         |
+| **Phase 16** | ⏳ PENDING   | Enhanced Security & Compliance              | 0/0 ⏳   | -         |
+| **Phase 17** | ⏳ PENDING   | Performance & Optimization                  | 0/0 ⏳   | -         |
+| **Phase 18** | ⏳ PENDING   | Advanced Features                           | 0/0 ⏳   | -         |
 
 **Overall Test Status**: 138 frontend + 40 backend = **178 tests passing** 🎯
+
+## 📋 **Priority Rationale**
+
+**Phase 13 (Code Quality)** was moved from Phase 18 to immediate priority because:
+
+- **Technical Debt Impact**: 20+ TypeScript `any` types and ESLint violations slow development
+- **Foundation for Future Work**: Material Design (Phase 14) requires clean, type-safe code
+- **Risk Mitigation**: Floating promises and unsafe operations introduce production bugs
+- **Developer Experience**: Proper types and error handling improve maintainability
+
+The sequence **Code Quality → Material Design → Chat Topics** creates a solid foundation for advanced features.
 
 ---
 
@@ -300,93 +312,57 @@ Follow test-driven development: write tests first, then implement, then validate
 
 ---
 
-## Phase 13: Chat with Pre-Set Topics
+## Phase 13: Code Quality & Technical Debt Resolution
 
-- [ ] Add summary at top of chat
-- [ ] Highlight 3 key clinical items
-- [ ] Clicking item starts chat with that topic
-- [ ] Implement topic detection algorithm
-- [ ] Add customizable topic categories
-- [ ] Support different clinical specialties
-- [ ] Implement topic priority ranking
-- [ ] Add topic suggestion system
+**Goal**: Systematically improve code quality, type safety, and maintainability across the application
 
-**Tests**
+### 1. ESLint Configuration & Rule Enforcement (High Priority)
 
-- [ ] Clinical topics identified correctly
-- [ ] Topic clicks initiate proper chat
-- [ ] Summary displays key items
-- [ ] Topic ranking works
-- [ ] Specialty-specific topics shown
+- [x] Audit current ESLint configuration and identify rules set to "warn"
+- [x] Configure comprehensive ESLint rules with TypeScript strict checking
+- [ ] Fix all existing violations for `@typescript-eslint/no-unsafe-assignment`
+- [ ] Fix all existing violations for `@typescript-eslint/no-unsafe-member-access`
+- [ ] Fix all existing violations for `@typescript-eslint/no-unsafe-call`
+- [ ] Fix all existing violations for `@typescript-eslint/no-unsafe-return`
+- [ ] Fix all existing violations for `@typescript-eslint/no-explicit-any`
+- [ ] Fix all existing violations for `@typescript-eslint/no-floating-promises`
+- [ ] Upgrade rules from "warn" to "error" systematically after fixes
+- [ ] Update ESLint configuration to enforce stricter TypeScript rules
 
----
+### 2. TypeScript Type Safety Improvements (High Priority)
 
-## Phase 14: Enhanced Security & Compliance
+- [ ] Replace `any` types in FHIR service with proper FHIR resource interfaces (20+ instances in FhirClientService)
+- [ ] Remove unsafe type assertions (`as any`) in mapping functions (8+ instances in FileUploadComponent)
+- [ ] Add proper type guards for FHIR resource validation
+- [ ] Strengthen component interfaces with required vs optional properties
+- [ ] Add generic type parameters where appropriate
+- [ ] Implement proper typing for Observable streams
+- [ ] Add return type annotations for all public methods
+- [ ] Create union types for FHIR resource variants
 
-- [ ] Implement proper session management
-- [ ] Add security headers (CSP, HSTS, etc.)
-- [ ] Audit logging for all actions
-- [ ] Implement data encryption at rest
-- [ ] Add HIPAA compliance features
-- [ ] Session timeout and renewal
-- [ ] Input validation and sanitization
-- [ ] XSS and CSRF protection
+### 3. Error Handling & Async Operations (High Priority)
 
-**Tests**
-
-- [ ] Security headers present
-- [ ] Session management works
-- [ ] Audit logs captured
-- [ ] Data encryption verified
-- [ ] Attack vectors blocked
-
----
-
-## Phase 15: Performance & Optimization
-
-- [ ] Implement lazy loading for components
-- [ ] Optimize bundle size
-- [ ] Add service worker for caching
-- [ ] Implement progressive web app features
-- [ ] Optimize API calls and caching
-- [ ] Add performance monitoring
-- [ ] Implement error tracking
-- [ ] Database query optimization
+- [ ] Add proper error handling to all async operations in components (replace 'any' in catch blocks with proper error interfaces)
+- [ ] Fix floating promises by adding `.catch()` or `await` keywords
+- [ ] Implement proper error boundaries and user feedback mechanisms
+- [ ] Add timeout handling for HTTP requests
+- [x] Create centralized error handling service (logger.ts service implemented)
+- [ ] Add retry logic for failed API calls
+- [ ] Implement proper loading states with error recovery
+- [ ] Add user-friendly error messages for common failure scenarios
 
 **Tests**
 
-- [ ] Load times meet targets
-- [ ] Bundle size optimized
-- [ ] Caching works correctly
-- [ ] PWA features function
-- [ ] Error tracking captures issues
+- [ ] All ESLint rules pass without warnings or errors
+- [ ] No `any` types remain in production code
+- [ ] All async operations have proper error handling
+- [ ] All floating promises are properly handled
+- [ ] Type guards properly validate FHIR resources
+- [ ] Error boundaries catch and handle component failures
 
 ---
 
----
-
-## Phase 16: Advanced Features
-
-- [ ] Support for `DiagnosticReport` resources
-- [ ] Add `DocumentReference` viewing
-- [ ] Implement dark mode
-- [ ] Add WCAG accessibility compliance
-- [ ] Offline mode via IndexedDB
-- [ ] Advanced chart filtering (date ranges, code selectors)
-- [ ] Integration with Google Cloud FHIR Store
-- [ ] Multi-language support
-
-**Tests**
-
-- [ ] Additional resource types display
-- [ ] Dark mode toggles correctly
-- [ ] Accessibility standards met
-- [ ] Offline functionality works
-- [ ] Advanced filters function
-
----
-
-## Phase 17: UI & Design System Improvements
+## Phase 14: Material Design System Implementation
 
 **Goal**: Apply Angular Material and a consistent design system across the app to improve UI consistency, accessibility, responsiveness, and maintainability.
 
@@ -428,48 +404,7 @@ Follow test-driven development: write tests first, then implement, then validate
   - [ ] Medications list component
   - [ ] File upload component
 
-### Shared Components
-
-- [ ] Create reusable `ButtonComponent` with standardized interaction states
-- [ ] Create reusable `CardComponent` for grouped content
-- [ ] Create shared SCSS mixins for common patterns
-- [ ] Apply consistent layout spacing using CSS Grid or Flexbox
-- [ ] Implement responsive breakpoints for mobile-first design
-
-### Interaction and Visual States
-
-- [ ] Add consistent hover, focus, and active styles using SCSS mixins
-- [ ] Implement Material animations and transitions for:
-  - [ ] Modal dialogs
-  - [ ] Expandable sections
-  - [ ] Loading states
-  - [ ] Form validation feedback
-- [ ] Ensure smooth visual feedback for user interactions
-- [ ] Add ripple effects for clickable elements
-- [ ] Implement proper disabled states for interactive elements
-
-### Accessibility and Compliance
-
-- [ ] Review color contrast to ensure WCAG AA compliance
-- [ ] Ensure keyboard navigation and focus order is consistent
-- [ ] Add proper ARIA roles and labels
-- [ ] Use semantic HTML elements appropriately
-- [ ] Implement `mat-label` and `mat-error` for form fields
-- [ ] Add focus indicators for custom interactive elements
-- [ ] Test screen reader compatibility
-
-### Testing and Validation
-
-- [ ] Write component tests for Material Design integration
-- [ ] Test visual states (hover, focus, disabled) across components
-- [ ] Validate typography and spacing consistency
-- [ ] Test responsive behavior across screen sizes
-- [ ] Verify color contrast meets accessibility standards
-- [ ] Test keyboard navigation for all primary flows
-- [ ] Validate that existing functionality remains intact
-- [ ] Test Angular Material theming system
-
-### Tests
+**Tests**
 
 - [ ] All components use Angular Material primitives and design tokens
 - [ ] Buttons show correct visual states (hover, focus, disabled)
@@ -483,6 +418,91 @@ Follow test-driven development: write tests first, then implement, then validate
 - [ ] Shared components follow design system guidelines
 - [ ] Theme system allows for customization and dark mode support
 - [ ] Screen reader accessibility tested and functional
+
+---
+
+## Phase 15: Chat with Pre-Set Topics
+
+- [ ] Add summary at top of chat
+- [ ] Highlight 3 key clinical items
+- [ ] Clicking item starts chat with that topic
+- [ ] Implement topic detection algorithm
+- [ ] Add customizable topic categories
+- [ ] Support different clinical specialties
+- [ ] Implement topic priority ranking
+- [ ] Add topic suggestion system
+
+**Tests**
+
+- [ ] Clinical topics identified correctly
+- [ ] Topic clicks initiate proper chat
+- [ ] Summary displays key items
+- [ ] Topic ranking works
+- [ ] Specialty-specific topics shown
+
+---
+
+## Phase 16: Enhanced Security & Compliance
+
+- [ ] Implement proper session management
+- [ ] Add security headers (CSP, HSTS, etc.)
+- [ ] Audit logging for all actions
+- [ ] Implement data encryption at rest
+- [ ] Add HIPAA compliance features
+- [ ] Session timeout and renewal
+- [ ] Input validation and sanitization
+- [ ] XSS and CSRF protection
+
+**Tests**
+
+- [ ] Security headers present
+- [ ] Session management works
+- [ ] Audit logs captured
+- [ ] Data encryption verified
+- [ ] Attack vectors blocked
+
+---
+
+## Phase 17: Performance & Optimization
+
+- [ ] Implement lazy loading for components
+- [ ] Optimize bundle size
+- [ ] Add service worker for caching
+- [ ] Implement progressive web app features
+- [ ] Optimize API calls and caching
+- [ ] Add performance monitoring
+- [ ] Implement error tracking
+- [ ] Database query optimization
+
+**Tests**
+
+- [ ] Load times meet targets
+- [ ] Bundle size optimized
+- [ ] Caching works correctly
+- [ ] PWA features function
+- [ ] Error tracking captures issues
+
+---
+
+## Phase 18: Advanced Features
+
+- [ ] Support for `DiagnosticReport` resources
+- [ ] Support for `AllergyIntolerance` resources
+- [ ] Add `DocumentReference` viewing
+- [ ] Implement dark mode
+- [ ] Add WCAG accessibility compliance
+- [ ] Offline mode via IndexedDB
+- [ ] Advanced chart filtering (date ranges, code selectors)
+- [ ] Integration with Google Cloud FHIR Store
+- [ ] Multi-language support
+
+**Tests**
+
+- [ ] Additional resource types display
+- [ ] Dark mode toggles correctly
+- [ ] Accessibility standards met
+- [ ] Offline functionality works
+- [ ] Advanced filters function
 
 ---
 

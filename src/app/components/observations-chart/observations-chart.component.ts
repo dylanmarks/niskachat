@@ -544,15 +544,22 @@ export class ObservationsChartComponent
           'ObservationsChartComponent: Error loading observations',
           error,
         );
-        this.error = error.message || 'Failed to load observations';
+        this.error = (error as Error).message ?? 'Failed to load observations';
         this.loading = false;
         this.observations = [];
       },
     });
   }
 
-  onCategoryChange(event: any): void {
-    const newCategory = event.target?.value ?? event;
+  onCategoryChange(event: Event | string | { value: string }): void {
+    let newCategory: string;
+    if (typeof event === 'string') {
+      newCategory = event;
+    } else if (event && typeof event === 'object' && 'value' in event) {
+      newCategory = (event as { value: string }).value;
+    } else {
+      newCategory = (event as Event & { target: { value: string } }).target?.value ?? '';
+    }
 
     // Prevent unnecessary processing if category hasn't changed
     if (this.selectedCategory === newCategory) {
@@ -584,8 +591,7 @@ export class ObservationsChartComponent
       return observations;
     }
 
-    const categoryLoincCodes =
-      this.LOINC_CATEGORIES[category as keyof typeof this.LOINC_CATEGORIES];
+    const categoryLoincCodes = this.LOINC_CATEGORIES[category as keyof typeof this.LOINC_CATEGORIES] as string[] | undefined;
     if (!categoryLoincCodes) {
       return [];
     }
@@ -597,7 +603,7 @@ export class ObservationsChartComponent
       return coding.some(
         (code) =>
           code.system === 'http://loinc.org' &&
-          categoryLoincCodes.includes(code.code || ''),
+          categoryLoincCodes.includes(code.code ?? ''),
       );
     });
   }
@@ -667,7 +673,7 @@ export class ObservationsChartComponent
           tension: 0.1,
         });
         colorIndex++;
-        logger.info(`Created dataset for ${label} with ${data.length} points`);
+        logger.info(`Created dataset for ${label} with ${String(data.length)} points`);
       } else {
         logger.info(`No valid data points for ${label}`);
       }
@@ -688,9 +694,7 @@ export class ObservationsChartComponent
         // Standard observation processing
         const label = this.getObservationLabel(obs);
         if (label) {
-          if (!grouped[label]) {
-            grouped[label] = [];
-          }
+          grouped[label] ??= [];
           grouped[label].push(obs);
         }
       }
@@ -730,19 +734,17 @@ export class ObservationsChartComponent
       }
 
       if (label && component.valueQuantity?.value !== undefined) {
-        if (!grouped[label]) {
-          grouped[label] = [];
-        }
+        grouped[label] ??= [];
 
         // Create a synthetic observation for the component
         const { component: _, ...baseObs } = obs;
         const componentObs: Observation = {
           ...baseObs,
-          code: component.code || { coding: [] },
+          code: component.code ?? { coding: [] },
           valueQuantity: component.valueQuantity,
         };
 
-        grouped[label]!.push(componentObs);
+        grouped[label]?.push(componentObs);
       }
     });
   }
@@ -753,7 +755,7 @@ export class ObservationsChartComponent
     }
     if (obs.code?.coding && obs.code.coding.length > 0) {
       const firstCoding = obs.code.coding[0];
-      return firstCoding?.display || firstCoding?.code || null;
+      return firstCoding?.display ?? firstCoding?.code ?? null;
     }
     return null;
   }

@@ -4,16 +4,7 @@ This directory contains example FHIR bundles and resources for development, test
 
 ## 📁 Folder Structure
 
-```
-examples/
-├── fhir-bundles/          # FHIR Bundle JSON files
-│   ├── patients/          # Patient-focused bundles
-│   ├── medications/       # Medication-focused bundles
-│   ├── conditions/        # Condition-focused bundles
-│   ├── observations/      # Observation-focused bundles
-│   └── comprehensive/     # Full patient records with multiple resources
-└── README.md             # This file
-```
+
 
 ## 🎯 Usage
 
@@ -66,16 +57,6 @@ const bundle = require("./examples/fhir-bundles/example.json");
 // In tests
 const exampleBundle = require("../../examples/fhir-bundles/example.json");
 ```
-
-## 📚 Example Bundle Types
-
-| Type                 | Description                 | Filename Pattern                |
-| -------------------- | --------------------------- | ------------------------------- |
-| Patient Demographics | Basic patient info          | `patient-[name].json`           |
-| Medications          | MedicationRequest resources | `medications-[condition].json`  |
-| Conditions           | Condition resources         | `conditions-[type].json`        |
-| Observations         | Vital signs, lab results    | `observations-[type].json`      |
-| Comprehensive        | Full patient record         | `comprehensive-[scenario].json` |
 
 ## 🚀 Getting Started
 
