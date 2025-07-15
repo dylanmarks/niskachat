@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 import {
-  HttpClientTestingModule,
   HttpTestingController,
+  provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -25,19 +26,21 @@ describe('ChatComponent', () => {
     const fhirClientSpy = jasmine.createSpyObj('FhirClientService', [
       'getCurrentContext',
       'buildComprehensiveFhirBundle',
-    ]);
+    ]) as jasmine.SpyObj<FhirClientService>;
 
     await TestBed.configureTestingModule({
-      imports: [ChatComponent, HttpClientTestingModule, FormsModule],
-      providers: [{ provide: FhirClientService, useValue: fhirClientSpy }],
+      imports: [ChatComponent, FormsModule],
+      providers: [
+        { provide: FhirClientService, useValue: fhirClientSpy },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ChatComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    fhirClientService = TestBed.inject(
-      FhirClientService,
-    ) as jasmine.SpyObj<FhirClientService>;
+    fhirClientService = fhirClientSpy;
   });
 
   afterEach(() => {
@@ -149,6 +152,7 @@ describe('ChatComponent', () => {
       fhirClientService.getCurrentContext.and.returnValue({
         authenticated: true,
         patient: {
+          resourceType: 'Patient',
           id: 'test-patient',
           name: [{ given: ['John'], family: 'Doe' }],
         },
@@ -159,9 +163,10 @@ describe('ChatComponent', () => {
         entry: [
           {
             resource: {
+              resourceType: 'Patient' as const,
               id: 'test-patient',
               name: [{ given: ['John'], family: 'Doe' }],
-            },
+            } as any,
           },
         ],
       });
@@ -217,16 +222,16 @@ describe('ChatComponent', () => {
 
       // Verify messages
       expect(component.messages.length).toBe(initialCount + 2); // user + AI
-      expect(component.messages[initialCount]!.content).toBe(
+      expect(component.messages[initialCount]?.content).toBe(
         'What are the patient conditions?',
       );
 
-      expect(component.messages[initialCount]!.isUser).toBe(true);
-      expect(component.messages[initialCount + 1]!.content).toBe(
+      expect(component.messages[initialCount]?.isUser).toBe(true);
+      expect(component.messages[initialCount + 1]?.content).toBe(
         'Patient has hypertension and diabetes.',
       );
 
-      expect(component.messages[initialCount + 1]!.isUser).toBe(false);
+      expect(component.messages[initialCount + 1]?.isUser).toBe(false);
 
       // Verify state
       expect(component.currentMessage).toBe('');
@@ -249,7 +254,7 @@ describe('ChatComponent', () => {
 
       // Verify error message
       expect(component.messages.length).toBe(initialCount + 2);
-      expect(component.messages[initialCount + 1]!.content).toBe(
+      expect(component.messages[initialCount + 1]?.content).toBe(
         'Server error occurred. Please try again later.',
       );
 
@@ -269,7 +274,7 @@ describe('ChatComponent', () => {
 
       // Verify error message
       expect(component.messages.length).toBe(initialCount + 2);
-      expect(component.messages[initialCount + 1]!.content).toBe(
+      expect(component.messages[initialCount + 1]?.content).toBe(
         'Unable to connect to the server. Please check your connection.',
       );
 
@@ -358,10 +363,11 @@ describe('ChatComponent', () => {
       const mockContext = {
         authenticated: true,
         patient: {
+          resourceType: 'Patient' as const,
           id: 'test-patient',
           name: [{ given: ['John'], family: 'Doe' }],
           birthDate: '1980-01-01',
-        },
+        } as any,
       };
 
       fhirClientService.getCurrentContext.and.returnValue(mockContext);

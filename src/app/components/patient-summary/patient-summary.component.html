@@ -32,9 +32,7 @@
   </mat-card>
 
   <!-- Patient Information -->
-  <div *ngIf="patient && !isLoading && !errorMessage" class="patient-content">
-    <!-- Patient card content is now moved to the header -->
-
+  <div *ngIf="patient && !isLoading && !errorMessage && (summary || summaryError)" class="patient-content">
     <!-- Summary Card -->
     <mat-card *ngIf="summary" class="summary-card">
       <mat-card-header>

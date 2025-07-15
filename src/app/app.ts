@@ -155,7 +155,7 @@ export class App implements OnInit, OnDestroy {
   onSummarizeClick(): void {
     if (this.patientSummaryComponent) {
       this.isSummarizing = true;
-      this.patientSummaryComponent.generateSummary().finally(() => {
+      void this.patientSummaryComponent.generateSummary().finally(() => {
         this.isSummarizing = false;
       });
     }

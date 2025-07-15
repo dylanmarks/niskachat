@@ -50,7 +50,7 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
       .subscribe((context) => {
         this.context = context;
         if (context?.authenticated && context.patient) {
-          this.loadConditions();
+          void this.loadConditions();
         }
       });
   }

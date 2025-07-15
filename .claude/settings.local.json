@@ -19,7 +19,11 @@
       "Bash(npx cspell:*)",
       "Bash(git push:*)",
       "Bash(rg:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run build:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }

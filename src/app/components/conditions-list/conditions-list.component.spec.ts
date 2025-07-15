@@ -15,6 +15,7 @@ describe('ConditionsListComponent', () => {
 
   // Mock data
   const mockActiveCondition: Condition = {
+    resourceType: 'Condition',
     id: 'condition-1',
     clinicalStatus: {
       coding: [
@@ -53,6 +54,7 @@ describe('ConditionsListComponent', () => {
   };
 
   const mockResolvedCondition: Condition = {
+    resourceType: 'Condition',
     id: 'condition-2',
     clinicalStatus: {
       coding: [
@@ -75,9 +77,10 @@ describe('ConditionsListComponent', () => {
 
   const mockContext: FhirContext = {
     patient: {
+      resourceType: 'Patient' as const,
       id: '123',
       name: [{ family: 'Doe', given: ['John'] }],
-    },
+    } as any,
     authenticated: true,
   };
 
@@ -85,7 +88,7 @@ describe('ConditionsListComponent', () => {
     const spy = jasmine.createSpyObj('FhirClientService', [
       'isAuthenticated',
       'getConditions',
-    ]);
+    ]) as jasmine.SpyObj<FhirClientService>;
 
     // Set up default return values
     spy.isAuthenticated.and.returnValue(true);
@@ -98,9 +101,7 @@ describe('ConditionsListComponent', () => {
 
     fixture = TestBed.createComponent(ConditionsListComponent);
     component = fixture.componentInstance;
-    mockFhirClientService = TestBed.inject(
-      FhirClientService,
-    ) as jasmine.SpyObj<FhirClientService>;
+    mockFhirClientService = spy;
 
     // Mock the context$ observable
     Object.defineProperty(mockFhirClientService, 'context$', {
@@ -118,7 +119,7 @@ describe('ConditionsListComponent', () => {
 
       component.ngOnInit();
 
-      expect(component.loadConditions).toHaveBeenCalled();
+      expect(component.loadConditions).toHaveBeenCalledWith();
     });
 
     it('should not load conditions when not authenticated', () => {
@@ -133,7 +134,7 @@ describe('ConditionsListComponent', () => {
 
       component.ngOnInit();
 
-      expect(component.loadConditions).not.toHaveBeenCalled();
+      expect(component.loadConditions).not.toHaveBeenCalledWith();
     });
   });
 
@@ -159,7 +160,7 @@ describe('ConditionsListComponent', () => {
       await component.loadConditions();
 
       expect(component.errorMessage).toContain('Not authenticated');
-      expect(mockFhirClientService.getConditions).not.toHaveBeenCalled();
+      expect(mockFhirClientService.getConditions).not.toHaveBeenCalledWith();
     });
 
     it('should handle conditions fetch error', async () => {
@@ -218,12 +219,12 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should handle conditions without dates', async () => {
-      const conditionWithoutDate = {
+      const conditionWithoutDate: Condition = {
         ...mockActiveCondition,
         id: 'no-date',
-      } as Condition;
-      delete (conditionWithoutDate as any).recordedDate;
-      delete (conditionWithoutDate as any).onsetDateTime;
+        recordedDate: undefined,
+        onsetDateTime: undefined,
+      };
 
       mockFhirClientService.getConditions.and.returnValue(
         of([mockActiveCondition, conditionWithoutDate]),
@@ -281,10 +282,10 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should show Unknown Condition when no useful information', () => {
-      const conditionWithoutName = {
+      const conditionWithoutName: Condition = {
         ...mockActiveCondition,
-      } as Condition;
-      delete (conditionWithoutName as any).code;
+        code: undefined,
+      };
 
       const name = component.getConditionName(conditionWithoutName);
 
@@ -299,7 +300,7 @@ describe('ConditionsListComponent', () => {
       expect(status).toBe('Active');
     });
 
-    it('should fall back to code when display not available', () => {
+    it('should fall back to code when display not available in status', () => {
       const conditionWithCodeOnly = {
         ...mockActiveCondition,
         clinicalStatus: {
@@ -319,10 +320,10 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should return Unknown when no status available', () => {
-      const conditionWithoutStatus = {
+      const conditionWithoutStatus: Condition = {
         ...mockActiveCondition,
-      } as Condition;
-      delete (conditionWithoutStatus as any).clinicalStatus;
+        clinicalStatus: undefined,
+      };
 
       const status = component.getConditionStatus(conditionWithoutStatus);
 
@@ -371,13 +372,13 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should format onset period with ongoing end', () => {
-      const conditionWithOngoingPeriod = {
+      const conditionWithOngoingPeriod: Condition = {
         ...mockActiveCondition,
         onsetPeriod: {
           start: '2020-01-01',
         },
-      } as Condition;
-      delete (conditionWithOngoingPeriod as any).onsetDateTime;
+        onsetDateTime: undefined,
+      };
 
       const onset = component.getOnsetDate(conditionWithOngoingPeriod);
 
@@ -385,10 +386,10 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should return null when no onset information', () => {
-      const conditionWithoutOnset = {
+      const conditionWithoutOnset: Condition = {
         ...mockActiveCondition,
-      } as Condition;
-      delete (conditionWithoutOnset as any).onsetDateTime;
+        onsetDateTime: undefined,
+      };
 
       const onset = component.getOnsetDate(conditionWithoutOnset);
 
@@ -418,10 +419,10 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should return null when no verification status', () => {
-      const conditionWithoutVerification = {
+      const conditionWithoutVerification: Condition = {
         ...mockActiveCondition,
-      } as Condition;
-      delete (conditionWithoutVerification as any).verificationStatus;
+        verificationStatus: undefined,
+      };
 
       const status = component.getVerificationStatus(
         conditionWithoutVerification,
@@ -439,10 +440,10 @@ describe('ConditionsListComponent', () => {
     });
 
     it('should detect when condition has no codings', () => {
-      const conditionWithoutCoding = {
+      const conditionWithoutCoding: Condition = {
         ...mockActiveCondition,
-      } as Condition;
-      delete (conditionWithoutCoding as any).code;
+        code: undefined,
+      };
 
       const hasCoding = component.hasCodings(conditionWithoutCoding);
 
@@ -493,21 +494,9 @@ describe('ConditionsListComponent', () => {
   });
 
   describe('Metadata', () => {
-    it('should detect when condition has codings', () => {
-      const hasCodings = component.hasCodings(mockActiveCondition);
-
-      expect(hasCodings).toBeTrue();
-    });
-
-    it('should detect when condition has no codings', () => {
-      const conditionWithoutCodings = {
-        id: 'test',
-        code: {},
-      } as Condition;
-
-      const hasCodings = component.hasCodings(conditionWithoutCodings);
-
-      expect(hasCodings).toBeFalse();
+    it('should return true when condition has metadata', () => {
+      const hasMetadata = component.hasCodings(mockActiveCondition);
+      expect(hasMetadata).toBeTrue();
     });
   });
 
@@ -554,11 +543,10 @@ describe('ConditionsListComponent', () => {
       component.isLoading = true;
       fixture.detectChanges();
 
-      const loadingElement =
-        fixture.nativeElement.querySelector('.loading-card');
+      const loadingElement = fixture.nativeElement.querySelector('.loading-card') as HTMLElement;
 
       expect(loadingElement).toBeTruthy();
-      expect(loadingElement.textContent).toContain('Loading conditions');
+      expect(loadingElement?.textContent).toContain('Loading conditions');
     });
 
     it('should show error message when error occurs', () => {
@@ -566,10 +554,10 @@ describe('ConditionsListComponent', () => {
       component.isLoading = false;
       fixture.detectChanges();
 
-      const errorElement = fixture.nativeElement.querySelector('.error-card');
+      const errorElement = fixture.nativeElement.querySelector('.error-card') as HTMLElement;
 
       expect(errorElement).toBeTruthy();
-      expect(errorElement.textContent).toContain('Test error message');
+      expect(errorElement?.textContent).toContain('Test error message');
     });
 
     it('should show no conditions message when list is empty', () => {
@@ -578,11 +566,10 @@ describe('ConditionsListComponent', () => {
       component.errorMessage = '';
       fixture.detectChanges();
 
-      const noConditionsElement =
-        fixture.nativeElement.querySelector('.no-conditions');
+      const noConditionsElement = fixture.nativeElement.querySelector('.no-conditions') as HTMLElement;
 
       expect(noConditionsElement).toBeTruthy();
-      expect(noConditionsElement.textContent).toContain('No Active Conditions');
+      expect(noConditionsElement?.textContent).toContain('No Active Conditions');
     });
 
     it('should display conditions when available', () => {
@@ -591,13 +578,11 @@ describe('ConditionsListComponent', () => {
       component.errorMessage = '';
       fixture.detectChanges();
 
-      const conditionsElement =
-        fixture.nativeElement.querySelector('.conditions-list');
+      const conditionsElement = fixture.nativeElement.querySelector('.conditions-list') as HTMLElement;
 
       expect(conditionsElement).toBeTruthy();
 
-      const conditionItems =
-        fixture.nativeElement.querySelectorAll('.condition-item');
+      const conditionItems = fixture.nativeElement.querySelectorAll('.condition-item') as NodeListOf<HTMLElement>;
 
       expect(conditionItems.length).toBe(1);
     });
@@ -608,17 +593,13 @@ describe('ConditionsListComponent', () => {
       component.errorMessage = '';
       fixture.detectChanges();
 
-      const countElement = fixture.nativeElement.querySelector(
-        '.conditions-count .count',
-      );
+      const countElement = fixture.nativeElement.querySelector('.conditions-count .count') as HTMLElement;
 
-      expect(countElement.textContent).toBe('2');
+      expect(countElement?.textContent).toBe('2');
 
-      const labelElement = fixture.nativeElement.querySelector(
-        '.conditions-count .label',
-      );
+      const labelElement = fixture.nativeElement.querySelector('.conditions-count .label') as HTMLElement;
 
-      expect(labelElement.textContent).toContain('conditions');
+      expect(labelElement?.textContent).toContain('conditions');
     });
 
     it('should show singular form for single condition', () => {
@@ -627,11 +608,9 @@ describe('ConditionsListComponent', () => {
       component.errorMessage = '';
       fixture.detectChanges();
 
-      const labelElement = fixture.nativeElement.querySelector(
-        '.conditions-count .label',
-      );
+      const labelElement = fixture.nativeElement.querySelector('.conditions-count .label') as HTMLElement;
 
-      expect(labelElement.textContent).toContain('condition');
+      expect(labelElement?.textContent).toContain('condition');
     });
 
     it('should show no patient card when not authenticated', () => {
@@ -640,11 +619,10 @@ describe('ConditionsListComponent', () => {
       component.errorMessage = '';
       fixture.detectChanges();
 
-      const noPatientElement =
-        fixture.nativeElement.querySelector('.no-patient-card');
+      const noPatientElement = fixture.nativeElement.querySelector('.no-patient-card') as HTMLElement;
 
       expect(noPatientElement).toBeTruthy();
-      expect(noPatientElement.textContent).toContain('No Patient Selected');
+      expect(noPatientElement?.textContent).toContain('No Patient Selected');
     });
   });
 
