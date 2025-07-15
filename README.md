@@ -77,7 +77,8 @@ Development is organized into clear test-driven phases, including:
 
 > Each phase includes: test case definition → implementation → CI validation → PR merge
 
-📄 [View the full PRD here](./docs/PRD.md)
+📄 [View the full PRD here](./docs/prd.md)  
+📋 [View the task tracker here](./docs/tasks.md)
 
 ---
 
