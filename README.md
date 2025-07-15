@@ -125,3 +125,6 @@ npm run start:backend
 # In a separate terminal, run the frontend application
 npm run start
 ```
+
+Use SMART HealthIT Launcher in Practitioner Context to test:
+For example: https://launch.smarthealthit.org/?launch_url=http%3A%2F%2Flocalhost%3A4200%2F&launch=WzAsImJhYjdmYmJlLTliODQtNGIyYi1iNTQxLWJiMWZlNzY5NzcyYSIsIjFjYjUxMTU3LTgwODMtNDEwZi04N2QxLTA3YTk0NjI5MjIyYSIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDAsMSwiIl0 
