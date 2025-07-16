@@ -7,11 +7,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import * as DOMPurify from 'dompurify';
 import { firstValueFrom } from 'rxjs';
 import {
   FhirBundle,
   FhirClientService,
 } from '../../services/fhir-client.service';
+import { compressFhirBundleClient } from '../../utils/fhir-compressor';
 import { logger } from '../../utils/logger';
 
 export interface ChatMessage {
@@ -26,6 +28,7 @@ export interface ChatRequest {
   query: string;
   context: string;
   patientData?: FhirBundle | Record<string, unknown> | null;
+  compressedData?: string;
 }
 
 export interface ChatResponse {
@@ -104,12 +107,28 @@ export class ChatComponent {
       const patientData = await this.gatherPatientContext();
       logger.debug('Gathered patient data');
 
-      // Prepare request
-      const chatRequest: ChatRequest = {
-        query: messageText,
-        context: 'clinical_chat',
-        patientData: patientData,
-      };
+      // Compress FHIR bundle client-side to reduce payload size
+      let chatRequest: ChatRequest;
+      if (patientData && patientData.resourceType === 'Bundle') {
+        const compressed = compressFhirBundleClient(patientData);
+        logger.debug('Compressed FHIR bundle', {
+          originalSize: compressed.originalSize,
+          compressedSize: compressed.compressedSize,
+          compressionRatio: compressed.compressionRatio,
+        });
+
+        chatRequest = {
+          query: messageText,
+          context: 'clinical_chat',
+          compressedData: compressed.compressedData,
+        };
+      } else {
+        chatRequest = {
+          query: messageText,
+          context: 'clinical_chat',
+          patientData: patientData,
+        };
+      }
 
       logger.debug('Sending chat request', { phi: true });
 
@@ -163,9 +182,10 @@ export class ChatComponent {
    * Add a regular message to the chat
    */
   private addMessage(content: string, isUser: boolean): string {
+    const sanitizedContent = isUser ? content : DOMPurify.default.sanitize(content);
     const message: ChatMessage = {
       id: this.generateMessageId(),
-      content: content,
+      content: sanitizedContent,
       isUser: isUser,
       timestamp: new Date(),
       isLoading: false,
@@ -206,7 +226,7 @@ export class ChatComponent {
       const existingMessage = this.messages[messageIndex];
       this.messages[messageIndex] = {
         id: existingMessage.id,
-        content: content,
+        content: DOMPurify.default.sanitize(content),
         isUser: existingMessage.isUser,
         timestamp: existingMessage.timestamp,
         isLoading: false,

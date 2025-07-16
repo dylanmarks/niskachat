@@ -76,8 +76,12 @@ app.use(
   }),
 );
 
-// Body parsing middleware
-app.use(express.json());
+// Body parsing middleware - moderate limit with timeout for FHIR bundles
+app.use(express.json({ 
+  limit: '2mb',
+  parameterLimit: 10000,
+  type: 'application/json'
+}));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
