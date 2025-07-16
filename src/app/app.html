@@ -1,4 +1,7 @@
 <div class="niska-chat-app">
+  <!-- Skip navigation link for accessibility -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <header class="app-header">
     <!-- Default Niska Chat Header - Show when no patient -->
     <div class="header-content" *ngIf="!context?.patient">
@@ -42,7 +45,7 @@
     </div>
   </header>
 
-  <main class="app-main">
+  <main class="app-main" id="main-content">
     <!-- SMART Launch Component - Only show during active SMART SSO flow and no patient data -->
     <app-smart-launch
       *ngIf="isSmartSsoActive && !context?.patient"

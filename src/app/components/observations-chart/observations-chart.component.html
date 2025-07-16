@@ -26,6 +26,7 @@
         mat-stroked-button
         color="primary"
         (click)="backToTable()"
+        aria-label="Return to observations table view"
         class="back-button"
       >
         <mat-icon>arrow_back</mat-icon>
@@ -117,10 +118,24 @@
             mat-table
             [dataSource]="sortedObservations"
             class="observations-table"
+            role="table"
+            aria-label="Patient clinical observations"
           >
+            <caption class="sr-only">
+              Table showing {{ observations.length }} clinical observations for
+              the patient. Columns include observation type, value, date,
+              status, and actions.
+            </caption>
             <!-- Type Column -->
             <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="observation-type-header"
+              >
+                Type
+              </th>
               <td
                 mat-cell
                 *matCellDef="let obs"
@@ -137,6 +152,7 @@
                     ? 'Click to view chart for ' + getObservationLabel(obs)
                     : getObservationLabel(obs) + ' (no chart available)'
                 "
+                [attr.headers]="'observation-type-header'"
               >
                 {{ getObservationLabel(obs) }}
               </td>
@@ -144,24 +160,60 @@
 
             <!-- Value Column -->
             <ng-container matColumnDef="value">
-              <th mat-header-cell *matHeaderCellDef>Value</th>
-              <td mat-cell *matCellDef="let obs" class="obs-value">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="observation-value-header"
+              >
+                Value
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let obs"
+                class="obs-value"
+                [attr.headers]="'observation-value-header'"
+              >
                 {{ formatObservationValue(obs) }}
               </td>
             </ng-container>
 
             <!-- Date Column -->
             <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Date</th>
-              <td mat-cell *matCellDef="let obs" class="obs-date">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="observation-date-header"
+              >
+                Date
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let obs"
+                class="obs-date"
+                [attr.headers]="'observation-date-header'"
+              >
                 {{ formatObservationDate(obs) }}
               </td>
             </ng-container>
 
             <!-- Status Column -->
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let obs" class="obs-status">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="observation-status-header"
+              >
+                Status
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let obs"
+                class="obs-status"
+                [attr.headers]="'observation-status-header'"
+              >
                 <span
                   [class]="'status-badge status-' + (obs.status || 'unknown')"
                 >
@@ -172,13 +224,28 @@
 
             <!-- Actions Column -->
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let obs" class="obs-actions">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="observation-actions-header"
+              >
+                Actions
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let obs"
+                class="obs-actions"
+                [attr.headers]="'observation-actions-header'"
+              >
                 <button
                   *ngIf="isObservationChartable(obs)"
                   mat-icon-button
                   (click)="onObservationClick(obs)"
                   matTooltip="View chart"
+                  [attr.aria-label]="
+                    'View chart for ' + getObservationLabel(obs)
+                  "
                   color="primary"
                 >
                   <mat-icon>bar_chart</mat-icon>

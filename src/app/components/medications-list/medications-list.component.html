@@ -21,6 +21,9 @@
         mat-stroked-button
         (click)="toggleInactive()"
         [color]="showInactive ? 'primary' : ''"
+        [attr.aria-label]="
+          (showInactive ? 'Hide' : 'Show') + ' inactive medications'
+        "
         class="toggle-inactive-btn"
       >
         <mat-icon>
@@ -118,16 +121,31 @@
             mat-table
             [dataSource]="activeMedications"
             class="medications-table"
+            role="table"
+            aria-label="Active medications for patient"
           >
+            <caption class="sr-only">
+              Table showing {{ activeMedications.length }} active medications
+              for the patient. Columns include medication name, status,
+              prescribed date, and actions.
+            </caption>
             <!-- Medication Name Column -->
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Medication</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-name-header"
+              >
+                Medication
+              </th>
               <td
                 mat-cell
                 *matCellDef="let medication"
                 class="medication-name"
                 (click)="selectMedication(medication)"
                 [class.selected]="selectedMedicationId === medication.id"
+                [attr.headers]="'medication-name-header'"
               >
                 {{ getMedicationName(medication) }}
               </td>
@@ -135,11 +153,19 @@
 
             <!-- Status Column -->
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-status-header"
+              >
+                Status
+              </th>
               <td
                 mat-cell
                 *matCellDef="let medication"
                 class="medication-status"
+                [attr.headers]="'medication-status-header'"
               >
                 <span
                   class="status-badge"
@@ -152,19 +178,39 @@
 
             <!-- Prescribed Date Column -->
             <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Prescribed Date</th>
-              <td mat-cell *matCellDef="let medication" class="medication-date">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-date-header"
+              >
+                Prescribed Date
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-date"
+                [attr.headers]="'medication-date-header'"
+              >
                 {{ formatDate(medication.authoredOn) }}
               </td>
             </ng-container>
 
             <!-- Actions Column -->
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-actions-header"
+              >
+                Actions
+              </th>
               <td
                 mat-cell
                 *matCellDef="let medication"
                 class="medication-actions"
+                [attr.headers]="'medication-actions-header'"
               >
                 <button
                   mat-icon-button
@@ -173,6 +219,9 @@
                     selectedMedicationId === medication.id ? 'primary' : ''
                   "
                   matTooltip="View details"
+                  [attr.aria-label]="
+                    'View details for ' + getMedicationName(medication)
+                  "
                 >
                   <mat-icon>visibility</mat-icon>
                 </button>
@@ -214,13 +263,21 @@
           >
             <!-- Medication Name Column -->
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Medication</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-name-header"
+              >
+                Medication
+              </th>
               <td
                 mat-cell
                 *matCellDef="let medication"
                 class="medication-name"
                 (click)="selectMedication(medication)"
                 [class.selected]="selectedMedicationId === medication.id"
+                [attr.headers]="'medication-name-header'"
               >
                 {{ getMedicationName(medication) }}
               </td>
@@ -228,11 +285,19 @@
 
             <!-- Status Column -->
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-status-header"
+              >
+                Status
+              </th>
               <td
                 mat-cell
                 *matCellDef="let medication"
                 class="medication-status"
+                [attr.headers]="'medication-status-header'"
               >
                 <span
                   class="status-badge"
@@ -245,19 +310,39 @@
 
             <!-- Prescribed Date Column -->
             <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Prescribed Date</th>
-              <td mat-cell *matCellDef="let medication" class="medication-date">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-date-header"
+              >
+                Prescribed Date
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let medication"
+                class="medication-date"
+                [attr.headers]="'medication-date-header'"
+              >
                 {{ formatDate(medication.authoredOn) }}
               </td>
             </ng-container>
 
             <!-- Actions Column -->
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="medication-actions-header"
+              >
+                Actions
+              </th>
               <td
                 mat-cell
                 *matCellDef="let medication"
                 class="medication-actions"
+                [attr.headers]="'medication-actions-header'"
               >
                 <button
                   mat-icon-button
@@ -266,6 +351,9 @@
                     selectedMedicationId === medication.id ? 'primary' : ''
                   "
                   matTooltip="View details"
+                  [attr.aria-label]="
+                    'View details for ' + getMedicationName(medication)
+                  "
                 >
                   <mat-icon>visibility</mat-icon>
                 </button>
@@ -296,6 +384,7 @@
         mat-icon-button
         (click)="clearSelection()"
         matTooltip="Close details"
+        aria-label="Close medication details panel"
         class="close-button"
       >
         <mat-icon>close</mat-icon>

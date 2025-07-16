@@ -121,6 +121,8 @@
             accept=".json"
             (change)="onFileSelected($event)"
             style="display: none"
+            id="fhir-bundle-upload"
+            aria-label="Upload FHIR Bundle JSON file"
           />
 
           <!-- Upload Bundle Button -->
@@ -129,11 +131,17 @@
             color="primary"
             (click)="fileInput.click()"
             [disabled]="uploadStatus.isUploading"
+            aria-describedby="upload-description"
             class="upload-button"
           >
             <mat-icon>upload_file</mat-icon>
             Upload Bundle
           </button>
+
+          <p id="upload-description" class="sr-only">
+            Click to select a FHIR Bundle JSON file to upload and view patient
+            data offline
+          </p>
 
           <!-- Example Data Buttons -->
           <button
@@ -141,6 +149,7 @@
             color="accent"
             (click)="loadExampleData('johnsmith')"
             [disabled]="uploadStatus.isUploading"
+            aria-label="Load John Smith example patient data"
             class="example-button"
           >
             <mat-icon>person</mat-icon>
@@ -152,6 +161,7 @@
             color="accent"
             (click)="loadExampleData('maria')"
             [disabled]="uploadStatus.isUploading"
+            aria-label="Load Maria Johnson example patient data"
             class="example-button"
           >
             <mat-icon>person</mat-icon>

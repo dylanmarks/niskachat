@@ -90,19 +90,54 @@
   <!-- Conditions Table -->
   <mat-card *ngIf="conditions.length > 0" class="conditions-table-container">
     <div class="table-wrapper">
-      <table mat-table [dataSource]="conditions" class="conditions-table">
+      <table
+        mat-table
+        [dataSource]="conditions"
+        class="conditions-table"
+        role="table"
+        aria-label="Patient medical conditions"
+      >
+        <caption class="sr-only">
+          Table showing {{ conditions.length }} medical conditions for the
+          patient. Columns include condition name, status, onset date, and
+          actions.
+        </caption>
         <!-- Condition Name Column -->
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Condition</th>
-          <td mat-cell *matCellDef="let condition" class="condition-name">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            scope="col"
+            id="condition-name-header"
+          >
+            Condition
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let condition"
+            class="condition-name"
+            [attr.headers]="'condition-name-header'"
+          >
             {{ getConditionName(condition) }}
           </td>
         </ng-container>
 
         <!-- Status Column -->
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let condition" class="condition-status">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            scope="col"
+            id="condition-status-header"
+          >
+            Status
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let condition"
+            class="condition-status"
+            [attr.headers]="'condition-status-header'"
+          >
             <span class="status-badge" [class]="getStatusClass(condition)">
               {{ getConditionStatus(condition) }}
             </span>
@@ -111,21 +146,48 @@
 
         <!-- Onset Date Column -->
         <ng-container matColumnDef="onset">
-          <th mat-header-cell *matHeaderCellDef>Onset Date</th>
-          <td mat-cell *matCellDef="let condition" class="condition-onset">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            scope="col"
+            id="condition-onset-header"
+          >
+            Onset Date
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let condition"
+            class="condition-onset"
+            [attr.headers]="'condition-onset-header'"
+          >
             {{ getOnsetDate(condition) || "N/A" }}
           </td>
         </ng-container>
 
         <!-- Actions Column -->
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let condition" class="condition-actions">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            scope="col"
+            id="condition-actions-header"
+          >
+            Actions
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let condition"
+            class="condition-actions"
+            [attr.headers]="'condition-actions-header'"
+          >
             <button
               mat-icon-button
               (click)="selectCondition(condition)"
               [color]="selectedConditionId === condition.id ? 'primary' : ''"
               matTooltip="View details"
+              [attr.aria-label]="
+                'View details for ' + getConditionName(condition)
+              "
             >
               <mat-icon>visibility</mat-icon>
             </button>
@@ -154,6 +216,7 @@
         mat-icon-button
         (click)="clearSelection()"
         matTooltip="Close details"
+        aria-label="Close condition details panel"
         class="close-button"
       >
         <mat-icon>close</mat-icon>
