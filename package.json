@@ -28,6 +28,9 @@
     "lint:format": "npm run format:base -- --check",
     "lint:all": "npm run lint:tsc:all && npm run lint && npm run lint:style && npm run lint:spelling && npm run lint:format",
     "ci:all": "npm run lint:all && npm run test:ci",
+    "a11y:test": "pa11y http://localhost:4200 --runner axe --standard WCAG2AA",
+    "a11y:test-offline": "pa11y http://localhost:4200 --runner axe --standard WCAG2AA --wait 3000",
+    "a11y:report": "pa11y http://localhost:4200 --runner axe --standard WCAG2AA --reporter json > accessibility-report.json",
     "shove": "git config push.autoSetupRemote true && git add . && git commit -m 'wip: shoved' --no-verify && git push --no-verify",
     "prepare": "husky"
   },
@@ -82,6 +85,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "lint-staged": "^16.1.0",
+    "pa11y": "^9.0.0",
     "prettier": "^3.5.3",
     "prettier-plugin-css-order": "^2.1.2",
     "prettier-plugin-organize-imports": "^4.1.0",

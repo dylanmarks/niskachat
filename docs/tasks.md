@@ -362,7 +362,34 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 14: Material Design System Implementation
+## Phase 14: WCAG Compliance Enforcement
+
+**Goal**: Ensure the NiskaChat app meets WCAG 2.1 AA accessibility standards through automated checks and a full UI audit. Prevent regressions with pre-commit enforcement.
+
+---
+
+### 1. Accessibility Audit of UI Components
+
+- [ ] Review all UI components for WCAG 2.1 AA compliance
+- [ ] Verify color contrast meets minimum 4.5:1 (normal text) or 3:1 (large text)
+- [ ] Ensure keyboard navigation is functional for all interactive elements
+- [ ] Verify proper use of ARIA roles and labels
+- [ ] Test core flows with screen reader (VoiceOver or NVDA)
+- [ ] Add skip navigation link if missing
+- [ ] Ensure all buttons, icons, and inputs have accessible names (via `aria-label`, `alt`, or `label` tags)
+
+---
+
+### 2. Add Automated WCAG Checks
+
+- [ ] Install and configure `pa11y` for automated accessibility tests
+  ```bash
+  npm install --save-dev pa11y
+  ```
+
+---
+
+## Phase 15: Material Design System Implementation
 
 **Goal**: Apply Angular Material and a consistent design system across the app to improve UI consistency, accessibility, responsiveness, and maintainability.
 
@@ -421,7 +448,7 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 15: Chat with Pre-Set Topics
+## Phase 16: Chat with Pre-Set Topics
 
 - [ ] Add summary at top of chat
 - [ ] Highlight 3 key clinical items
@@ -442,7 +469,7 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 16: Enhanced Security & Compliance
+## Phase 17: Enhanced Security & Compliance
 
 - [ ] Implement proper session management
 - [ ] Add security headers (CSP, HSTS, etc.)
@@ -463,7 +490,7 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 17: Performance & Optimization
+## Phase 18: Performance & Optimization
 
 - [ ] Implement lazy loading for components
 - [ ] Optimize bundle size
@@ -484,7 +511,7 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 18: Advanced Features
+## Phase 19: Advanced Features
 
 - [ ] Support for `DiagnosticReport` resources
 - [ ] Support for `AllergyIntolerance` resources
