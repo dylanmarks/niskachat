@@ -1,3 +1,21 @@
+// Skip link for accessibility
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  z-index: var(--niska-z-modal);
+  border-radius: 0 0 4px 4px;
+  background: var(--niska-primary-900);
+  padding: 8px;
+  color: white;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:focus {
+    top: 0;
+  }
+}
+
 .niska-chat-app {
   display: flex;
   flex-direction: column;
