@@ -525,7 +525,7 @@ function formatDate(dateString: string | undefined): string {
 
   try {
     const date = new Date(dateString!);
-    return date.toISOString().split("T")[0]; // YYYY-MM-DD format
+    return date.toISOString().split("T")[0] || ""; // YYYY-MM-DD format
   } catch {
     return ""; // Return empty string if parsing fails
   }
