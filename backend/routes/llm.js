@@ -158,8 +158,17 @@ function generatePrompt(context, data, userQuery = null) {
 
   switch (context) {
     case CONTEXT_TYPES.CLINICAL_CHAT: {
+      // Check if we have pre-compressed data from client
+      if (typeof data === "string") {
+        logger.debug("Processing pre-compressed data");
+        return getFormattedPrompt("clinical-chat", {
+          fhirBundle: "", // Empty string for legacy compatibility
+          patientData: data,
+          userQuery: userQuery || "Please provide an overview of this patient.",
+        });
+      }
       // For chat interactions, check if we have a full FHIR bundle
-      if (data && data.resourceType === "Bundle" && data.entry) {
+      else if (data && data.resourceType === "Bundle" && data.entry) {
         logger.debug("Processing FHIR bundle", { count: data.entry.length });
         // Use compressed FHIR bundle instead of full JSON for token efficiency
         const compressedData = compressFHIRBundle(data);
@@ -311,21 +320,25 @@ router.post("/", async (req, res) => {
       context = CONTEXT_TYPES.SUMMARY,
       query,
       patientData,
+      compressedData,
     } = req.body;
 
-    // For chat context, we can accept either bundle or patientData
-    if (!bundle && !patientData) {
+    // For chat context, we can accept either bundle, patientData, or compressedData
+    if (!bundle && !patientData && !compressedData) {
       return res.status(400).json({
         error: "Missing patient data",
         message:
-          "Please provide either a FHIR Bundle or patient data in the request body",
+          "Please provide either a FHIR Bundle, patient data, or compressed data in the request body",
       });
     }
 
     let clinicalData;
 
     // Handle different input types
-    if (bundle) {
+    if (compressedData) {
+      // Client-side compressed data - use directly
+      clinicalData = compressedData;
+    } else if (bundle) {
       // If we have a bundle, use it directly for FHIR bundle processing
       clinicalData = bundle;
     } else if (patientData) {

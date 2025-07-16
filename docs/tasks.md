@@ -370,19 +370,19 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ### 1. Accessibility Audit of UI Components
 
-- [ ] Review all UI components for WCAG 2.1 AA compliance
-- [ ] Verify color contrast meets minimum 4.5:1 (normal text) or 3:1 (large text)
-- [ ] Ensure keyboard navigation is functional for all interactive elements
-- [ ] Verify proper use of ARIA roles and labels
-- [ ] Test core flows with screen reader (VoiceOver or NVDA)
-- [ ] Add skip navigation link if missing
-- [ ] Ensure all buttons, icons, and inputs have accessible names (via `aria-label`, `alt`, or `label` tags)
+- [x] Review all UI components for WCAG 2.1 AA compliance
+- [x] Verify color contrast meets minimum 4.5:1 (normal text) or 3:1 (large text)
+- [x] Ensure keyboard navigation is functional for all interactive elements
+- [x] Verify proper use of ARIA roles and labels
+- [x] Test core flows with screen reader (VoiceOver or NVDA)
+- [x] Add skip navigation link if missing
+- [x] Ensure all buttons, icons, and inputs have accessible names (via `aria-label`, `alt`, or `label` tags)
 
 ---
 
 ### 2. Add Automated WCAG Checks
 
-- [ ] Install and configure `pa11y` for automated accessibility tests
+- [x] Install and configure `pa11y` for automated accessibility tests
   ```bash
   npm install --save-dev pa11y
   ```
