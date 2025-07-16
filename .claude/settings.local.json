@@ -27,7 +27,9 @@
       "Bash(npm test:*)",
       "Bash(git restore:*)",
       "Bash(git pull:*)",
-      "Bash(npm run format:*)"
+      "Bash(npm run format:*)",
+      "Bash(npm start)",
+      "Bash(npm run a11y:test:*)"
     ],
     "deny": []
   }

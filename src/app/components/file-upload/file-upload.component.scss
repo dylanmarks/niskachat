@@ -289,6 +289,17 @@
     mat-icon {
       font-size: var(--font-size-base);
     }
+    
+    // Ensure sufficient contrast for stroked buttons
+    &.mat-mdc-outlined-button {
+      color: var(--niska-primary-700) !important;
+      border-color: var(--niska-primary-700) !important;
+      
+      &:hover {
+        background-color: var(--niska-primary-700) !important;
+        color: white !important;
+      }
+    }
   }
 }
 
