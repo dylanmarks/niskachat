@@ -2,65 +2,42 @@
 @use "../../../themes/theme";
 
 .chat-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  box-shadow: var(--niska-elevation-4);
-  border: 1px solid var(--niska-primary-200);
-  border-radius: var(--niska-radius-xl);
   background: var(--niska-surface);
-  max-width: 700px;
-  height: 600px;
+  max-width: 100%;
+  width: 100%;
+  height: 100%;
+  min-height: 0; // Important for flex children
   overflow: hidden;
   font-family: var(--niska-font-family);
 
-  // Chat Header
-  .chat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--niska-primary-400);
-    background: linear-gradient(
-      135deg,
-      var(--niska-primary-500) 0%,
-      var(--niska-primary-700) 100%
-    );
-    padding: var(--niska-spacing-md) var(--niska-spacing-lg);
-    color: white;
+  // Clear button positioned in top-right corner
+  .clear-button {
+    position: absolute;
+    top: var(--niska-spacing-md);
+    right: var(--niska-spacing-md);
+    z-index: 10;
+    color: var(--niska-primary-600);
+    background: var(--niska-surface);
+    border: 1px solid var(--niska-primary-200);
+    box-shadow: var(--niska-elevation-2);
 
-    .chat-title {
-      h3 {
-        margin: 0;
-        font-weight: var(--niska-font-weight-semibold);
-        font-size: var(--niska-font-size-lg);
-        letter-spacing: -0.02em;
-      }
-
-      .chat-subtitle {
-        opacity: 0.9;
-        margin: var(--niska-spacing-xs) 0 0 0;
-        font-weight: var(--niska-font-weight-regular);
-        font-size: var(--niska-font-size-sm);
-      }
+    &:hover:not(:disabled) {
+      background: var(--niska-primary-50);
+      border-color: var(--niska-primary-300);
     }
 
-    // Material Design icon button styling
-    .clear-button {
-      color: white;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-      &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.1);
-      }
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-      ::ng-deep .mat-icon {
-        font-size: 1.2rem;
-      }
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    ::ng-deep .mat-icon {
+      font-size: 1.2rem;
     }
   }
 
@@ -69,8 +46,10 @@
     flex: 1;
     background: var(--niska-background);
     padding: var(--niska-spacing-md);
+    padding-top: calc(var(--niska-spacing-md) + 48px); // Space for clear button
     overflow-y: auto;
     scroll-behavior: smooth;
+    min-height: 0; // Important for flex scrolling
 
     // Custom scrollbar
     &::-webkit-scrollbar {
@@ -235,8 +214,9 @@
     }
   }
 
-  // Input Area
+  // Input Area - Fixed at bottom
   .chat-input-area {
+    flex-shrink: 0; // Prevent shrinking
     border-top: 1px solid var(--niska-primary-100);
     background: var(--niska-surface);
     padding: var(--niska-spacing-md);
@@ -350,25 +330,38 @@
 // Responsive Design
 @media (max-width: 768px) {
   .chat-container {
-    border: none;
-    border-radius: 0;
     max-width: 100%;
-    height: 100vh;
+    height: 100%;
 
     .chat-messages {
+      padding: var(--niska-spacing-sm) var(--niska-spacing-md) 120px var(--niska-spacing-md); // Reduced top padding, space for fixed input area on mobile
+
       .message-wrapper {
         &.user-message .message-content {
-          margin-left: 10%;
+          margin-left: 5%;
         }
 
         &.ai-message .message-content {
-          margin-right: 10%;
+          margin-right: 5%;
         }
       }
+    }
+    
+    .clear-button {
+      top: var(--niska-spacing-sm); // Reduced top position to match reduced padding
     }
 
     .chat-input-area {
       padding: var(--niska-spacing-md);
+      // Ensure input area stays at bottom on mobile
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--niska-surface);
+      border-top: 2px solid var(--niska-primary-100);
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 100;
 
       .chat-form .input-wrapper {
         gap: var(--niska-spacing-sm);
@@ -386,7 +379,6 @@
 // Dark mode support using design tokens
 @media (prefers-color-scheme: dark) {
   .chat-container {
-    border-color: var(--niska-primary-200);
     background: var(--niska-surface);
 
     .chat-messages {
