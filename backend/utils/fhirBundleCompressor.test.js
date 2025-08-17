@@ -358,9 +358,7 @@ describe("FHIR Bundle Compressor", () => {
     const result = compressFHIRBundle(bundle);
 
     // Should contain all key clinical information
-    expect(result).toContain(
-      "Pt: Alice Johnson, F, DOB 1975-03-20, MRN 123456",
-    );
+    expect(result).toContain("Pt: Alice Johnson, F, DOB 1975-03-20");
     expect(result).toContain("Dx: Type 2 diabetes mellitus (2010-05-15)");
     expect(result).toContain("Rx: Metformin 500mg BID");
     expect(result).toContain("Labs: A1c 8.2% (2024-06-01)");

@@ -1,0 +1,104 @@
+<div class="task-comments">
+  <!-- Comments Header -->
+  <div class="comments-header" *ngIf="commentCount > 0">
+    <h4 class="comments-title">
+      <mat-icon>chat</mat-icon>
+      Comments ({{ commentCount }})
+    </h4>
+  </div>
+
+  <!-- Comments List -->
+  <div class="comments-list" *ngIf="commentCount > 0">
+    <div
+      *ngFor="let comment of visibleComments; trackBy: trackByComment"
+      class="comment-item"
+      [class.pending]="isCommentPending(comment)"
+    >
+      <div class="comment-header">
+        <div class="comment-author">
+          <mat-icon class="author-icon">person</mat-icon>
+          <span class="author-name">{{ getAuthorDisplay(comment) }}</span>
+        </div>
+        <div class="comment-time">
+          <mat-icon class="time-icon">schedule</mat-icon>
+          <span class="time-text" [matTooltip]="comment.time">
+            {{ formatCommentTime(comment.time) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="comment-content">
+        <p class="comment-text">{{ comment.text }}</p>
+      </div>
+
+      <!-- Pending indicator -->
+      <div class="pending-indicator" *ngIf="isCommentPending(comment)">
+        <mat-icon class="pending-icon">hourglass_empty</mat-icon>
+        <span>Sending...</span>
+      </div>
+    </div>
+
+    <!-- Show All Button -->
+    <div class="show-all-section" *ngIf="hasMoreComments">
+      <button
+        mat-button
+        color="primary"
+        (click)="toggleComments()"
+        class="show-all-button"
+      >
+        <mat-icon>
+          {{ showAllComments ? "expand_less" : "expand_more" }}
+        </mat-icon>
+        {{ showAllComments ? 'Show Less' : `Show All (${commentCount})` }}
+      </button>
+    </div>
+  </div>
+
+  <!-- No Comments Message -->
+  <div class="no-comments" *ngIf="commentCount === 0">
+    <p class="no-comments-text">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      No comments yet. Be the first to add one!
+    </p>
+  </div>
+
+  <!-- Add Comment Section -->
+  <div class="add-comment-section">
+    <mat-form-field appearance="outline" class="comment-input">
+      <mat-label>Add a comment</mat-label>
+      <textarea
+        matInput
+        [(ngModel)]="newComment"
+        name="newComment"
+        placeholder="Type your comment here..."
+        rows="2"
+        maxlength="1000"
+        [disabled]="isSubmitting"
+        #commentInput
+        (keydown.enter)="onEnterKey($event)"
+      ></textarea>
+      <mat-hint>{{ newComment.length }}/1000</mat-hint>
+    </mat-form-field>
+
+    <div class="comment-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="addComment()"
+        [disabled]="!newComment.trim() || isSubmitting"
+        class="add-comment-button"
+      >
+        <mat-icon *ngIf="!isSubmitting">send</mat-icon>
+        <mat-icon *ngIf="isSubmitting" class="spinning">
+          hourglass_empty
+        </mat-icon>
+        {{ isSubmitting ? "Adding..." : "Add Comment" }}
+      </button>
+
+      <div class="comment-help">
+        <mat-icon>info</mat-icon>
+        <span>Press Shift+Enter for new line, Enter to send</span>
+      </div>
+    </div>
+  </div>
+</div>

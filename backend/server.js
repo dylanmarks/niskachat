@@ -11,6 +11,7 @@ import { resetLLMProviderFactory } from "./providers/providerFactory.js";
 import authRouter from "./routes/auth.js";
 import llmRouter from "./routes/llm.js";
 import proxyRouter from "./routes/proxy.js";
+import tasksRouter from "./routes/tasks.js";
 import logger from "./utils/logger.js";
 
 // Reset the provider factory to ensure it uses the loaded environment variables
@@ -77,11 +78,13 @@ app.use(
 );
 
 // Body parsing middleware - moderate limit with timeout for FHIR bundles
-app.use(express.json({ 
-  limit: '2mb',
-  parameterLimit: 10000,
-  type: 'application/json'
-}));
+app.use(
+  express.json({
+    limit: "2mb",
+    parameterLimit: 10000,
+    type: "application/json",
+  }),
+);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -96,10 +99,13 @@ app.get("/health", (req, res) => {
 app.use("/auth", authRouter);
 
 // Summarize routes
-app.use("/llm", llmRouter);
+app.use("/api/llm", llmRouter);
 
 // FHIR proxy routes
 app.use("/proxy", proxyRouter);
+
+// Task management routes
+app.use("/api/tasks", tasksRouter);
 
 // Basic route
 app.get("/", (req, res) => {

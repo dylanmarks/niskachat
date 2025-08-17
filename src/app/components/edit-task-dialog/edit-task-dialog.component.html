@@ -1,0 +1,128 @@
+<div class="edit-task-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>edit</mat-icon>
+    Edit Task
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <form class="edit-form">
+      <!-- Task Title -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Task Title</mat-label>
+        <input
+          matInput
+          [(ngModel)]="title"
+          name="title"
+          placeholder="Enter task title..."
+          maxlength="100"
+          required
+        />
+        <mat-hint>{{ title.length }}/100</mat-hint>
+        <mat-error *ngIf="!isValid()">Title is required</mat-error>
+      </mat-form-field>
+
+      <!-- Task Description -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description</mat-label>
+        <textarea
+          matInput
+          [(ngModel)]="description"
+          name="description"
+          placeholder="Enter task description..."
+          rows="3"
+          maxlength="500"
+        ></textarea>
+        <mat-hint>{{ description.length }}/500</mat-hint>
+      </mat-form-field>
+
+      <!-- Priority and Status Row -->
+      <div class="form-row">
+        <!-- Priority -->
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Priority</mat-label>
+          <mat-select [(ngModel)]="priority" name="priority">
+            <mat-select-trigger>
+              <div class="option-content" *ngIf="getPriorityOption(priority)">
+                <mat-icon [class]="'priority-' + getPriorityOption(priority)!.color">{{ getPriorityOption(priority)!.icon }}</mat-icon>
+                <span>{{ getPriorityOption(priority)!.label }}</span>
+              </div>
+            </mat-select-trigger>
+            <mat-option *ngFor="let option of priorityOptions" [value]="option.value">
+              <div class="option-content">
+                <mat-icon [class]="'priority-' + option.color">{{ option.icon }}</mat-icon>
+                <span>{{ option.label }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Status -->
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="status" name="status">
+            <mat-select-trigger>
+              <div class="option-content" *ngIf="getStatusOption(status)">
+                <mat-icon>{{ getStatusOption(status)!.icon }}</mat-icon>
+                <span>{{ getStatusOption(status)!.label }}</span>
+              </div>
+            </mat-select-trigger>
+            <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+              <div class="option-content">
+                <mat-icon>{{ option.icon }}</mat-icon>
+                <span>{{ option.label }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Add Comment Section -->
+      <div class="comment-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Add Comment (Optional)</mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="newComment"
+            name="newComment"
+            placeholder="Add a comment about this change..."
+            rows="3"
+            maxlength="1000"
+          ></textarea>
+          <mat-hint>{{ (newComment || '').length }}/1000</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Task Info -->
+      <div class="task-info">
+        <div class="info-item">
+          <mat-icon>schedule</mat-icon>
+          <span>Created: {{ data.task.authoredOn | date:'medium' }}</span>
+        </div>
+        <div class="info-item" *ngIf="data.task._source">
+          <mat-icon>source</mat-icon>
+          <span>Source: {{ data.task._source === 'clinical_chat' ? 'Clinical Chat' : 'Manual' }}</span>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button
+      mat-button
+      (click)="onCancel()"
+      class="cancel-button"
+    >
+      Cancel
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onSave()"
+      [disabled]="!isValid() || !hasChanges()"
+      class="save-button"
+    >
+      <mat-icon>save</mat-icon>
+      Save Changes
+    </button>
+  </mat-dialog-actions>
+</div>

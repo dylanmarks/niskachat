@@ -7,15 +7,34 @@
 html,
 body {
   height: 100%;
+  width: 100%;
+  overflow-x: hidden; // Prevent horizontal scroll
 }
 
 body {
   margin: 0;
+  padding: 0;
   background-color: var(--niska-background);
   color: var(--niska-on-background);
   font-size: var(--niska-font-size-base);
   line-height: var(--niska-line-height-normal);
   font-family: var(--niska-font-family);
+  
+  // Smooth transitions for theme changes
+  transition: background-color var(--niska-transition-normal), 
+              color var(--niska-transition-normal);
+}
+
+// Add smooth transitions to common elements for theme changes (exclude Material ripple internals)
+:not(.mat-ripple-element):not(.mdc-button__ripple):not(.mdc-icon-button__ripple) {
+  transition: background-color var(--niska-transition-fast), 
+              color var(--niska-transition-fast), 
+              border-color var(--niska-transition-fast),
+              box-shadow var(--niska-transition-fast);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 // Typography hierarchy following Material Design
@@ -146,6 +165,108 @@ pre {
 // Smooth scrolling
 html {
   scroll-behavior: smooth;
+}
+
+// Dark mode specific overrides for better contrast
+[data-theme="dark"] {
+  // Better focus indicators in dark mode
+  *:focus {
+    outline-color: var(--niska-primary-400);
+  }
+  
+  // Link styles for dark mode
+  a {
+    color: var(--niska-primary-400);
+    
+    &:hover {
+      color: var(--niska-primary-300);
+    }
+    
+    &:focus {
+      outline-color: var(--niska-primary-400);
+    }
+  }
+  
+  // Code styles for dark mode
+  code {
+    background-color: var(--niska-surface-container-high);
+    color: var(--niska-primary-200);
+  }
+  
+  pre {
+    background-color: var(--niska-surface-container);
+    
+    code {
+      background-color: transparent;
+    }
+  }
+  
+  // Better scrollbar styling in dark mode
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: var(--niska-surface-container);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--niska-outline);
+    border-radius: var(--niska-radius-sm);
+    
+    &:hover {
+      background: var(--niska-on-surface-variant);
+    }
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--niska-surface-variant);
+  }
+  
+  // Global Material table styles for dark mode
+  .mat-table {
+    background-color: var(--niska-surface) !important;
+    color: var(--niska-on-surface) !important;
+    
+    th.mat-header-cell {
+      background-color: var(--niska-surface-variant) !important;
+      color: var(--niska-on-surface) !important;
+      border-bottom-color: var(--niska-outline) !important;
+    }
+    
+    td.mat-cell {
+      color: var(--niska-on-surface) !important;
+      border-bottom-color: var(--niska-outline-variant) !important;
+    }
+    
+    tr.mat-row {
+      background-color: var(--niska-surface) !important;
+      
+      &:hover {
+        background-color: var(--niska-surface-variant) !important;
+      }
+    }
+    
+    // For mat-card containers with tables
+    .mat-card & {
+      background-color: var(--niska-surface) !important;
+    }
+  }
+  
+  // Ensure table container cards use dark theme
+  .mat-card {
+    background: var(--niska-surface) !important;
+    color: var(--niska-on-surface) !important;
+    
+    &.conditions-table-container,
+    &.procedures-table-container,
+    &.medications-table-container,
+    &.observations-table-container,
+    &.immunizations-table-container,
+    &.allergies-table-container {
+      .table-wrapper {
+        background-color: var(--niska-surface) !important;
+      }
+    }
+  }
 }
 
 /* GLOBAL OVERRIDE FOR OBSERVATIONS BACK BUTTON - FORCE STYLES */

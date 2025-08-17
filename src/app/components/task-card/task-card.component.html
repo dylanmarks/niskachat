@@ -1,0 +1,119 @@
+<mat-card
+  class="task-card"
+  [class]="'status-' + task.status"
+  [class.completed]="task.status === 'completed'"
+>
+  <mat-card-content>
+    <div class="task-header">
+      <div class="task-status-section">
+        <button
+          mat-icon-button
+          [color]="getStatusColor()"
+          (click)="onStatusToggle()"
+          [attr.aria-label]="'Edit task: ' + task.code.text"
+          class="status-toggle-btn"
+          [class]="'status-' + task.status"
+        >
+          <mat-icon>{{ getStatusIcon() }}</mat-icon>
+        </button>
+        <div class="task-content">
+          <div class="task-title-row">
+            <h3
+              class="task-title"
+              [class.completed-text]="task.status === 'completed'"
+            >
+              {{ task.code.text }}
+            </h3>
+            <div class="task-badges">
+              <span
+                class="priority-badge"
+                [class]="'priority-' + (task.priority || 'routine')"
+              >
+                <mat-icon>{{ getPriorityIcon() }}</mat-icon>
+                {{ getPriorityDisplay() }}
+              </span>
+              <span class="status-badge" [class]="'status-' + task.status">
+                {{ getStatusDisplay() }}
+              </span>
+            </div>
+          </div>
+
+          <div class="task-metadata">
+            <div class="metadata-row">
+              <span class="meta-item">
+                <mat-icon>schedule</mat-icon>
+                Created {{ formatDate(task.authoredOn) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-actions">
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="taskMenu"
+          aria-label="Task options"
+          class="menu-trigger"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #taskMenu="matMenu" class="task-menu">
+          <button mat-menu-item (click)="onEditClick()">
+            <mat-icon>edit</mat-icon>
+            <span>Edit Task</span>
+          </button>
+          <button mat-menu-item (click)="onDeleteClick()" class="delete-action">
+            <mat-icon>delete</mat-icon>
+            <span>Delete Task</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <div class="task-description" *ngIf="hasDescription()">
+      <div class="description-content">
+        <mat-icon class="description-icon">notes</mat-icon>
+        <p>{{ task.description }}</p>
+      </div>
+    </div>
+
+    <div class="task-focus" *ngIf="hasFocus()">
+      <div class="focus-info">
+        <mat-icon>link</mat-icon>
+        <span>Related to {{ getFocusDisplay() }}</span>
+      </div>
+    </div>
+
+    <div
+      class="task-care-plan"
+      *ngIf="showCarePlanInfo && task.basedOn && task.basedOn.length > 0"
+    >
+      <div class="care-plan-info">
+        <mat-icon>folder_shared</mat-icon>
+        <span>Part of {{ getCarePlanReference() }}</span>
+      </div>
+    </div>
+
+    <!-- Task Comments Section -->
+    <div class="comments-section">
+      <button
+        mat-button
+        color="primary"
+        (click)="toggleComments()"
+        class="comments-toggle-btn"
+        [attr.aria-label]="'Toggle comments for task ' + task.code.text"
+      >
+        <mat-icon>{{ showComments ? "expand_less" : "expand_more" }}</mat-icon>
+        {{ showComments ? 'Hide Comments' : (hasComments() ? `Show Comments (${getCommentCount()})` : 'Add Comment') }}
+      </button>
+
+      <app-task-comments
+        *ngIf="showComments"
+        [task]="task"
+        (commentAdded)="onCommentAdded($event)"
+        (commentError)="onCommentError($event)"
+      ></app-task-comments>
+    </div>
+  </mat-card-content>
+</mat-card>
