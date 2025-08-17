@@ -1,0 +1,157 @@
+// Import theme for component-specific overrides
+@use "../../../themes/theme";
+
+.create-task-dialog {
+  .dialog-title {
+    display: flex;
+    align-items: center;
+    gap: var(--niska-spacing-sm);
+    margin-bottom: var(--niska-spacing-md);
+    color: var(--niska-primary-700);
+    font-weight: var(--niska-font-weight-semibold);
+
+    mat-icon {
+      color: var(--niska-primary-500);
+    }
+  }
+
+  .dialog-content {
+    padding: 0 var(--niska-spacing-md);
+    min-width: 400px;
+    max-width: 500px;
+
+    .create-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--niska-spacing-md);
+
+      .full-width {
+        width: 100%;
+      }
+
+      // Style for select options with icons and selected priority display
+      .option-content,
+      .selected-priority {
+        display: flex;
+        align-items: center;
+        gap: var(--niska-spacing-sm);
+
+        mat-icon {
+          width: 1.1rem;
+          height: 1.1rem;
+          font-size: 1.1rem;
+
+          &.priority-primary {
+            color: var(--niska-primary-500);
+          }
+
+          &.priority-accent {
+            color: var(--niska-accent-500);
+          }
+
+          &.priority-warn {
+            color: var(--niska-error-500);
+          }
+        }
+      }
+
+      .info-note {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--niska-spacing-sm);
+        border: 1px solid var(--niska-info-200);
+        border-radius: var(--niska-radius-md);
+        background: var(--niska-info-50);
+        padding: var(--niska-spacing-sm);
+        color: var(--niska-info-700);
+        font-size: var(--niska-font-size-sm);
+
+        mat-icon {
+          margin-top: 1px;
+          width: 1rem;
+          height: 1rem;
+          color: var(--niska-info-500);
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--niska-spacing-sm);
+    margin-top: var(--niska-spacing-md);
+    border-top: 1px solid var(--niska-outline-variant);
+    padding: var(--niska-spacing-md);
+
+    .cancel-button {
+      color: var(--niska-on-surface-variant);
+    }
+
+    .create-button {
+      /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+      ::ng-deep .mat-icon {
+        margin-right: var(--niska-spacing-xs);
+        font-size: 1rem;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Responsive design for mobile
+@media (max-width: 768px) {
+  .create-task-dialog {
+    .dialog-content {
+      padding: 0 var(--niska-spacing-sm);
+      min-width: unset;
+      max-width: 90vw;
+    }
+
+    .dialog-actions {
+      flex-direction: column-reverse;
+      gap: var(--niska-spacing-sm);
+
+      .cancel-button,
+      .create-button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Dark mode support
+[data-theme="dark"] {
+  .create-task-dialog {
+    .dialog-title {
+      color: var(--niska-primary-300);
+
+      mat-icon {
+        color: var(--niska-primary-400);
+      }
+    }
+
+    .dialog-content {
+      .create-form {
+        .info-note {
+          border-color: var(--niska-info-700);
+          background: var(--niska-info-900);
+          color: var(--niska-info-200);
+
+          mat-icon {
+            color: var(--niska-info-400);
+          }
+        }
+      }
+    }
+
+    .dialog-actions {
+      border-top-color: var(--niska-outline);
+    }
+  }
+}

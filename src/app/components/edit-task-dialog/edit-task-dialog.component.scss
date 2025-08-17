@@ -1,0 +1,188 @@
+// Import theme for component-specific overrides
+@use "../../../themes/theme";
+
+.edit-task-dialog {
+  .dialog-title {
+    display: flex;
+    align-items: center;
+    gap: var(--niska-spacing-sm);
+    margin-bottom: var(--niska-spacing-md);
+    color: var(--niska-primary-700);
+    font-weight: var(--niska-font-weight-semibold);
+
+    mat-icon {
+      color: var(--niska-primary-500);
+    }
+  }
+
+  .dialog-content {
+    padding: 0 var(--niska-spacing-md);
+    min-width: 400px;
+    max-width: 600px;
+
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--niska-spacing-md);
+
+      .full-width {
+        width: 100%;
+      }
+
+      .form-row {
+        display: flex;
+        gap: var(--niska-spacing-md);
+        width: 100%;
+
+        .half-width {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+
+      // Style for select options with icons
+      .option-content {
+        display: flex;
+        align-items: center;
+        gap: var(--niska-spacing-sm);
+
+        mat-icon {
+          width: 1.1rem;
+          height: 1.1rem;
+          font-size: 1.1rem;
+
+          &.priority-primary {
+            color: var(--niska-primary-500);
+          }
+
+          &.priority-accent {
+            color: var(--niska-accent-500);
+          }
+
+          &.priority-warn {
+            color: var(--niska-error-500);
+          }
+        }
+      }
+
+      .task-info {
+        border: 1px solid var(--niska-outline-variant);
+        border-radius: var(--niska-radius-md);
+        background: var(--niska-surface-variant);
+        padding: var(--niska-spacing-md);
+
+        .info-item {
+          display: flex;
+          align-items: center;
+          gap: var(--niska-spacing-sm);
+          margin-bottom: var(--niska-spacing-xs);
+          color: var(--niska-on-surface-variant);
+          font-size: var(--niska-font-size-sm);
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          mat-icon {
+            width: 1rem;
+            height: 1rem;
+            color: var(--niska-primary-400);
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--niska-spacing-sm);
+    margin-top: var(--niska-spacing-md);
+    border-top: 1px solid var(--niska-outline-variant);
+    padding: var(--niska-spacing-md);
+
+    .cancel-button {
+      color: var(--niska-on-surface-variant);
+    }
+
+    .save-button {
+      /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+      ::ng-deep .mat-icon {
+        margin-right: var(--niska-spacing-xs);
+        font-size: 1rem;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Responsive design for mobile
+@media (max-width: 768px) {
+  .edit-task-dialog {
+    .dialog-content {
+      padding: 0 var(--niska-spacing-sm);
+      min-width: unset;
+      max-width: 90vw;
+
+      .edit-form {
+        .form-row {
+          flex-direction: column;
+          gap: var(--niska-spacing-sm);
+
+          .half-width {
+            width: 100%;
+          }
+        }
+      }
+    }
+
+    .dialog-actions {
+      flex-direction: column-reverse;
+      gap: var(--niska-spacing-sm);
+
+      .cancel-button,
+      .save-button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Dark mode support
+[data-theme="dark"] {
+  .edit-task-dialog {
+    .dialog-title {
+      color: var(--niska-primary-300);
+
+      mat-icon {
+        color: var(--niska-primary-400);
+      }
+    }
+
+    .dialog-content {
+      .edit-form {
+        .task-info {
+          border-color: var(--niska-outline);
+          background: var(--niska-surface-container);
+
+          .info-item {
+            color: var(--niska-on-surface-variant);
+
+            mat-icon {
+              color: var(--niska-primary-300);
+            }
+          }
+        }
+      }
+    }
+
+    .dialog-actions {
+      border-top-color: var(--niska-outline);
+    }
+  }
+}

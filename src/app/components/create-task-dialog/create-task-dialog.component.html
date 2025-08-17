@@ -1,0 +1,107 @@
+<div class="create-task-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon>add_task</mat-icon>
+    Create New Task
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <form class="create-form">
+      <!-- Task Title -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Task Title</mat-label>
+        <input
+          matInput
+          [(ngModel)]="title"
+          name="title"
+          placeholder="Enter task title..."
+          maxlength="100"
+          required
+        />
+        <mat-hint>{{ title.length }}/100</mat-hint>
+        <mat-error *ngIf="!isValid()">Title is required</mat-error>
+      </mat-form-field>
+
+      <!-- Task Description -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description (Optional)</mat-label>
+        <textarea
+          matInput
+          [(ngModel)]="description"
+          name="description"
+          placeholder="Enter task description..."
+          rows="3"
+          maxlength="500"
+        ></textarea>
+        <mat-hint>{{ description.length }}/500</mat-hint>
+      </mat-form-field>
+
+      <!-- Initial Comment -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Initial Comment (Optional)</mat-label>
+        <textarea
+          matInput
+          [(ngModel)]="initialComment"
+          name="initialComment"
+          placeholder="Add a comment visible to the care team..."
+          rows="2"
+          maxlength="1000"
+        ></textarea>
+        <mat-hint>{{ initialComment.length }}/1000</mat-hint>
+      </mat-form-field>
+
+      <!-- Priority -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Priority</mat-label>
+        <mat-select [(ngModel)]="priority" name="priority">
+          <mat-select-trigger>
+            <div
+              class="selected-priority"
+              *ngIf="getPriorityOption(priority) as selectedOption"
+            >
+              <mat-icon [class]="'priority-' + selectedOption.color">
+                {{ selectedOption.icon }}
+              </mat-icon>
+              <span>{{ selectedOption.label }}</span>
+            </div>
+          </mat-select-trigger>
+          <mat-option
+            *ngFor="let option of priorityOptions"
+            [value]="option.value"
+          >
+            <div class="option-content">
+              <mat-icon [class]="'priority-' + option.color">
+                {{ option.icon }}
+              </mat-icon>
+              <span>{{ option.label }}</span>
+            </div>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Info Note -->
+      <div class="info-note">
+        <mat-icon>info</mat-icon>
+        <span>
+          This task will be created manually and assigned to the current
+          patient.
+        </span>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onCancel()" class="cancel-button">
+      Cancel
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onCreate()"
+      [disabled]="!isValid()"
+      class="create-button"
+    >
+      <mat-icon>add_task</mat-icon>
+      Create Task
+    </button>
+  </mat-dialog-actions>
+</div>

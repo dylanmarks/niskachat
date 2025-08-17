@@ -1,0 +1,179 @@
+<div class="tasks-container">
+  <!-- Modern Header Section -->
+  <div class="tasks-header">
+    <div class="header-content">
+      <div class="title-section">
+        <div class="title-with-icon">
+          <div class="icon-wrapper">
+            <mat-icon>assignment_ind</mat-icon>
+          </div>
+          <div class="title-text">
+            <h1 class="tasks-title">Clinical Tasks</h1>
+            <p class="tasks-subtitle" *ngIf="hasAnyTasks()">
+              Manage and track patient care tasks
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button 
+          mat-fab 
+          color="primary" 
+          (click)="onCreateNewTask()"
+          class="create-task-fab"
+          matTooltip="Create new clinical task"
+          aria-label="Create new task">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Enhanced Stats Cards -->
+    <div class="stats-section" *ngIf="hasAnyTasks()">
+      <div class="stats-grid">
+        <div class="stat-card total">
+          <div class="stat-icon">
+            <mat-icon>assignment</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ taskStats.total }}</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+        </div>
+        
+        <div class="stat-card pending">
+          <div class="stat-icon">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ taskStats.requested }}</div>
+            <div class="stat-label">Requested</div>
+          </div>
+        </div>
+        
+        <div class="stat-card active">
+          <div class="stat-icon">
+            <mat-icon>play_circle</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ taskStats.inProgress }}</div>
+            <div class="stat-label">In Progress</div>
+          </div>
+        </div>
+        
+        <div class="stat-card completed">
+          <div class="stat-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ taskStats.completed }}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-section">
+        <div class="progress-info">
+          <span class="progress-label">Completion Progress</span>
+          <span class="progress-percentage">{{ getCompletionPercentage() }}%</span>
+        </div>
+        <div class="progress-bar-container">
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="getCompletionPercentage()"
+            color="primary"
+            class="enhanced-progress">
+          </mat-progress-bar>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Empty State -->
+  <div class="empty-state" *ngIf="!hasAnyTasks()">
+    <div class="empty-content">
+      <div class="empty-illustration">
+        <mat-icon class="empty-icon">assignment_late</mat-icon>
+        <div class="empty-background-icon">
+          <mat-icon>assignment</mat-icon>
+        </div>
+      </div>
+      <div class="empty-text">
+        <h2>No Clinical Tasks Yet</h2>
+        <p>Get started by creating your first task or generating recommendations using "Next Best Action" in the chat.</p>
+      </div>
+      <div class="empty-actions">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="onCreateNewTask()"
+          class="primary-action">
+          <mat-icon>add_task</mat-icon>
+          Create Your First Task
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Task Groups -->
+  <div class="task-groups" *ngIf="hasAnyTasks()">
+    <div class="task-group" *ngFor="let group of taskGroups; trackBy: trackTaskGroup">
+      <!-- Enhanced Care Plan Header -->
+      <div class="care-plan-header">
+        <div class="care-plan-info">
+          <div class="care-plan-icon-wrapper">
+            <mat-icon [class]="'status-' + (group.carePlan?.status || 'default')">
+              {{ getCarePlanIcon(group.carePlan) }}
+            </mat-icon>
+          </div>
+          <div class="care-plan-details">
+            <h2 class="care-plan-title">{{ getCarePlanTitle(group.carePlan) }}</h2>
+            <div class="care-plan-meta" *ngIf="group.carePlan">
+              <span class="meta-item">
+                <mat-icon>calendar_today</mat-icon>
+                Created {{ formatCarePlanDate(group.carePlan) }}
+              </span>
+              <span class="meta-divider">•</span>
+              <span class="meta-item status-badge" [class]="'status-' + group.carePlan.status">
+                <mat-icon>{{ getCarePlanStatusIcon(group.carePlan.status) }}</mat-icon>
+                {{ getCarePlanStatusDisplay(group.carePlan.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="care-plan-stats">
+          <div class="task-summary">
+            <span class="task-count-badge">
+              {{ group.tasks.length }} task{{ group.tasks.length !== 1 ? 's' : '' }}
+            </span>
+            <div class="task-progress-mini" *ngIf="group.tasks.length > 0">
+              <div class="progress-mini-bar">
+                <div 
+                  class="progress-mini-fill" 
+                  [style.width.%]="getGroupCompletionPercentage(group.tasks)">
+                </div>
+              </div>
+              <span class="progress-mini-text">
+                {{ getCompletedTasksCount(group.tasks) }}/{{ group.tasks.length }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Tasks Grid -->
+      <div class="care-plan-tasks">
+        <app-task-card
+          *ngFor="let task of group.tasks; trackBy: trackTask"
+          [task]="task"
+          [showCarePlanInfo]="false"
+          (statusToggle)="onTaskStatusToggle($event)"
+          (editTask)="onEditTask($event)"
+          (deleteTask)="onDeleteTask($event)">
+        </app-task-card>
+      </div>
+    </div>
+  </div>
+</div>

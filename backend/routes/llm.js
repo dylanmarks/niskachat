@@ -146,9 +146,30 @@ function formatClinicalData(data) {
 }
 
 /**
+ * Format conversation history for the LLM prompt
+ */
+function formatConversationHistory(conversationHistory) {
+  if (!conversationHistory || !Array.isArray(conversationHistory) || conversationHistory.length === 0) {
+    return "";
+  }
+
+  // Format conversation history as a readable string
+  const formattedHistory = conversationHistory
+    .filter(msg => !msg.isLoading) // Exclude loading messages
+    .map(msg => {
+      const role = msg.isUser ? "Human" : "Assistant";
+      const timestamp = new Date(msg.timestamp).toLocaleString();
+      return `[${timestamp}] ${role}: ${msg.content}`;
+    })
+    .join("\n");
+
+  return formattedHistory;
+}
+
+/**
  * Generate appropriate prompt based on context type
  */
-function generatePrompt(context, data, userQuery = null) {
+function generatePrompt(context, data, userQuery = null, conversationHistory = null) {
   logger.debug("generatePrompt called", {
     context,
     dataType: typeof data,
@@ -165,6 +186,7 @@ function generatePrompt(context, data, userQuery = null) {
           fhirBundle: "", // Empty string for legacy compatibility
           patientData: data,
           userQuery: userQuery || "Please provide an overview of this patient.",
+          conversationHistory: formatConversationHistory(conversationHistory),
         });
       }
       // For chat interactions, check if we have a full FHIR bundle
@@ -176,6 +198,7 @@ function generatePrompt(context, data, userQuery = null) {
           fhirBundle: "", // Empty string for legacy compatibility
           patientData: compressedData,
           userQuery: userQuery || "Please provide an overview of this patient.",
+          conversationHistory: formatConversationHistory(conversationHistory),
         });
       } else {
         logger.debug("Processing legacy structured data");
@@ -204,6 +227,7 @@ function generatePrompt(context, data, userQuery = null) {
           fhirBundle: "", // Empty string for FHIR bundle
           patientData,
           userQuery: userQuery || "Please provide an overview of this patient.",
+          conversationHistory: formatConversationHistory(conversationHistory),
         });
       }
     }
@@ -249,6 +273,169 @@ async function callLLM(prompt, options = {}) {
 }
 
 /**
+ * Parse and validate Clinical Chat response with suggested actions and optional FHIR tasks
+ */
+function parseClinicalChatResponse(llmResponse) {
+  try {
+    logger.debug("Parsing clinical chat response", {
+      responseLength: llmResponse.length,
+      responseStart: llmResponse.substring(0, 200)
+    });
+
+    // Try to parse JSON from the response
+    let parsedResponse;
+    let jsonText = "";
+    
+    // Handle cases where response might be wrapped in markdown code blocks
+    const jsonMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[1].trim();
+      logger.debug("Found JSON in code block", { jsonLength: jsonText.length });
+    } else {
+      // Try to find JSON-like content in the response
+      const jsonStart = llmResponse.indexOf('{');
+      const jsonEnd = llmResponse.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        jsonText = llmResponse.substring(jsonStart, jsonEnd + 1).trim();
+        logger.debug("Extracted JSON-like content", { jsonLength: jsonText.length });
+      } else {
+        // If no JSON structure found, treat as plain text response
+        logger.debug("No JSON structure found, treating as plain text");
+        return {
+          response: llmResponse,
+          suggestedActions: [],
+          isPlainText: true
+        };
+      }
+    }
+
+    // Try to fix common JSON truncation issues
+    if (jsonText && !jsonText.endsWith('}')) {
+      logger.warn("JSON appears to be truncated, attempting to fix");
+      // Count open braces to try to close properly
+      const openBraces = (jsonText.match(/\{/g) || []).length;
+      const closeBraces = (jsonText.match(/\}/g) || []).length;
+      const missingBraces = openBraces - closeBraces;
+      
+      if (missingBraces > 0) {
+        // Add missing closing braces
+        jsonText += '}'.repeat(missingBraces);
+        logger.debug("Added missing closing braces", { count: missingBraces });
+      }
+      
+      // Try to complete arrays if they're incomplete
+      if (jsonText.includes('"tasks": [') && !jsonText.includes('"tasks": []')) {
+        const tasksMatch = jsonText.match(/"tasks":\s*\[([^\]]*?)$/);
+        if (tasksMatch && !jsonText.endsWith(']]')) {
+          // Try to close incomplete task array
+          if (jsonText.endsWith(',')) {
+            jsonText = jsonText.slice(0, -1); // Remove trailing comma
+          }
+          if (!jsonText.endsWith(']')) {
+            jsonText += ']';
+            logger.debug("Closed incomplete tasks array");
+          }
+        }
+      }
+    }
+
+    try {
+      parsedResponse = JSON.parse(jsonText);
+    } catch (parseError) {
+      logger.debug("JSON parsing failed, treating as plain text", {
+        error: parseError.message
+      });
+      // Fall back to plain text response
+      return {
+        response: llmResponse,
+        suggestedActions: [],
+        isPlainText: true
+      };
+    }
+
+    // Validate structure - be flexible about structure
+    if (typeof parsedResponse.response !== 'string') {
+      logger.debug("Invalid response structure, using raw response");
+      return {
+        response: llmResponse,
+        suggestedActions: [],
+        isPlainText: true
+      };
+    }
+
+    // Ensure suggestedActions is an array
+    if (!Array.isArray(parsedResponse.suggestedActions)) {
+      parsedResponse.suggestedActions = [];
+    }
+
+    // Validate suggested actions structure
+    parsedResponse.suggestedActions = parsedResponse.suggestedActions.filter((action, index) => {
+      if (!action.id || !action.title || !action.description) {
+        logger.debug(`Invalid suggested action at index ${index}, filtering out`);
+        return false;
+      }
+      return true;
+    });
+
+    // Check if this response includes FHIR task generation (when user requests comprehensive actions)
+    let taskGeneration = null;
+    if (parsedResponse.carePlan && parsedResponse.tasks && Array.isArray(parsedResponse.tasks)) {
+      // Validate CarePlan structure
+      const carePlan = parsedResponse.carePlan;
+      if (carePlan.resourceType === "CarePlan" && carePlan.id && carePlan.title) {
+        // Validate Task structures
+        const validTasks = parsedResponse.tasks.filter((task, index) => {
+          if (task.resourceType !== "Task" || !task.id || !task.code?.text) {
+            logger.debug(`Invalid Task structure at index ${index}, filtering out`);
+            return false;
+          }
+          return true;
+        });
+
+        if (validTasks.length > 0) {
+          taskGeneration = {
+            summary: parsedResponse.response,
+            carePlan: carePlan,
+            tasks: validTasks,
+            source: "clinical_chat"
+          };
+          logger.info("Successfully parsed FHIR task generation", {
+            carePlanId: carePlan.id,
+            taskCount: validTasks.length
+          });
+        }
+      }
+    }
+
+    logger.info("Successfully parsed clinical chat response", {
+      responseLength: parsedResponse.response.length,
+      suggestedActionsCount: parsedResponse.suggestedActions.length,
+      hasTaskGeneration: !!taskGeneration
+    });
+
+    return {
+      response: parsedResponse.response,
+      suggestedActions: parsedResponse.suggestedActions,
+      taskGeneration: taskGeneration,
+      isPlainText: false
+    };
+  } catch (error) {
+    logger.warn("Failed to parse clinical chat response, using fallback", {
+      error: error.message
+    });
+    
+    // Return fallback structure with plain text response
+    return {
+      response: llmResponse,
+      suggestedActions: [],
+      isPlainText: true
+    };
+  }
+}
+
+
+/**
  * Generate concise fallback summary without LLM
  */
 function generateFallbackSummary(data) {
@@ -284,7 +471,7 @@ function generateFallbackSummary(data) {
   }
 
   // Active conditions
-  if (data.conditions.length > 0) {
+  if (data.conditions && data.conditions.length > 0) {
     const primaryConditions = data.conditions.slice(0, 3).map((condition) => {
       const display =
         condition.code?.coding?.[0]?.display || "unspecified condition";
@@ -294,13 +481,13 @@ function generateFallbackSummary(data) {
   }
 
   // Current medications
-  if (data.medications.length > 0) {
+  if (data.medications && data.medications.length > 0) {
     medicationsInfo = ` and is currently on ${data.medications.length} active medication${data.medications.length > 1 ? "s" : ""}`;
   }
 
   // Recent observations summary
   let observationsInfo = "";
-  if (data.observations.length > 0) {
+  if (data.observations && data.observations.length > 0) {
     observationsInfo = ` Recent clinical observations include ${data.observations.length} recorded measurements and lab results.`;
   }
 
@@ -321,7 +508,9 @@ router.post("/", async (req, res) => {
       query,
       patientData,
       compressedData,
+      conversationHistory,
     } = req.body;
+
 
     // For chat context, we can accept either bundle, patientData, or compressedData
     if (!bundle && !patientData && !compressedData) {
@@ -368,6 +557,16 @@ router.post("/", async (req, res) => {
     let llmUsed = false;
     let provider = null;
 
+    // Prepare response based on context
+    const response = {
+      success: true,
+      summary: "", // Will be set below
+      llmUsed,
+      provider,
+      context,
+      timestamp: new Date().toISOString(),
+    };
+
     // Check if any LLM provider is available
     const llmFactory = getLLMProviderFactory();
     const hasProvider = await llmFactory.hasAvailableProvider();
@@ -381,14 +580,44 @@ router.post("/", async (req, res) => {
         });
 
         // Generate appropriate prompt based on context
-        const prompt = generatePrompt(context, clinicalData, query);
+        const prompt = generatePrompt(context, clinicalData, query, conversationHistory);
         logger.debug(`Generated prompt length: ${prompt.length}`);
 
-        const llmResult = await callLLM(prompt);
-        summary = llmResult.response;
-        provider = llmResult.provider;
-        llmUsed = true;
-        logger.info("✅ LLM call successful, using AI-generated summary");
+        // Use more tokens for clinical chat to handle complex FHIR JSON responses
+        const llmOptions = context === CONTEXT_TYPES.CLINICAL_CHAT 
+          ? { maxTokens: 4000 } // Increase tokens for complex FHIR JSON response
+          : {};
+
+        const llmResult = await callLLM(prompt, llmOptions);
+        
+        // Handle clinical chat responses (which now includes both simple and comprehensive actions)
+        if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
+          const parsedResponse = parseClinicalChatResponse(llmResult.response);
+          summary = parsedResponse.response;
+          provider = llmResult.provider;
+          llmUsed = true;
+          
+          // Add the parsed suggested actions to the response
+          response.suggestedActions = parsedResponse.suggestedActions;
+          response.isStructuredResponse = !parsedResponse.isPlainText;
+          
+          // Add task generation if present (for comprehensive action requests)
+          if (parsedResponse.taskGeneration) {
+            response.taskGeneration = parsedResponse.taskGeneration;
+          }
+          
+          logger.info("✅ Clinical chat LLM call successful, parsed response", {
+            responseLength: summary.length,
+            suggestedActionsCount: parsedResponse.suggestedActions?.length || 0,
+            hasTaskGeneration: !!parsedResponse.taskGeneration,
+            isPlainText: parsedResponse.isPlainText || false
+          });
+        } else {
+          summary = llmResult.response;
+          provider = llmResult.provider;
+          llmUsed = true;
+          logger.info("✅ LLM call successful, using AI-generated summary");
+        }
       } catch (llmError) {
         logger.warn(
           `LLM providers unavailable for ${context} context, using fallback: ${llmError.message}`,
@@ -462,15 +691,10 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // Prepare response based on context
-    const response = {
-      success: true,
-      summary,
-      llmUsed,
-      provider,
-      context,
-      timestamp: new Date().toISOString(),
-    };
+    // Update response with final values
+    response.summary = summary;
+    response.llmUsed = llmUsed;
+    response.provider = provider;
 
     // Add stats for summary context or when we have structured clinical data
     if (context === CONTEXT_TYPES.SUMMARY) {
