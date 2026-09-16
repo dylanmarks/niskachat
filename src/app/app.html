@@ -12,6 +12,9 @@
           <p class="app-subtitle">SMART on FHIR Clinical Data Viewer</p>
         </div>
       </div>
+      <div class="header-actions">
+        <app-theme-toggle variant="menu"></app-theme-toggle>
+      </div>
     </div>
 
     <!-- Patient Header - Show when patient is loaded -->
@@ -24,7 +27,6 @@
         />
         <div class="patient-header-text">
           <h1 class="patient-name">{{ getPatientDisplayName() }}</h1>
-          <p class="patient-details">{{ getPatientHeaderDetails() }}</p>
         </div>
         <div class="header-spacer"></div>
         <div class="header-actions">
@@ -40,6 +42,28 @@
             <span *ngIf="!isSummarizing">Summarize</span>
             <span *ngIf="isSummarizing">Generating...</span>
           </button>
+          <button
+            mat-raised-button
+            color="accent"
+            *ngIf="context?.patient"
+            (click)="onNextBestActionClick()"
+            [disabled]="isProcessing"
+            class="ml-2"
+          >
+            <mat-icon>lightbulb</mat-icon>
+            <span>Next Best Action</span>
+          </button>
+          <button
+            mat-raised-button
+            color="accent"
+            *ngIf="context?.patient"
+            (click)="onDiscussClick()"
+            class="ml-2"
+          >
+            <mat-icon>forum</mat-icon>
+            <span>Discuss</span>
+          </button>
+          <app-theme-toggle variant="icon"></app-theme-toggle>
         </div>
       </div>
     </div>
@@ -56,44 +80,84 @@
       <app-file-upload></app-file-upload>
     </div>
 
-    <!-- Patient Information Section -->
+    <!-- Patient Information Section with Custom Tabs -->
     <div class="patient-section" *ngIf="context?.patient">
-      <!-- Patient Card with Contact Info - Full width, no margin -->
-      <div class="patient-card">
-        <div class="contact-info" *ngIf="hasContactInfo()">
-          <div class="contact-item" *ngFor="let contact of getContactInfo()">
-            <span class="contact-type">{{ contact.type }}:</span>
-            <span class="contact-value">{{ contact.value }}</span>
+      <!-- Custom Tab Buttons -->
+      <div class="custom-tab-header">
+        <button
+          class="custom-tab-button"
+          [class.active]="selectedTabIndex === 0"
+          (click)="selectedTabIndex = 0"
+        >
+          <mat-icon>folder_open</mat-icon>
+          <span class="tab-label">Records</span>
+        </button>
+        <button
+          class="custom-tab-button"
+          [class.active]="selectedTabIndex === 1"
+          (click)="selectedTabIndex = 1"
+        >
+          <mat-icon>forum</mat-icon>
+          <span class="tab-label">Discuss</span>
+        </button>
+        <button
+          class="custom-tab-button"
+          [class.active]="selectedTabIndex === 2"
+          (click)="selectedTabIndex = 2"
+        >
+          <mat-icon>assignment</mat-icon>
+          <span class="tab-label">Tasks</span>
+        </button>
+      </div>
+
+      <!-- Records View -->
+      <div class="records-view" *ngIf="selectedTabIndex === 0">
+        <!-- Patient Card with Contact Info -->
+        <div class="patient-card">
+          <!-- Patient Details -->
+          <div class="patient-tile">
+            <p class="patient-details">{{ getPatientHeaderDetails() }}</p>
+          </div>
+
+          <div class="contact-info" *ngIf="hasContactInfo()">
+            <div class="contact-item" *ngFor="let contact of getContactInfo()">
+              <span class="contact-type">{{ contact.type }}:</span>
+              <span class="contact-value">{{ contact.value }}</span>
+            </div>
+          </div>
+
+          <div class="address-info" *ngIf="hasAddresses()">
+            <div class="address-item" *ngFor="let address of getAddresses()">
+              <span class="address-type">{{ address.type }}:</span>
+              <span class="address-text">{{ address.text }}</span>
+            </div>
           </div>
         </div>
 
-        <div class="address-info" *ngIf="hasAddresses()">
-          <div class="address-item" *ngFor="let address of getAddresses()">
-            <span class="address-type">{{ address.type }}:</span>
-            <span class="address-text">{{ address.text }}</span>
-          </div>
+        <app-patient-summary></app-patient-summary>
+
+        <!-- Clinical Data Section -->
+        <div class="clinical-section">
+          <app-conditions-list></app-conditions-list>
+          <app-medications-list></app-medications-list>
+          <app-allergies-list></app-allergies-list>
+          <app-immunizations-list></app-immunizations-list>
+          <app-procedures-list></app-procedures-list>
+          <app-observations-chart></app-observations-chart>
         </div>
       </div>
 
-      <app-patient-summary></app-patient-summary>
-    </div>
+      <!-- Chat View -->
+      <div class="chat-view" [class.hidden]="selectedTabIndex !== 1">
+        <app-chat #chatComponent></app-chat>
+      </div>
 
-    <!-- Clinical Data Section -->
-    <div class="clinical-section" *ngIf="context?.patient">
-      <app-conditions-list></app-conditions-list>
-      <app-medications-list></app-medications-list>
-      <app-observations-chart></app-observations-chart>
-    </div>
-
-    <!-- Chat Section -->
-    <div class="chat-section" *ngIf="context?.patient">
-      <app-chat></app-chat>
+      <!-- Tasks View -->
+      <div class="tasks-view" *ngIf="selectedTabIndex === 2">
+        <app-tasks-list></app-tasks-list>
+      </div>
     </div>
   </main>
-
-  <footer class="app-footer">
-    <p>&copy; 2024 Niska Chat - SMART on FHIR Healthcare Data Platform</p>
-  </footer>
 </div>
 
 <router-outlet />

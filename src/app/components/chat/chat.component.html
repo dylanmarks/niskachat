@@ -1,21 +1,15 @@
 <div class="chat-container">
-  <!-- Chat Header -->
-  <div class="chat-header">
-    <div class="chat-title">
-      <h3>Clinical AI Assistant</h3>
-      <p class="chat-subtitle">Ask questions about patient data</p>
-    </div>
-    <button
-      mat-icon-button
-      class="clear-button"
-      (click)="clearChat()"
-      [disabled]="isLoading"
-      aria-label="Clear chat history"
-      matTooltip="Clear chat history"
-    >
-      <mat-icon>delete</mat-icon>
-    </button>
-  </div>
+  <!-- Clear button in top-right corner -->
+  <button
+    mat-icon-button
+    class="clear-button"
+    (click)="clearChat()"
+    [disabled]="isLoading"
+    aria-label="Clear chat history"
+    matTooltip="Clear chat history"
+  >
+    <mat-icon>delete</mat-icon>
+  </button>
 
   <!-- Messages Area -->
   <div
@@ -48,6 +42,159 @@
           class="message-text"
           [innerHTML]="message.content"
         ></div>
+
+        <!-- Individual task action items for NBA responses -->
+        <div
+          *ngIf="message.showTaskActions && message.taskGeneration"
+          class="suggested-actions"
+        >
+          <div class="actions-header">
+            <mat-chip-set>
+              <mat-chip class="task-count-chip">
+                <mat-icon>assignment</mat-icon>
+                {{ getTaskCount(message) }} suggested actions
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <div class="action-items">
+            <div
+              *ngFor="let task of message.taskGeneration.tasks"
+              class="action-item"
+              [class.action-added]="
+                getActionState(message, task.id) === 'added'
+              "
+            >
+              <div class="action-content">
+                <div class="action-title">
+                  <mat-icon
+                    class="priority-icon"
+                    [class.priority-routine]="task.priority === 'routine'"
+                    [class.priority-urgent]="task.priority === 'urgent'"
+                    [class.priority-asap]="task.priority === 'asap'"
+                    [class.priority-stat]="task.priority === 'stat'"
+                  >
+                    {{
+                      task.priority === "routine"
+                        ? "low_priority"
+                        : task.priority === "urgent"
+                          ? "priority_high"
+                          : task.priority === "asap"
+                            ? "warning"
+                            : "error"
+                    }}
+                  </mat-icon>
+                  {{ task.code.text }}
+                </div>
+                <div *ngIf="task.description" class="action-description">
+                  {{ task.description }}
+                </div>
+              </div>
+
+              <button
+                mat-icon-button
+                class="action-button"
+                [disabled]="getActionState(message, task.id) === 'added'"
+                (click)="openTaskDialog(message, task)"
+                [matTooltip]="
+                  getActionState(message, task.id) === 'added'
+                    ? 'Task added'
+                    : 'Add as task'
+                "
+              >
+                <mat-icon>
+                  {{
+                    getActionState(message, task.id) === "added"
+                      ? "check_circle"
+                      : "add_circle_outline"
+                  }}
+                </mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggested action items for regular chat responses (only show if no FHIR task generation) -->
+        <div
+          *ngIf="
+            message.showSuggestedActions &&
+            message.suggestedActions &&
+            !message.taskGeneration
+          "
+          class="suggested-actions"
+        >
+          <div class="actions-header">
+            <mat-chip-set>
+              <mat-chip class="suggested-action-count-chip">
+                <mat-icon>lightbulb</mat-icon>
+                {{ getSuggestedActionCount(message) }} suggested actions
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <div class="action-items">
+            <div
+              *ngFor="let action of message.suggestedActions"
+              class="action-item suggested-action-item"
+              [class.action-added]="
+                getSuggestedActionState(message, action.id) === 'added'
+              "
+            >
+              <div class="action-content">
+                <div class="action-title">
+                  <mat-icon
+                    class="priority-icon"
+                    [class.priority-routine]="action.priority === 'routine'"
+                    [class.priority-urgent]="action.priority === 'urgent'"
+                    [class.priority-asap]="action.priority === 'asap'"
+                    [class.priority-stat]="action.priority === 'stat'"
+                  >
+                    {{
+                      action.priority === "routine"
+                        ? "low_priority"
+                        : action.priority === "urgent"
+                          ? "priority_high"
+                          : action.priority === "asap"
+                            ? "warning"
+                            : "error"
+                    }}
+                  </mat-icon>
+                  {{ action.title }}
+                  <span
+                    class="action-category-badge category-{{ action.category }}"
+                  >
+                    {{ action.category }}
+                  </span>
+                </div>
+                <div class="action-description">
+                  {{ action.description }}
+                </div>
+              </div>
+
+              <button
+                mat-icon-button
+                class="action-button"
+                [disabled]="
+                  getSuggestedActionState(message, action.id) === 'added'
+                "
+                (click)="openSuggestedActionDialog(message, action)"
+                [matTooltip]="
+                  getSuggestedActionState(message, action.id) === 'added'
+                    ? 'Task added'
+                    : 'Add as task'
+                "
+              >
+                <mat-icon>
+                  {{
+                    getSuggestedActionState(message, action.id) === "added"
+                      ? "check_circle"
+                      : "add_circle_outline"
+                  }}
+                </mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Message timestamp -->
@@ -82,7 +229,9 @@
             maxlength="1000"
             aria-label="Type your message"
           ></textarea>
-          <mat-hint>{{ currentMessage.length }}/1000</mat-hint>
+          <mat-hint>
+            {{ currentMessage.length }}/1000 | Shift+Enter for new line
+          </mat-hint>
         </mat-form-field>
 
         <button
@@ -96,13 +245,6 @@
         >
           <mat-icon>{{ isLoading ? "hourglass_empty" : "send" }}</mat-icon>
         </button>
-      </div>
-
-      <!-- Input hint -->
-      <div class="input-footer">
-        <small class="input-hint">
-          Press Enter to send, Shift+Enter for new line
-        </small>
       </div>
     </form>
   </div>

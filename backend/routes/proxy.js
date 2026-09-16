@@ -95,7 +95,8 @@ function authenticate(req, res, next) {
 async function proxyFhirRequest(req, res) {
   try {
     const { path } = req.params;
-    const { sessionId, ...otherParams } = req.query;
+    const otherParams = { ...req.query };
+    delete otherParams.sessionId;
     const { tokenData } = req;
 
     // Build target URL

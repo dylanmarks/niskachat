@@ -1,5 +1,8 @@
 import logger from "../utils/logger.js";
 import { ClaudeHaikuProvider } from "./claudeHaikuProvider.js";
+import { GeminiVertexProvider } from "./geminiVertexProvider.js";
+import { OllamaProvider } from "./ollamaProvider.js";
+import { OpenRouterProvider } from "./openRouterProvider.js";
 
 /**
  * LLM Provider Factory
@@ -8,7 +11,7 @@ import { ClaudeHaikuProvider } from "./claudeHaikuProvider.js";
 export class LLMProviderFactory {
   constructor() {
     this.providers = new Map();
-    this.preferredProvider = process.env.LLM_PROVIDER || "claude-haiku";
+    this.preferredProvider = process.env.LLM_PROVIDER || "openrouter";
 
     this.initializeProviders();
   }
@@ -17,9 +20,21 @@ export class LLMProviderFactory {
    * Initialize all available providers
    */
   initializeProviders() {
-    // Initialize Claude Haiku provider
+    // 1. OpenRouter (Unified API for Claude, Llama, DeepSeek, etc.)
+    const openRouterProvider = new OpenRouterProvider();
+    this.providers.set("openrouter", openRouterProvider);
+
+    // 2. Ollama (Local / Offline inference)
+    const ollamaProvider = new OllamaProvider();
+    this.providers.set("ollama", ollamaProvider);
+
+    // 3. Direct Claude Haiku
     const claudeProvider = new ClaudeHaikuProvider();
     this.providers.set("claude-haiku", claudeProvider);
+
+    // 4. Direct Gemini
+    const geminiProvider = new GeminiVertexProvider();
+    this.providers.set("gemini-vertex", geminiProvider);
 
     logger.info(
       `LLM Provider Factory initialized with providers: ${Array.from(this.providers.keys()).join(", ")}`,

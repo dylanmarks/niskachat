@@ -1,0 +1,176 @@
+@use "../../../themes/theme";
+
+.theme-toggle-btn {
+  transition: all var(--niska-transition-fast);
+  color: var(--niska-on-surface-variant);
+
+  &:hover {
+    background-color: var(--niska-primary-50);
+    color: var(--niska-primary-600);
+  }
+
+  &:focus {
+    outline: 2px solid var(--niska-primary-500);
+    outline-offset: 2px;
+  }
+
+  mat-icon {
+    animation: themeIconSpin 0.3s ease-in-out;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+
+  &.button-variant {
+    display: flex;
+    align-items: center;
+    gap: var(--niska-spacing-sm);
+    border-color: var(--niska-outline);
+    padding: var(--niska-spacing-sm) var(--niska-spacing-md);
+    color: var(--niska-on-surface);
+
+    &:hover {
+      border-color: var(--niska-primary-400);
+      background-color: var(--niska-surface-variant);
+    }
+
+    .theme-label {
+      font-weight: var(--niska-font-weight-medium);
+      font-size: var(--niska-font-size-sm);
+    }
+  }
+}
+
+.theme-menu {
+  .theme-toggle-btn {
+    position: relative;
+
+    &::after {
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: width var(--niska-transition-fast);
+      background-color: var(--niska-primary-500);
+      width: 0;
+      height: 2px;
+      content: "";
+    }
+
+    &:hover::after {
+      width: 80%;
+    }
+  }
+}
+
+/* Global menu styling */
+::ng-deep .theme-menu-panel {
+  .mat-mdc-menu-content {
+    padding: var(--niska-spacing-xs) 0;
+    min-width: 140px;
+  }
+
+  .mat-mdc-menu-item {
+    display: flex;
+    position: relative;
+    align-items: center;
+    gap: var(--niska-spacing-sm);
+    padding: var(--niska-spacing-sm) var(--niska-spacing-md);
+    min-height: 44px;
+    font-size: var(--niska-font-size-sm);
+
+    &:hover {
+      background-color: var(--niska-surface-variant);
+    }
+
+    &.active {
+      background-color: var(--niska-primary-50);
+      color: var(--niska-primary-700);
+
+      mat-icon:not(.check-icon) {
+        color: var(--niska-primary-600);
+      }
+    }
+
+    mat-icon:first-child {
+      width: 1.125rem;
+      height: 1.125rem;
+      color: var(--niska-on-surface-variant);
+      font-size: 1.125rem;
+    }
+
+    span {
+      flex: 1;
+      font-weight: var(--niska-font-weight-medium);
+    }
+
+    .check-icon {
+      margin-left: auto;
+      width: 1rem;
+      height: 1rem;
+      color: var(--niska-primary-600);
+      font-size: 1rem;
+    }
+  }
+}
+
+// Dark mode specific styles
+[data-theme="dark"] {
+  .theme-toggle-btn {
+    color: var(--niska-on-surface-variant);
+
+    &:hover {
+      background-color: var(--niska-primary-900);
+      color: var(--niska-primary-400);
+    }
+
+    &.button-variant {
+      border-color: var(--niska-outline);
+      color: var(--niska-on-surface);
+
+      &:hover {
+        border-color: var(--niska-primary-400);
+        background-color: var(--niska-surface-container);
+      }
+    }
+  }
+
+  ::ng-deep .theme-menu-panel {
+    .mat-mdc-menu-item {
+      &:hover {
+        background-color: var(--niska-surface-container);
+      }
+
+      &.active {
+        background-color: var(--niska-primary-900);
+        color: var(--niska-primary-200);
+
+        mat-icon:not(.check-icon) {
+          color: var(--niska-primary-300);
+        }
+      }
+
+      mat-icon:first-child {
+        color: var(--niska-on-surface-variant);
+      }
+
+      .check-icon {
+        color: var(--niska-primary-300);
+      }
+    }
+  }
+}
+
+// Animation for theme transitions
+
+@keyframes themeIconSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.8);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

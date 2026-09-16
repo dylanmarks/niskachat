@@ -1,0 +1,594 @@
+<!-- Immunizations Table -->
+<div class="immunizations-container">
+  <div class="immunizations-header">
+    <h2>
+      <mat-icon>vaccines</mat-icon>
+      Immunizations
+    </h2>
+    <div class="header-controls">
+      <div
+        class="immunization-count"
+        *ngIf="administeredImmunizations.length > 0"
+      >
+        <span class="count">{{ administeredImmunizations.length }}</span>
+        <span class="label">
+          {{
+            administeredImmunizations.length === 1
+              ? "immunization"
+              : "immunizations"
+          }}
+        </span>
+      </div>
+      <button
+        *ngIf="notAdministeredImmunizations.length > 0"
+        mat-stroked-button
+        (click)="toggleNotAdministered()"
+        [color]="showNotAdministered ? 'primary' : ''"
+        [attr.aria-label]="
+          (showNotAdministered ? 'Hide' : 'Show') +
+          ' not administered immunizations'
+        "
+        class="toggle-not-administered-btn"
+      >
+        <mat-icon>
+          {{ showNotAdministered ? "visibility_off" : "visibility" }}
+        </mat-icon>
+        {{ showNotAdministered ? "Hide" : "Show" }} Not Administered ({{
+          notAdministeredImmunizations.length
+        }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="loading-state">
+    <mat-card-content>
+      <div class="loading-content">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="48"
+        ></mat-progress-spinner>
+        <p>Loading immunizations...</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Error State -->
+  <mat-card *ngIf="errorMessage" class="error-state">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="warn">warning</mat-icon>
+        Error Loading Immunizations
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ errorMessage }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="loadImmunizations()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- No Patient State -->
+  <mat-card
+    *ngIf="!isLoading && !errorMessage && !context?.patient"
+    class="no-patient-state"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">person</mat-icon>
+        No Patient Selected
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Please authenticate and select a patient to view immunizations.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Empty State -->
+  <mat-card
+    *ngIf="
+      !isLoading &&
+      !errorMessage &&
+      context?.patient &&
+      immunizations.length === 0
+    "
+    class="empty-state"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">vaccines</mat-icon>
+        No Immunizations Found
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>No immunizations are recorded for this patient.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Administered Immunizations Table -->
+  <mat-card
+    *ngIf="administeredImmunizations.length > 0"
+    class="immunizations-section"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">vaccines</mat-icon>
+        Immunizations
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="immunizations-table-container">
+        <div class="table-wrapper">
+          <table
+            mat-table
+            [dataSource]="administeredImmunizations"
+            class="immunizations-table"
+            role="table"
+            aria-label="Immunizations for patient"
+          >
+            <caption class="sr-only">
+              Table showing {{ administeredImmunizations.length }} immunizations
+              for the patient. Columns include vaccine name, status,
+              administration date, and actions.
+            </caption>
+            <!-- Vaccine Name Column -->
+            <ng-container matColumnDef="vaccine">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="vaccine-name-header"
+              >
+                Vaccine
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="vaccine-name"
+                (click)="selectImmunization(immunization)"
+                [class.selected]="selectedImmunizationId === immunization.id"
+                [attr.headers]="'vaccine-name-header'"
+              >
+                {{ getVaccineName(immunization) }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="immunization-status-header"
+              >
+                Status
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="immunization-status"
+                [attr.headers]="'immunization-status-header'"
+              >
+                <span
+                  class="status-badge"
+                  [class]="getStatusClass(immunization.status)"
+                >
+                  {{ getImmunizationStatus(immunization) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Administration Date Column -->
+            <ng-container matColumnDef="date">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="immunization-date-header"
+              >
+                Date Given
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="immunization-date"
+                [attr.headers]="'immunization-date-header'"
+              >
+                {{ formatDate(getImmunizationDate(immunization) || undefined) }}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="immunization-actions-header"
+              >
+                Actions
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="immunization-actions"
+                [attr.headers]="'immunization-actions-header'"
+              >
+                <button
+                  mat-icon-button
+                  (click)="selectImmunization(immunization)"
+                  [color]="
+                    selectedImmunizationId === immunization.id ? 'primary' : ''
+                  "
+                  matTooltip="View details"
+                  [attr.aria-label]="
+                    'View details for ' + getVaccineName(immunization)
+                  "
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              [class.selected]="selectedImmunizationId === row.id"
+              (click)="selectImmunization(row)"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Not Administered Immunizations Table -->
+  <mat-card
+    *ngIf="showNotAdministered && notAdministeredImmunizations.length > 0"
+    class="immunizations-section not-administered-section"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="accent">vaccines</mat-icon>
+        Not Administered Immunizations
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="immunizations-table-container">
+        <div class="table-wrapper">
+          <table
+            mat-table
+            [dataSource]="notAdministeredImmunizations"
+            class="immunizations-table"
+          >
+            <!-- Vaccine Name Column -->
+            <ng-container matColumnDef="vaccine">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="vaccine-name-header"
+              >
+                Vaccine
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="vaccine-name"
+                (click)="selectImmunization(immunization)"
+                [class.selected]="selectedImmunizationId === immunization.id"
+                [attr.headers]="'vaccine-name-header'"
+              >
+                {{ getVaccineName(immunization) }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="immunization-status-header"
+              >
+                Status
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="immunization-status"
+                [attr.headers]="'immunization-status-header'"
+              >
+                <span
+                  class="status-badge"
+                  [class]="getStatusClass(immunization.status)"
+                >
+                  {{ getImmunizationStatus(immunization) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Recorded Date Column -->
+            <ng-container matColumnDef="date">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="immunization-date-header"
+              >
+                Recorded Date
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="immunization-date"
+                [attr.headers]="'immunization-date-header'"
+              >
+                {{ formatDate(immunization.recorded) }}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="immunization-actions-header"
+              >
+                Actions
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let immunization"
+                class="immunization-actions"
+                [attr.headers]="'immunization-actions-header'"
+              >
+                <button
+                  mat-icon-button
+                  (click)="selectImmunization(immunization)"
+                  [color]="
+                    selectedImmunizationId === immunization.id ? 'primary' : ''
+                  "
+                  matTooltip="View details"
+                  [attr.aria-label]="
+                    'View details for ' + getVaccineName(immunization)
+                  "
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              [class.selected]="selectedImmunizationId === row.id"
+              (click)="selectImmunization(row)"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Immunization Details Panel -->
+  <mat-card *ngIf="selectedImmunization" class="immunization-details-panel">
+    <mat-card-header>
+      <mat-card-title>Immunization Details</mat-card-title>
+      <mat-card-subtitle>
+        {{ getVaccineName(selectedImmunization) }}
+      </mat-card-subtitle>
+      <button
+        mat-icon-button
+        (click)="clearSelection()"
+        matTooltip="Close details"
+        aria-label="Close immunization details panel"
+        class="close-button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="detail-section">
+        <div class="detail-grid">
+          <div
+            class="detail-item"
+            *ngIf="getImmunizationDate(selectedImmunization)"
+          >
+            <span class="detail-label">Date Given:</span>
+            <span class="detail-value">
+              {{
+                formatDate(
+                  getImmunizationDate(selectedImmunization) || undefined
+                )
+              }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedImmunization.recorded">
+            <span class="detail-label">Recorded:</span>
+            <span class="detail-value">
+              {{ formatDate(selectedImmunization.recorded) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedImmunization.status">
+            <span class="detail-label">Status:</span>
+            <span
+              class="detail-value"
+              [class]="getStatusClass(selectedImmunization.status)"
+            >
+              {{ getImmunizationStatus(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="getManufacturerText(selectedImmunization)"
+          >
+            <span class="detail-label">Manufacturer:</span>
+            <span class="detail-value">
+              {{ getManufacturerText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getLotNumber(selectedImmunization)">
+            <span class="detail-label">Lot Number:</span>
+            <span class="detail-value">
+              {{ getLotNumber(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedImmunization.expirationDate">
+            <span class="detail-label">Expiration Date:</span>
+            <span class="detail-value">
+              {{ formatDate(selectedImmunization.expirationDate) }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="getDoseQuantityText(selectedImmunization)"
+          >
+            <span class="detail-label">Dose:</span>
+            <span class="detail-value">
+              {{ getDoseQuantityText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getSiteText(selectedImmunization)">
+            <span class="detail-label">Site:</span>
+            <span class="detail-value">
+              {{ getSiteText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getRouteText(selectedImmunization)">
+            <span class="detail-label">Route:</span>
+            <span class="detail-value">
+              {{ getRouteText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="getPerformerText(selectedImmunization)"
+          >
+            <span class="detail-label">Administered by:</span>
+            <span class="detail-value">
+              {{ getPerformerText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getReasonText(selectedImmunization)">
+            <span class="detail-label">Reason:</span>
+            <span class="detail-value">
+              {{ getReasonText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="getProtocolText(selectedImmunization)"
+          >
+            <span class="detail-label">Protocol:</span>
+            <span class="detail-value">
+              {{ getProtocolText(selectedImmunization) }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="selectedImmunization.primarySource !== undefined"
+          >
+            <span class="detail-label">Primary Source:</span>
+            <span class="detail-value">
+              {{ selectedImmunization.primarySource ? "Yes" : "No" }}
+            </span>
+          </div>
+
+          <div
+            class="detail-item"
+            *ngIf="selectedImmunization.isSubpotent !== undefined"
+          >
+            <span class="detail-label">Subpotent:</span>
+            <span class="detail-value">
+              {{ selectedImmunization.isSubpotent ? "Yes" : "No" }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedImmunization.id">
+            <span class="detail-label">Resource ID:</span>
+            <span class="detail-value">
+              {{ selectedImmunization.id }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vaccine Codes -->
+      <div
+        class="detail-section"
+        *ngIf="getVaccineCodes(selectedImmunization).length > 0"
+      >
+        <h4>Vaccine Codes</h4>
+        <div class="codes-list">
+          <div
+            *ngFor="let code of getVaccineCodes(selectedImmunization)"
+            class="code-item"
+          >
+            <span class="code-system">
+              {{ code.system }}
+            </span>
+            <span class="code-value">{{ code.code }}</span>
+            <span class="code-display" *ngIf="code.display">
+              {{ code.display }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reactions -->
+      <div class="detail-section" *ngIf="hasReactions(selectedImmunization)">
+        <h4>Reactions</h4>
+        <div class="reactions-list">
+          <p class="reaction-text">
+            {{ getReactionsText(selectedImmunization) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div
+        class="detail-section"
+        *ngIf="
+          selectedImmunization.note && selectedImmunization.note.length > 0
+        "
+      >
+        <h4>Notes</h4>
+        <div class="notes-list">
+          <div *ngFor="let note of selectedImmunization.note" class="note-item">
+            <p>{{ note.text }}</p>
+            <small *ngIf="note.time">
+              {{ formatDate(note.time) }}
+              <span *ngIf="note.authorString">- {{ note.authorString }}</span>
+              <span *ngIf="note.authorReference?.display">
+                - {{ note.authorReference?.display }}
+              </span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

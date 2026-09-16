@@ -159,7 +159,7 @@ function getPatientName(patient) {
  * @param {Object} patient - Patient resource
  * @returns {string} - Patient MRN
  */
-function getPatientMRN(patient) {
+export function getPatientMRN(patient) {
   if (!patient.identifier || !Array.isArray(patient.identifier)) {
     return "";
   }

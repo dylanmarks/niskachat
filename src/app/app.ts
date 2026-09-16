@@ -5,14 +5,20 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterOutlet } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { AllergiesListComponent } from './components/allergies-list/allergies-list.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { ConditionsListComponent } from './components/conditions-list/conditions-list.component';
 import { FileUploadComponent } from './components/file-upload/file-upload.component';
+import { ImmunizationsListComponent } from './components/immunizations-list/immunizations-list.component';
 import { MedicationsListComponent } from './components/medications-list/medications-list.component';
 import { ObservationsChartComponent } from './components/observations-chart/observations-chart.component';
 import { PatientSummaryComponent } from './components/patient-summary/patient-summary.component';
+import { ProceduresListComponent } from './components/procedures-list/procedures-list.component';
 import { SmartLaunchComponent } from './components/smart-launch/smart-launch.component';
+import { TasksListComponent } from './components/tasks-list/tasks-list.component';
+import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 import { FhirClientService, FhirContext } from './services/fhir-client.service';
+import { ThemeService } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -25,10 +31,15 @@ import { FhirClientService, FhirContext } from './services/fhir-client.service';
     SmartLaunchComponent,
     PatientSummaryComponent,
     ConditionsListComponent,
+    AllergiesListComponent,
+    ImmunizationsListComponent,
+    ProceduresListComponent,
     ObservationsChartComponent,
     MedicationsListComponent,
     FileUploadComponent,
     ChatComponent,
+    TasksListComponent,
+    ThemeToggleComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -40,11 +51,17 @@ export class App implements OnInit, OnDestroy {
   context: FhirContext | null = null;
   isSmartSsoActive = false;
   isSummarizing = false;
+  isProcessing = false;
+  selectedTabIndex = 0; // 0 = Records, 1 = Discuss, 2 = Tasks
 
   @ViewChild(PatientSummaryComponent)
   patientSummaryComponent!: PatientSummaryComponent;
 
+  @ViewChild('chatComponent')
+  chatComponent!: ChatComponent;
+
   private fhirClient = inject(FhirClientService);
+  protected themeService = inject(ThemeService);
 
   constructor() {
     this.checkForSmartSso();
@@ -89,27 +106,29 @@ export class App implements OnInit, OnDestroy {
     }
 
     const patient = this.context.patient;
-    const parts = [];
+    const firstLine = [];
 
     // Add patient name with Pt: prefix
-    parts.push(`Pt: ${this.getPatientDisplayName()}`);
+    firstLine.push(`Pt: ${this.getPatientDisplayName()}`);
 
     // Add gender
     if (patient.gender) {
-      parts.push(patient.gender.charAt(0).toUpperCase());
+      firstLine.push(patient.gender.charAt(0).toUpperCase());
     }
 
     // Add birth date
     if (patient.birthDate) {
-      parts.push(`DOB ${patient.birthDate}`);
+      firstLine.push(`DOB ${patient.birthDate}`);
     }
 
-    // Add patient ID
+    let result = firstLine.join(', ');
+
+    // Add patient ID on a new line
     if (patient.id) {
-      parts.push(`Patient ID: ${patient.id}`);
+      result += `\nPatient ID: ${patient.id}`;
     }
 
-    return parts.join(', ');
+    return result;
   }
 
   hasContactInfo(): boolean {
@@ -153,11 +172,50 @@ export class App implements OnInit, OnDestroy {
   }
 
   onSummarizeClick(): void {
-    if (this.patientSummaryComponent) {
-      this.isSummarizing = true;
-      void this.patientSummaryComponent.generateSummary().finally(() => {
-        this.isSummarizing = false;
-      });
+    this.selectedTabIndex = 1; // Switch to Discuss tab
+    this.isSummarizing = true;
+
+    // Wait for the chat component to be rendered
+    setTimeout(() => {
+      if (this.chatComponent) {
+        this.chatComponent.currentMessage = 'summarize this patient';
+        void this.chatComponent.sendMessage().finally(() => {
+          this.isSummarizing = false;
+        });
+      }
+    }, 100);
+  }
+
+  onNextBestActionClick(): void {
+    this.selectedTabIndex = 1; // Switch to Discuss tab
+    this.isProcessing = true;
+
+    // Wait for the chat component to be rendered
+    setTimeout(() => {
+      if (this.chatComponent) {
+        // Set the chat input and send the NBA message
+        this.chatComponent.currentMessage =
+          'Please suggest next best actions and clinical recommendations for this patient.';
+        void this.chatComponent.sendMessage();
+        this.isProcessing = false;
+      }
+    }, 100);
+  }
+
+  onDiscussClick(): void {
+    this.selectedTabIndex = 1; // Switch to Discuss tab
+
+    // Wait for the chat component to be rendered then focus input
+    setTimeout(() => {
+      this.focusChatInput();
+    }, 100);
+  }
+
+  private focusChatInput(): void {
+    // Find the textarea input in the chat component and focus it
+    const chatTextarea = document.querySelector('.chat-input');
+    if (chatTextarea && chatTextarea instanceof HTMLTextAreaElement) {
+      chatTextarea.focus();
     }
   }
 }

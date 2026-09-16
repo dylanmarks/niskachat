@@ -20,13 +20,14 @@ Follow test-driven development: write tests first, then implement, then validate
 | **Phase 11** | ⏳ PENDING   | Deployment & Integration Testing            | 0/0 ⏳   | -         |
 | **Phase 12** | ✅ COMPLETED | Custom Chat UI (Provider-Facing)            | 10/10 ✅ | `current` |
 | **Phase 13** | ⏳ PENDING   | Code Quality & Technical Debt Resolution    | 0/12 ⏳  | -         |
+| **Phase 15** | ✅ COMPLETED | Task Comments Management                    | 12/12 ✅ | `current` |
 | **Phase 14** | ⏳ PENDING   | Material Design System Implementation       | 0/12 ⏳  | -         |
 | **Phase 15** | ⏳ PENDING   | Chat UI with Pre-Set Topics                 | 0/0 ⏳   | -         |
 | **Phase 16** | ⏳ PENDING   | Enhanced Security & Compliance              | 0/0 ⏳   | -         |
 | **Phase 17** | ⏳ PENDING   | Performance & Optimization                  | 0/0 ⏳   | -         |
 | **Phase 18** | ⏳ PENDING   | Advanced Features                           | 0/0 ⏳   | -         |
 
-**Overall Test Status**: 138 frontend + 40 backend = **178 tests passing** 🎯
+**Overall Test Status**: 138 frontend + 40 backend + 12 task comments = **190 tests passing** 🎯
 
 ## 📋 **Priority Rationale**
 
@@ -389,87 +390,60 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 15: Material Design System Implementation
+## Phase 15: Task Comments Management
 
-**Goal**: Apply Angular Material and a consistent design system across the app to improve UI consistency, accessibility, responsiveness, and maintainability.
+**Goal**: Enable users to add comments when creating tasks and append additional comments during task editing using FHIR R4 Task.note[] mapping to Annotation resources.
 
-### Foundation & Setup
+**Tasks**
 
-- [ ] Install Angular Material using `ng add @angular/material`
-- [ ] Create `src/themes/theme.scss` with Angular Material custom theme
-- [ ] Define design tokens in SCSS:
-  - [ ] Color palette (primary, secondary, background, surface, error, etc.)
-  - [ ] Typography (font family, weights, sizes for headings, body, captions)
-  - [ ] Spacing (margin, padding scales)
-  - [ ] Elevation (z-index and box-shadow layers)
-- [ ] Configure Angular Material theme in main styles
-- [ ] Add dark theme support structure (optional)
-- [ ] Apply global typography rules consistently across the app
-
-### Component Refactoring
-
-- [ ] Refactor buttons to use Angular Material:
-  - [ ] `<button mat-button>` for text buttons
-  - [ ] `<button mat-raised-button>` for primary actions
-  - [ ] `<button mat-fab>` for floating action buttons
-- [ ] Refactor cards to use `<mat-card>` with proper structure
-- [ ] Refactor forms to use Angular Material form controls:
-  - [ ] `<mat-form-field>` for input containers
-  - [ ] `<mat-input>` for text inputs
-  - [ ] `<mat-select>` for dropdowns
-  - [ ] `<mat-checkbox>` for checkboxes
-- [ ] Refactor navigation elements:
-  - [ ] `<mat-toolbar>` for app header
-  - [ ] `<mat-sidenav>` for navigation drawer (if needed)
-  - [ ] `<mat-menu>` for context menus
-- [ ] Replace custom CSS with Angular Material utility classes
-- [ ] Update existing components to use Material classes:
-  - [ ] Chat component styling
-  - [ ] Patient summary component
-  - [ ] Conditions list component
-  - [ ] Observations chart component
-  - [ ] Medications list component
-  - [ ] File upload component
+- [x] Extend FHIR Task interface with `note[]` and `version` fields
+- [x] Create TaskNote interface mapping to FHIR Annotation
+- [x] Implement backend API endpoints for task creation with initial comments
+- [x] Implement backend API endpoints for appending comments to existing tasks
+- [x] Add optimistic concurrency control with version tracking
+- [x] Create TaskCommentsComponent for displaying and managing comments
+- [x] Integrate comment functionality into TaskCardComponent
+- [x] Add initial comment field to task creation dialog
+- [x] Implement optimistic UI updates with rollback on failure
+- [x] Add proper error handling and user feedback
+- [x] Support keyboard shortcuts (Enter to send, Shift+Enter for new line)
 
 **Tests**
 
-- [ ] All components use Angular Material primitives and design tokens
-- [ ] Buttons show correct visual states (hover, focus, disabled)
-- [ ] Cards use proper Material Design structure and spacing
-- [ ] Forms use Material form controls with proper validation
-- [ ] App renders correctly on mobile devices (responsive design)
-- [ ] Typography and spacing are consistent across all views
-- [ ] Color contrast passes WCAG AA compliance testing
-- [ ] Keyboard navigation works for all primary user flows
-- [ ] Material animations and transitions work smoothly
-- [ ] Shared components follow design system guidelines
-- [ ] Theme system allows for customization and dark mode support
-- [ ] Screen reader accessibility tested and functional
+- [x] Backend API creates tasks with initial comments
+- [x] Backend API appends comments with optimistic concurrency
+- [x] Backend API retrieves comments sorted by time (newest first)
+- [x] Frontend displays comments with proper formatting and author info
+- [x] Frontend handles comment submission with loading states
+- [x] Frontend provides proper error handling and user feedback
+
+**FHIR Mapping**
+
+- `Task.note[]` maps to FHIR R4 Annotation resources
+- `authorReference` supports Practitioner/PractitionerRole references
+- `authorString` provides fallback for internal users
+- `time` uses ISO 8601 timestamps
+- `text` supports 1-1000 character comments
+- Optimistic concurrency via `version` field
 
 ---
 
 ## Phase 16: Chat with Pre-Set Topics
 
-- [ ] Add summary at top of chat
-- [ ] Highlight 3 key clinical items
-- [ ] Clicking item starts chat with that topic
-- [ ] Implement topic detection algorithm
-- [ ] Add customizable topic categories
-- [ ] Support different clinical specialties
-- [ ] Implement topic priority ranking
-- [ ] Add topic suggestion system
+- [ ] Move the chat up to the top above conditions
+- [ ] Default the chat to be hidden. Make sure it doesn't take up space when not visible. Make the chat UI as wide as the rest of the tables.
+- [ ] When clicking the Summarize button, it should display the chat and populate the content as a chat response
+- [ ] Add two more buttons to the right of 'Summarize' with the same style: 'Next Best Action' and 'Chat'
+- [ ] Chat should simply display the chat box and focus the textbox to allow typing
+- [ ] Next Best Action should send that message to the LLM to retrieve recommended areas of focus to the provider.
 
 **Tests**
 
-- [ ] Clinical topics identified correctly
-- [ ] Topic clicks initiate proper chat
-- [ ] Summary displays key items
-- [ ] Topic ranking works
-- [ ] Specialty-specific topics shown
+TBD
 
 ---
 
-## Phase 17: Enhanced Security & Compliance
+## Phase 16: Enhanced Security & Compliance
 
 - [ ] Implement proper session management
 - [ ] Add security headers (CSP, HSTS, etc.)
@@ -490,7 +464,7 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ---
 
-## Phase 18: Performance & Optimization
+## Phase 17: Performance & Optimization
 
 - [ ] Implement lazy loading for components
 - [ ] Optimize bundle size
@@ -516,11 +490,8 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 - [ ] Support for `DiagnosticReport` resources
 - [ ] Support for `AllergyIntolerance` resources
 - [ ] Add `DocumentReference` viewing
+- [ ] Support for 'encounter' resources
 - [ ] Implement dark mode
-- [ ] Add WCAG accessibility compliance
-- [ ] Offline mode via IndexedDB
-- [ ] Advanced chart filtering (date ranges, code selectors)
-- [ ] Integration with Google Cloud FHIR Store
 - [ ] Multi-language support
 
 **Tests**

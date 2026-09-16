@@ -1,0 +1,83 @@
+<!-- Icon Button Variant -->
+<button
+  *ngIf="variant === 'icon'"
+  mat-icon-button
+  [matTooltip]="getTooltipText()"
+  (click)="themeService.toggleTheme()"
+  class="theme-toggle-btn"
+  aria-label="Toggle theme"
+>
+  <mat-icon>{{ getCurrentThemeIcon() }}</mat-icon>
+</button>
+
+<!-- Regular Button Variant -->
+<button
+  *ngIf="variant === 'button'"
+  mat-stroked-button
+  [matTooltip]="getTooltipText()"
+  (click)="themeService.toggleTheme()"
+  class="theme-toggle-btn button-variant"
+>
+  <mat-icon>{{ getCurrentThemeIcon() }}</mat-icon>
+  <span *ngIf="showLabel" class="theme-label">
+    {{ getCurrentThemeLabel() }}
+  </span>
+</button>
+
+<!-- Menu Variant -->
+<div *ngIf="variant === 'menu'" class="theme-menu">
+  <button
+    mat-icon-button
+    [matMenuTriggerFor]="themeMenu"
+    [matTooltip]="getTooltipText()"
+    class="theme-toggle-btn"
+    aria-label="Theme menu"
+  >
+    <mat-icon>{{ getCurrentThemeIcon() }}</mat-icon>
+  </button>
+
+  <mat-menu #themeMenu="matMenu" class="theme-menu-panel">
+    <button
+      mat-menu-item
+      (click)="setTheme('light')"
+      [class.active]="themeService.selectedTheme() === 'light'"
+    >
+      <mat-icon>{{ getThemeIcon("light") }}</mat-icon>
+      <span>{{ getThemeLabel("light") }}</span>
+      <mat-icon
+        *ngIf="themeService.selectedTheme() === 'light'"
+        class="check-icon"
+      >
+        check
+      </mat-icon>
+    </button>
+    <button
+      mat-menu-item
+      (click)="setTheme('dark')"
+      [class.active]="themeService.selectedTheme() === 'dark'"
+    >
+      <mat-icon>{{ getThemeIcon("dark") }}</mat-icon>
+      <span>{{ getThemeLabel("dark") }}</span>
+      <mat-icon
+        *ngIf="themeService.selectedTheme() === 'dark'"
+        class="check-icon"
+      >
+        check
+      </mat-icon>
+    </button>
+    <button
+      mat-menu-item
+      (click)="setTheme('system')"
+      [class.active]="themeService.selectedTheme() === 'system'"
+    >
+      <mat-icon>{{ getThemeIcon("system") }}</mat-icon>
+      <span>{{ getThemeLabel("system") }}</span>
+      <mat-icon
+        *ngIf="themeService.selectedTheme() === 'system'"
+        class="check-icon"
+      >
+        check
+      </mat-icon>
+    </button>
+  </mat-menu>
+</div>

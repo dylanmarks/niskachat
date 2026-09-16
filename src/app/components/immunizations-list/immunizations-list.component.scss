@@ -1,0 +1,401 @@
+// Immunizations List Component Styles
+.immunizations-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.immunizations-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: #1976d2; // Primary blue color for immunizations
+    font-weight: 500;
+  }
+
+  .header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .immunization-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--niska-on-surface-variant);
+    font-size: 0.875rem;
+
+    .count {
+      border-radius: 12px;
+      background: #e3f2fd;
+      padding: 0.25rem 0.5rem;
+      color: #1976d2;
+      font-weight: 600;
+    }
+  }
+
+  .toggle-not-administered-btn {
+    font-size: 0.875rem;
+  }
+}
+
+// State Cards
+.loading-state,
+.error-state,
+.no-patient-state,
+.empty-state {
+  margin: 2rem 0;
+
+  .loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// Table Section
+.immunizations-section {
+  margin: 1rem 0;
+
+  &.not-administered-section {
+    mat-card-title {
+      color: var(--niska-on-surface-variant);
+    }
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.immunizations-table-container {
+  margin-top: 1rem;
+  overflow-x: auto;
+
+  .table-wrapper {
+    min-width: 600px;
+  }
+}
+
+.immunizations-table {
+  width: 100%;
+
+  .mat-column-vaccine {
+    flex: 2;
+    min-width: 200px;
+  }
+
+  .mat-column-status {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .mat-column-date {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .mat-column-actions {
+    flex: 0 0 80px;
+  }
+
+  .vaccine-name {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    font-weight: 500;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    &.selected {
+      background-color: #e3f2fd;
+      font-weight: 600;
+    }
+  }
+
+  .mat-mdc-row {
+    transition: background-color 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    &.selected {
+      background-color: #e3f2fd;
+    }
+  }
+}
+
+// Status Badges
+.status-badge {
+  border-radius: 12px;
+  padding: 0.25rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  &.status-completed {
+    border: 1px solid #a5d6a7;
+    background-color: #e8f5e8;
+    color: #2e7d32;
+  }
+
+  &.status-not-done {
+    border: 1px solid #ffcc02;
+    background-color: #fff3e0;
+    color: #ef6c00;
+  }
+
+  &.status-error {
+    border: 1px solid #ffcdd2;
+    background-color: #ffebee;
+    color: #d32f2f;
+  }
+
+  &.status-unknown {
+    border: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    color: var(--niska-on-surface-variant);
+  }
+}
+
+// Status Classes for detail view
+.status-completed {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.status-not-done {
+  color: #ef6c00;
+  font-weight: 600;
+}
+
+.status-error {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+.status-unknown {
+  color: var(--niska-on-surface-variant);
+}
+
+// Detail Panel
+.immunization-details-panel {
+  margin-top: 1rem;
+  border-left: 4px solid #1976d2;
+
+  mat-card-header {
+    position: relative;
+    padding-bottom: 1rem;
+
+    .close-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+  }
+
+  .detail-section {
+    margin-bottom: 1.5rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    h4 {
+      margin: 0 0 1rem 0;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 0.5rem;
+      color: var(--niska-on-surface);
+      font-weight: 500;
+    }
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .detail-label {
+      color: var(--niska-on-surface-variant);
+      font-weight: 600;
+      font-size: 0.875rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      color: var(--niska-on-surface);
+      font-weight: 400;
+
+      &.status-completed {
+        color: #2e7d32;
+        font-weight: 600;
+      }
+
+      &.status-not-done {
+        color: #ef6c00;
+        font-weight: 600;
+      }
+
+      &.status-error {
+        color: #d32f2f;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .codes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .code-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-left: 3px solid #1976d2;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    padding: 0.5rem;
+
+    .code-system {
+      min-width: 80px;
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .code-value {
+      border-radius: 4px;
+      background-color: #e3f2fd;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.875rem;
+      font-family: monospace;
+    }
+
+    .code-display {
+      color: var(--niska-on-surface-variant);
+      font-style: italic;
+    }
+  }
+
+  .reactions-list {
+    border-left: 3px solid #ff9800;
+    border-radius: 4px;
+    background-color: #fff3e0;
+    padding: 1rem;
+
+    .reaction-text {
+      margin: 0;
+      color: var(--niska-on-surface);
+    }
+  }
+
+  .notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .note-item {
+    border-left: 3px solid #4caf50;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    padding: 1rem;
+
+    p {
+      margin: 0 0 0.5rem 0;
+      color: var(--niska-on-surface);
+    }
+
+    small {
+      color: var(--niska-on-surface-variant);
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// Screen reader only content
+.sr-only {
+  position: absolute;
+  margin: -1px;
+  padding: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .immunizations-container {
+    padding: 0.5rem;
+  }
+
+  .immunizations-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    .header-controls {
+      justify-content: space-between;
+      width: 100%;
+    }
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .immunizations-table-container {
+    .table-wrapper {
+      min-width: 500px;
+    }
+  }
+
+  .code-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    .code-system {
+      min-width: auto;
+    }
+  }
+}

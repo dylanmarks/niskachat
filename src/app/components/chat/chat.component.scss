@@ -2,13 +2,13 @@
 @use "../../../themes/theme";
 
 .chat-container {
-  position: relative;
   display: flex;
+  position: relative;
   flex-direction: column;
   margin: 0 auto;
   background: var(--niska-surface);
-  max-width: 100%;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   min-height: 0; // Important for flex children
   overflow: hidden;
@@ -20,14 +20,14 @@
     top: var(--niska-spacing-md);
     right: var(--niska-spacing-md);
     z-index: 10;
-    color: var(--niska-primary-600);
-    background: var(--niska-surface);
-    border: 1px solid var(--niska-primary-200);
     box-shadow: var(--niska-elevation-2);
+    border: 1px solid var(--niska-primary-200);
+    background: var(--niska-surface);
+    color: var(--niska-primary-600);
 
     &:hover:not(:disabled) {
-      background: var(--niska-primary-50);
       border-color: var(--niska-primary-300);
+      background: var(--niska-primary-50);
     }
 
     &:disabled {
@@ -47,9 +47,9 @@
     background: var(--niska-background);
     padding: var(--niska-spacing-md);
     padding-top: calc(var(--niska-spacing-md) + 48px); // Space for clear button
+    min-height: 0; // Important for flex scrolling
     overflow-y: auto;
     scroll-behavior: smooth;
-    min-height: 0; // Important for flex scrolling
 
     // Custom scrollbar
     &::-webkit-scrollbar {
@@ -182,6 +182,184 @@
             font-size: var(--niska-font-size-sm);
           }
         }
+
+        // Individual suggested actions for NBA responses
+        .suggested-actions {
+          margin-top: var(--niska-spacing-md);
+          border-top: 1px solid var(--niska-primary-100);
+          padding-top: var(--niska-spacing-md);
+
+          .actions-header {
+            margin-bottom: var(--niska-spacing-md);
+
+            .task-count-chip {
+              border: 1px solid var(--niska-primary-200);
+              background: var(--niska-primary-50);
+              color: var(--niska-primary-700);
+
+              /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+              ::ng-deep .mat-icon {
+                margin-right: var(--niska-spacing-xs);
+                font-size: 1rem;
+              }
+            }
+
+            .suggested-action-count-chip {
+              border: 1px solid var(--niska-accent-200);
+              background: var(--niska-accent-50);
+              color: var(--niska-accent-700);
+
+              /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+              ::ng-deep .mat-icon {
+                margin-right: var(--niska-spacing-xs);
+                font-size: 1rem;
+              }
+            }
+          }
+
+          .action-items {
+            display: flex;
+            flex-direction: column;
+            gap: var(--niska-spacing-sm);
+
+            .action-item {
+              display: flex;
+              align-items: flex-start;
+              gap: var(--niska-spacing-sm);
+              transition: all var(--niska-transition-fast);
+              border: 1px solid var(--niska-primary-100);
+              border-radius: var(--niska-radius-md);
+              background: var(--niska-background);
+              padding: var(--niska-spacing-sm);
+
+              &:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--niska-elevation-1);
+                border-color: var(--niska-primary-200);
+              }
+
+              &.action-added {
+                border-color: var(--niska-success-200);
+                background: var(--niska-success-50);
+
+                .action-content {
+                  opacity: 0.8;
+                }
+
+                .action-button {
+                  color: var(--niska-success-600);
+                }
+              }
+
+              &.suggested-action-item {
+                border-left: 3px solid var(--niska-accent-400);
+
+                &:hover {
+                  border-left-color: var(--niska-accent-500);
+                }
+
+                &.action-added {
+                  border-left-color: var(--niska-success-400);
+                }
+              }
+
+              .action-content {
+                flex: 1;
+                min-width: 0;
+
+                .action-title {
+                  display: flex;
+                  align-items: center;
+                  gap: var(--niska-spacing-xs);
+                  margin-bottom: var(--niska-spacing-xs);
+                  color: var(--niska-on-surface);
+                  font-weight: var(--niska-font-weight-medium);
+
+                  .priority-icon {
+                    flex-shrink: 0;
+                    font-size: 1rem;
+
+                    &.priority-routine {
+                      color: var(--niska-primary-500);
+                    }
+
+                    &.priority-urgent {
+                      color: var(--niska-accent-600);
+                    }
+
+                    &.priority-asap {
+                      color: var(--niska-warning-600);
+                    }
+
+                    &.priority-stat {
+                      color: var(--niska-error-600);
+                    }
+                  }
+
+                  .action-category-badge {
+                    display: inline-block;
+                    margin-left: auto;
+                    border-radius: var(--niska-radius-sm);
+                    padding: 2px 6px;
+                    font-weight: var(--niska-font-weight-medium);
+                    font-size: 0.7rem;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+
+                    &.category-diagnostic {
+                      background: var(--niska-info-100);
+                      color: var(--niska-info-700);
+                    }
+
+                    &.category-therapeutic {
+                      background: var(--niska-success-100);
+                      color: var(--niska-success-700);
+                    }
+
+                    &.category-monitoring {
+                      background: var(--niska-warning-100);
+                      color: var(--niska-warning-700);
+                    }
+
+                    &.category-preventive {
+                      background: var(--niska-accent-100);
+                      color: var(--niska-accent-700);
+                    }
+                  }
+                }
+
+                .action-description {
+                  color: var(--niska-on-surface-variant);
+                  font-size: var(--niska-font-size-sm);
+                  line-height: var(--niska-line-height-relaxed);
+                }
+              }
+
+              .action-button {
+                flex-shrink: 0;
+                transition: all var(--niska-transition-fast);
+                color: var(--niska-primary-600);
+
+                &:hover:not(:disabled) {
+                  transform: scale(1.1);
+                  background: var(--niska-primary-50);
+                  color: var(--niska-primary-700);
+                }
+
+                &:disabled {
+                  transform: none;
+                  opacity: 1;
+                  cursor: default;
+                }
+
+                /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+                ::ng-deep .mat-icon {
+                  font-size: 1.2rem;
+                }
+              }
+            }
+          }
+        }
       }
 
       .message-time {
@@ -217,20 +395,27 @@
   // Input Area - Fixed at bottom
   .chat-input-area {
     flex-shrink: 0; // Prevent shrinking
+    box-sizing: border-box;
     border-top: 1px solid var(--niska-primary-100);
     background: var(--niska-surface);
-    padding: var(--niska-spacing-md);
+    padding: var(--niska-spacing-md) var(--niska-spacing-md)
+      var(--niska-spacing-xs);
+    width: 100%;
 
     .chat-form {
       .input-wrapper {
         display: flex;
-        align-items: flex-end;
-        gap: var(--niska-spacing-md);
+        position: relative;
+        align-items: flex-start;
+        gap: var(--niska-spacing-sm);
+        box-sizing: border-box;
         margin-bottom: var(--niska-spacing-sm);
+        width: 100%;
 
         // Material form field styling
         .chat-input-field {
           flex: 1;
+          min-width: 0; // Prevent flex item from overflowing
 
           /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
           ::ng-deep {
@@ -285,17 +470,15 @@
             font-size: 1.2rem;
           }
         }
-      }
 
-      .input-footer {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-top: var(--niska-spacing-sm);
-
+        // Inline input hint styling
         .input-hint {
+          position: absolute;
+          bottom: -20px;
+          left: 0;
           color: var(--niska-on-surface-variant);
           font-size: var(--niska-font-size-xs);
+          white-space: nowrap;
         }
       }
     }
@@ -330,11 +513,15 @@
 // Responsive Design
 @media (max-width: 768px) {
   .chat-container {
+    margin: 0;
+    width: 100%;
     max-width: 100%;
     height: 100%;
+    overflow: hidden;
 
     .chat-messages {
-      padding: var(--niska-spacing-sm) var(--niska-spacing-md) 120px var(--niska-spacing-md); // Reduced top padding, space for fixed input area on mobile
+      padding: var(--niska-spacing-sm) var(--niska-spacing-md) 120px
+        var(--niska-spacing-md); // Reduced top padding, space for fixed input area on mobile
 
       .message-wrapper {
         &.user-message .message-content {
@@ -344,32 +531,80 @@
         &.ai-message .message-content {
           margin-right: 5%;
         }
+
+        .message-content .suggested-actions {
+          .action-items {
+            .action-item {
+              flex-direction: column;
+              align-items: stretch;
+
+              .action-content {
+                margin-bottom: var(--niska-spacing-xs);
+
+                .action-title {
+                  flex-wrap: wrap;
+                }
+              }
+
+              .action-button {
+                align-self: flex-end;
+                width: 48px;
+                height: 48px;
+              }
+            }
+          }
+        }
       }
     }
-    
+
     .clear-button {
-      top: var(--niska-spacing-sm); // Reduced top position to match reduced padding
+      top: var(
+        --niska-spacing-sm
+      ); // Reduced top position to match reduced padding
     }
 
     .chat-input-area {
-      padding: var(--niska-spacing-md);
       // Ensure input area stays at bottom on mobile
       position: fixed;
+      right: 0;
       bottom: 0;
       left: 0;
-      right: 0;
-      background: var(--niska-surface);
-      border-top: 2px solid var(--niska-primary-100);
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
       z-index: 100;
+      box-sizing: border-box;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      border-top: 2px solid var(--niska-primary-100);
+      background: var(--niska-surface);
+      padding: var(--niska-spacing-md);
 
-      .chat-form .input-wrapper {
-        gap: var(--niska-spacing-sm);
+      .chat-form {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
 
-        .send-button {
-          width: 48px;
-          height: 48px;
-          min-height: 48px;
+        .input-wrapper {
+          gap: var(--niska-spacing-sm);
+          box-sizing: border-box;
+          max-width: 100%;
+          overflow: hidden;
+
+          .send-button {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            min-height: 48px;
+          }
+        }
+
+        .quick-actions {
+          .nba-button {
+            padding: var(--niska-spacing-xs) var(--niska-spacing-sm);
+            font-size: var(--niska-font-size-sm);
+
+            /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+            ::ng-deep .mat-icon {
+              font-size: 1rem;
+            }
+          }
         }
       }
     }
@@ -377,7 +612,7 @@
 }
 
 // Dark mode support using design tokens
-@media (prefers-color-scheme: dark) {
+[data-theme="dark"] {
   .chat-container {
     background: var(--niska-surface);
 

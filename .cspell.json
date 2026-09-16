@@ -31,7 +31,23 @@
     "Tsuut",
     "ina",
     "Nakoda",
-    "Métis"
+    "Métis",
+    "genai",
+    "ollama",
+    "intolerances",
+    "UNII",
+    "openrouter",
+    "deepseek",
+    "synthea",
+    "pa11y",
+    "nephropathy",
+    "nephroprotection",
+    "empagliflozin",
+    "uacr",
+    "uuidv",
+    "smarthealthit",
+    "glycemic",
+    "sglt"
   ],
   // flagWords - list of words to be always considered incorrect
   // This is useful for offensive words and common spelling errors.

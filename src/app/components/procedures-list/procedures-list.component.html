@@ -1,0 +1,370 @@
+<!-- Procedures Table -->
+<div class="procedures-container">
+  <div class="procedures-header">
+    <h2>
+      <mat-icon>healing</mat-icon>
+      Procedures
+    </h2>
+    <div class="header-controls">
+      <div class="procedure-count" *ngIf="procedures.length > 0">
+        <span class="count">{{ procedures.length }}</span>
+        <span class="label">
+          {{ procedures.length === 1 ? "procedure" : "procedures" }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="loading-state">
+    <mat-card-content>
+      <div class="loading-content">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="48"
+        ></mat-progress-spinner>
+        <p>Loading procedures...</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Error State -->
+  <mat-card *ngIf="errorMessage" class="error-state">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="warn">warning</mat-icon>
+        Error Loading Procedures
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ errorMessage }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="loadProcedures()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- No Patient State -->
+  <mat-card
+    *ngIf="!isLoading && !errorMessage && !context?.patient"
+    class="no-patient-state"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">person</mat-icon>
+        No Patient Selected
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Please authenticate and select a patient to view procedures.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Empty State -->
+  <mat-card
+    *ngIf="
+      !isLoading && !errorMessage && context?.patient && procedures.length === 0
+    "
+    class="empty-state"
+  >
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">healing</mat-icon>
+        No Procedures Found
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>No procedures are recorded for this patient.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Procedures Table -->
+  <mat-card *ngIf="procedures.length > 0" class="procedures-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">healing</mat-icon>
+        Procedures
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="procedures-table-container">
+        <div class="table-wrapper">
+          <table
+            mat-table
+            [dataSource]="procedures"
+            class="procedures-table"
+            role="table"
+            aria-label="Procedures for patient"
+          >
+            <caption class="sr-only">
+              Table showing {{ procedures.length }} procedures for the patient.
+              Columns include procedure name, status, performed date, and
+              actions.
+            </caption>
+            <!-- Procedure Name Column -->
+            <ng-container matColumnDef="procedure">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="procedure-name-header"
+              >
+                Procedure
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let procedure"
+                class="procedure-name"
+                (click)="selectProcedure(procedure)"
+                [class.selected]="selectedProcedureId === procedure.id"
+                [attr.headers]="'procedure-name-header'"
+              >
+                {{ getProcedureName(procedure) }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="procedure-status-header"
+              >
+                Status
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let procedure"
+                class="procedure-status"
+                [attr.headers]="'procedure-status-header'"
+              >
+                <span
+                  class="status-badge"
+                  [class]="getStatusClass(procedure.status)"
+                >
+                  {{ getProcedureStatus(procedure) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Performed Date Column -->
+            <ng-container matColumnDef="date">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="procedure-date-header"
+              >
+                Date Performed
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let procedure"
+                class="procedure-date"
+                [attr.headers]="'procedure-date-header'"
+              >
+                {{ formatDate(getProcedureDate(procedure) || undefined) }}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                scope="col"
+                id="procedure-actions-header"
+              >
+                Actions
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let procedure"
+                class="procedure-actions"
+                [attr.headers]="'procedure-actions-header'"
+              >
+                <button
+                  mat-icon-button
+                  (click)="selectProcedure(procedure)"
+                  [color]="
+                    selectedProcedureId === procedure.id ? 'primary' : ''
+                  "
+                  matTooltip="View details"
+                  [attr.aria-label]="
+                    'View details for ' + getProcedureName(procedure)
+                  "
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              [class.selected]="selectedProcedureId === row.id"
+              (click)="selectProcedure(row)"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Procedure Details Panel -->
+  <mat-card *ngIf="selectedProcedure" class="procedure-details-panel">
+    <mat-card-header>
+      <mat-card-title>Procedure Details</mat-card-title>
+      <mat-card-subtitle>
+        {{ getProcedureName(selectedProcedure) }}
+      </mat-card-subtitle>
+      <button
+        mat-icon-button
+        (click)="clearSelection()"
+        matTooltip="Close details"
+        aria-label="Close procedure details panel"
+        class="close-button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="detail-section">
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="getProcedureDate(selectedProcedure)">
+            <span class="detail-label">Date Performed:</span>
+            <span class="detail-value">
+              {{ formatDate(getProcedureDate(selectedProcedure) || undefined) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedProcedure.status">
+            <span class="detail-label">Status:</span>
+            <span
+              class="detail-value"
+              [class]="getStatusClass(selectedProcedure.status)"
+            >
+              {{ getProcedureStatus(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getCategoryText(selectedProcedure)">
+            <span class="detail-label">Category:</span>
+            <span class="detail-value">
+              {{ getCategoryText(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getLocationText(selectedProcedure)">
+            <span class="detail-label">Location:</span>
+            <span class="detail-value">
+              {{ getLocationText(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getPerformerText(selectedProcedure)">
+            <span class="detail-label">Performed by:</span>
+            <span class="detail-value">
+              {{ getPerformerText(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getReasonText(selectedProcedure)">
+            <span class="detail-label">Reason:</span>
+            <span class="detail-value">
+              {{ getReasonText(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getBodySiteText(selectedProcedure)">
+            <span class="detail-label">Body Site:</span>
+            <span class="detail-value">
+              {{ getBodySiteText(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="getOutcomeText(selectedProcedure)">
+            <span class="detail-label">Outcome:</span>
+            <span class="detail-value">
+              {{ getOutcomeText(selectedProcedure) }}
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedProcedure.id">
+            <span class="detail-label">Resource ID:</span>
+            <span class="detail-value">
+              {{ selectedProcedure.id }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Procedure Codes -->
+      <div
+        class="detail-section"
+        *ngIf="getProcedureCodes(selectedProcedure).length > 0"
+      >
+        <h4>Procedure Codes</h4>
+        <div class="codes-list">
+          <div
+            *ngFor="let code of getProcedureCodes(selectedProcedure)"
+            class="code-item"
+          >
+            <span class="code-system">
+              {{ code.system }}
+            </span>
+            <span class="code-value">{{ code.code }}</span>
+            <span class="code-display" *ngIf="code.display">
+              {{ code.display }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Complications -->
+      <div class="detail-section" *ngIf="hasComplications(selectedProcedure)">
+        <h4>Complications</h4>
+        <div class="complications-list">
+          <p class="complication-text">
+            {{ getComplicationsText(selectedProcedure) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Devices -->
+      <div class="detail-section" *ngIf="hasDevices(selectedProcedure)">
+        <h4>Devices Used</h4>
+        <div class="devices-list">
+          <p class="device-text">{{ getDevicesText(selectedProcedure) }}</p>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div
+        class="detail-section"
+        *ngIf="selectedProcedure.note && selectedProcedure.note.length > 0"
+      >
+        <h4>Notes</h4>
+        <div class="notes-list">
+          <div *ngFor="let note of selectedProcedure.note" class="note-item">
+            <p>{{ note.text }}</p>
+            <small *ngIf="note.time">
+              {{ formatDate(note.time) }}
+              <span *ngIf="note.authorString">- {{ note.authorString }}</span>
+              <span *ngIf="note.authorReference?.display">
+                - {{ note.authorReference?.display }}
+              </span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

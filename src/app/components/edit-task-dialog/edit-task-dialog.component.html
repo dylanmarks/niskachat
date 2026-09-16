@@ -43,13 +43,22 @@
           <mat-select [(ngModel)]="priority" name="priority">
             <mat-select-trigger>
               <div class="option-content" *ngIf="getPriorityOption(priority)">
-                <mat-icon [class]="'priority-' + getPriorityOption(priority)!.color">{{ getPriorityOption(priority)!.icon }}</mat-icon>
+                <mat-icon
+                  [class]="'priority-' + getPriorityOption(priority)!.color"
+                >
+                  {{ getPriorityOption(priority)!.icon }}
+                </mat-icon>
                 <span>{{ getPriorityOption(priority)!.label }}</span>
               </div>
             </mat-select-trigger>
-            <mat-option *ngFor="let option of priorityOptions" [value]="option.value">
+            <mat-option
+              *ngFor="let option of priorityOptions"
+              [value]="option.value"
+            >
               <div class="option-content">
-                <mat-icon [class]="'priority-' + option.color">{{ option.icon }}</mat-icon>
+                <mat-icon [class]="'priority-' + option.color">
+                  {{ option.icon }}
+                </mat-icon>
                 <span>{{ option.label }}</span>
               </div>
             </mat-option>
@@ -66,7 +75,10 @@
                 <span>{{ getStatusOption(status)!.label }}</span>
               </div>
             </mat-select-trigger>
-            <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+            <mat-option
+              *ngFor="let option of statusOptions"
+              [value]="option.value"
+            >
               <div class="option-content">
                 <mat-icon>{{ option.icon }}</mat-icon>
                 <span>{{ option.label }}</span>
@@ -88,7 +100,7 @@
             rows="3"
             maxlength="1000"
           ></textarea>
-          <mat-hint>{{ (newComment || '').length }}/1000</mat-hint>
+          <mat-hint>{{ (newComment || "").length }}/1000</mat-hint>
         </mat-form-field>
       </div>
 
@@ -96,22 +108,23 @@
       <div class="task-info">
         <div class="info-item">
           <mat-icon>schedule</mat-icon>
-          <span>Created: {{ data.task.authoredOn | date:'medium' }}</span>
+          <span>Created: {{ data.task.authoredOn | date: "medium" }}</span>
         </div>
         <div class="info-item" *ngIf="data.task._source">
           <mat-icon>source</mat-icon>
-          <span>Source: {{ data.task._source === 'clinical_chat' ? 'Clinical Chat' : 'Manual' }}</span>
+          <span>
+            Source:
+            {{
+              data.task._source === "clinical_chat" ? "Clinical Chat" : "Manual"
+            }}
+          </span>
         </div>
       </div>
     </form>
   </mat-dialog-content>
 
   <mat-dialog-actions class="dialog-actions">
-    <button
-      mat-button
-      (click)="onCancel()"
-      class="cancel-button"
-    >
+    <button mat-button (click)="onCancel()" class="cancel-button">
       Cancel
     </button>
     <button

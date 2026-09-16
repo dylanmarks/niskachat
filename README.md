@@ -22,63 +22,38 @@ Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, w
 
 ---
 
+## 📸 Application Showcase
+
+|                Clinical AI Assistant & Suggested Actions                |            Longitudinal Observation Trends (Chart.js)             |
+| :---------------------------------------------------------------------: | :---------------------------------------------------------------: |
+| ![Clinical Chat & Actions](docs/screenshots/04-clinical-ai-discuss.png) | ![Observation Charts](docs/screenshots/03-observation-charts.png) |
+
+|                 Patient Overview & Demographics                  |              Privacy-First Offline FHIR Bundle Ingestion              |
+| :--------------------------------------------------------------: | :-------------------------------------------------------------------: |
+| ![Patient Demographics](docs/screenshots/02-patient-records.png) | ![Offline Landing Mode](docs/screenshots/01-landing-offline-mode.png) |
+
+---
+
 ## ⚙️ Tech Stack
 
-| Layer     | Tech                                  |
-| --------- | ------------------------------------- |
-| Frontend  | Angular 16+, Chart.js, fhirclient.js  |
-| Backend   | Node.js + Express, Jest, Supertest    |
-| Hosting   | GitHub Pages, Netlify, Render, Heroku |
-| Auth      | SMART on FHIR (OAuth2 + PKCE)         |
-| AI Option | Claude via Bedrock or local LLM       |
+| Layer                 | Tech                                                                                                                       |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**          | Angular 20 (Standalone Components), Angular Material 20, Chart.js 4, fhirclient.js                                         |
+| **Backend**           | Node.js 22 + Express, Helmet, Express Session, PKCE OAuth2                                                                 |
+| **Standards**         | HL7 FHIR R4, US Core, SMART on FHIR App Launch Framework                                                                   |
+| **AI Providers**      | **OpenRouter** (Unified Claude/Llama/DeepSeek), **Ollama** (Local/Offline Private AI), **Claude Haiku**, **Google Gemini** |
+| **Testing & Quality** | Jest, Jasmine/Karma, ESLint 9, Stylelint, Pa11y (WCAG 2.1 AA)                                                              |
 
 ---
 
 ## 🔐 Key Features
 
-- SMART on FHIR OAuth2 login (with PKCE)
-- Patient summary: demographics, identifiers
-- Views for Conditions, Medications, Observations
-- Time-series charts for labs and vitals
-- Optional LLM-powered summarization and chat
-- Upload and parse static FHIR Bundles in test mode
-- Secure backend token handling + proxy (optional)
-
----
-
-## ✅ Success Criteria
-
-| Metric                          | Target                      |
-| ------------------------------- | --------------------------- |
-| Time to patient view post-login | < 10 seconds                |
-| Resource parsing accuracy       | 100% by `resourceType`      |
-| Compatibility                   | SMART R4, GCP FHIR          |
-| Security                        | Server-side session storage |
-| LLM cost per summary (optional) | <$0.10                      |
-
----
-
-## 🚧 Development Phases (TDD)
-
-Development is organized into clear test-driven phases, including:
-
-1. **Project scaffolding**
-2. **SMART OAuth2 backend**
-3. **FHIR context handling**
-4. **Patient summary**
-5. **Condition list**
-6. **Observation charting**
-7. **Medication list**
-8. **Static FHIR Bundle support**
-9. **FHIR proxy backend (optional)**
-10. **LLM summarization plugin (optional)**
-11. **Deployment + integration testing**
-12. **Chat UI (initial + with pre-set topics)**
-
-> Each phase includes: test case definition → implementation → CI validation → PR merge
-
-📄 [View the full PRD here](./docs/prd.md)  
-📋 [View the task tracker here](./docs/tasks.md)
+- **SMART on FHIR OAuth2 Login**: Secure PKCE flow supporting EHR Launch and Standalone Launch.
+- **Privacy-First Offline Mode**: Ingest and explore synthetic FHIR Bundles (Synthea) with zero network egress.
+- **Longitudinal Clinical Charting**: Interactive time-series trends for Vitals, Labs (HbA1c, BP, Glucose) with Chart.js.
+- **Next Best Action AI Engine**: Translates conversational clinical summaries into structured **FHIR CarePlan** and **FHIR Task** resources.
+- **Multi-Provider LLM Gateway**: Seamlessly switch between OpenRouter, local air-gapped Ollama models, or direct vendor APIs with automatic fallback.
+- **Accessibility**: Full WCAG 2.1 AA compliance verified with automated Pa11y/Axe audits.
 
 ---
 
@@ -86,16 +61,15 @@ Development is organized into clear test-driven phases, including:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (Node 22 recommended)
 - Angular CLI
-- Git
 
 ### Setup
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-org/niska-chat.git
-cd niska-chat
+# Clone the repository
+git clone https://github.com/dylanmarks/niskachat.git
+cd niskachat
 
 # Install dependencies
 npm install
@@ -103,28 +77,49 @@ npm install
 
 ### Configuration
 
-NiskaChat is configured using environment variables. For local development, create a `.env` file in the project root by copying the example file:
+Copy the example environment configuration:
 
 ```bash
 cp .env.example .env
 ```
 
-Next, open the `.env` file and configure the following variables:
+Configure your preferred LLM provider in `.env`:
 
-- **`LLM_PROVIDER`**: Set this to `claude-haiku` to use the Anthropic API.
-- **`ANTHROPIC_API_KEY`**: Your Anthropic API key. This is required if you're using the `claude-haiku` provider.
-- **`SESSION_SECRET`**: A long, random string used to secure user sessions. You can generate one using a tool like `openssl rand -hex 32`.
-- **`CORS_ORIGINS`**: A comma-separated list of allowed origins for CORS requests. For local development, this should be `http://localhost:4200`.
+```env
+# Choose provider: openrouter | ollama | claude-haiku | gemini-vertex
+LLM_PROVIDER=openrouter
+
+# If using OpenRouter (Recommended - access Claude, Llama 3.3, etc. with one key):
+OPENROUTER_API_KEY=your_openrouter_key
+
+# If using local Ollama (100% private, zero-egress offline inference):
+# OLLAMA_BASE_URL=http://127.0.0.1:11434
+# OLLAMA_MODEL=llama3.1:8b
+
+SESSION_SECRET=dev-secret-change-in-production
+CORS_ORIGINS=http://localhost:4200
+```
 
 ### Running the Application
 
 ```bash
-# Run the backend server
-npm run start:backend
+# Run both backend and frontend concurrently:
+npm run start:dev
 
-# In a separate terminal, run the frontend application
-npm run start
+# Or run separately:
+npm run start:backend # Express API on port 3000
+npm start             # Angular dev server on port 4200
 ```
 
-Use SMART HealthIT Launcher in Practitioner Context to test:
-For example: https://launch.smarthealthit.org/?launch_url=http%3A%2F%2Flocalhost%3A4200%2F&launch=WzAsImJhYjdmYmJlLTliODQtNGIyYi1iNTQxLWJiMWZlNzY5NzcyYSIsIjFjYjUxMTU3LTgwODMtNDEwZi04N2QxLTA3YTk0NjI5MjIyYSIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDAsMSwiIl0 
+Open `http://localhost:4200/` in your browser.
+
+- **Offline Mode**: Click "Load John Smith Data" or "Load Maria Johnson Data" to instantly explore clinical data without connecting to an EHR.
+- **SMART Sandbox Mode**: Launch via the [SMART Health IT Launcher](https://launch.smarthealthit.org/?launch_url=http%3A%2F%2Flocalhost%3A4200%2F&launch=WzAsImJhYjdmYmJlLTliODQtNGIyYi1iNTQxLWJiMWZlNzY5NzcyYSIsIjFjYjUxMTU3LTgwODMtNDEwZi04N2QxLTA3YTk0NjI5MjIyYSIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDAsMSwiIl0) to test EHR practitioner launch workflows.
+
+### Capturing Fresh UI Screenshots
+
+To re-generate portfolio screenshots automatically using headless Chrome:
+
+```bash
+node scripts/capture-screenshots.mjs
+```

@@ -1,0 +1,477 @@
+.procedures-container {
+  margin: 20px 0;
+}
+
+.procedures-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: #2e7d32; // Green color for procedures
+    font-weight: 500;
+    font-size: 1.5rem;
+
+    mat-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      font-size: 1.5rem;
+    }
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .procedure-count {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--niska-on-surface-variant);
+    font-size: 0.875rem;
+
+    .count {
+      color: #2e7d32;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .label {
+      font-weight: 400;
+    }
+  }
+}
+
+.procedures-section {
+  margin-bottom: 20px;
+
+  .mat-card-header {
+    .mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.procedures-table-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .table-wrapper {
+    max-height: 600px;
+    overflow: auto;
+  }
+}
+
+.procedures-table {
+  background: var(--niska-surface);
+  width: 100%;
+
+  .mat-header-cell {
+    border-bottom: 2px solid #2e7d32;
+    background-color: var(--niska-surface-variant);
+    padding: 12px 16px;
+    color: var(--niska-on-surface);
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .mat-cell {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .mat-row {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--niska-surface-variant);
+    }
+
+    &.selected {
+      border-left: 4px solid #2e7d32;
+      background-color: #e8f5e8;
+    }
+  }
+
+  .procedure-name {
+    max-width: 300px;
+    color: var(--niska-on-surface);
+    font-weight: 500;
+    word-wrap: break-word;
+
+    &.selected {
+      color: #2e7d32;
+      font-weight: 600;
+    }
+  }
+
+  .procedure-status {
+    .status-badge {
+      display: inline-block;
+      border-radius: 12px;
+      padding: 4px 8px;
+      font-weight: 500;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+
+      &.status-completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      &.status-preparation {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+
+      &.status-in-progress {
+        background-color: #e3f2fd;
+        color: #1976d2;
+      }
+
+      &.status-not-done {
+        background-color: #ffebee;
+        color: #d32f2f;
+      }
+
+      &.status-on-hold {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+      }
+
+      &.status-stopped {
+        background-color: #fce4ec;
+        color: #c2185b;
+      }
+
+      &.status-error {
+        background-color: #ffebee;
+        color: #d32f2f;
+      }
+
+      &.status-unknown {
+        background-color: var(--niska-surface-variant);
+        color: #666;
+      }
+    }
+  }
+
+  .procedure-date {
+    color: var(--niska-on-surface-variant);
+    font-size: 0.8rem;
+    font-family: "Roboto Mono", monospace;
+  }
+
+  .procedure-actions {
+    width: 80px;
+    text-align: center;
+
+    .mat-icon-button {
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: rgba(46, 125, 50, 0.1);
+      }
+
+      mat-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 1.25rem;
+      }
+    }
+  }
+}
+
+.procedure-details-panel {
+  position: relative;
+  margin-top: 20px;
+
+  .mat-card-header {
+    .mat-card-title {
+      color: #2e7d32;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    .mat-card-subtitle {
+      margin-top: 4px;
+      color: #666;
+      font-size: 1rem;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+
+      mat-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  .detail-section {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    h4 {
+      margin: 0 0 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 4px;
+      color: #2e7d32;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .detail-label {
+      color: #666;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      color: #333;
+      font-weight: 400;
+      font-size: 0.875rem;
+      word-wrap: break-word;
+
+      &.status-completed {
+        color: #2e7d32;
+      }
+      &.status-preparation {
+        color: #f57c00;
+      }
+      &.status-in-progress {
+        color: #1976d2;
+      }
+      &.status-not-done {
+        color: #d32f2f;
+      }
+      &.status-on-hold {
+        color: #7b1fa2;
+      }
+      &.status-stopped {
+        color: #c2185b;
+      }
+      &.status-error {
+        color: #d32f2f;
+      }
+      &.status-unknown {
+        color: #666;
+      }
+    }
+  }
+
+  .codes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .code-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid #2e7d32;
+    border-radius: 6px;
+    background-color: var(--niska-surface-container);
+    padding: 8px 12px;
+
+    .code-system {
+      border-radius: 4px;
+      background-color: var(--niska-surface);
+      padding: 2px 6px;
+      min-width: 80px;
+      color: #2e7d32;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    .code-value {
+      border-radius: 4px;
+      background-color: var(--niska-surface);
+      padding: 2px 6px;
+      color: #333;
+      font-weight: 500;
+      font-size: 0.875rem;
+      font-family: "Roboto Mono", monospace;
+    }
+
+    .code-display {
+      flex: 1;
+      color: #666;
+      font-size: 0.875rem;
+    }
+  }
+
+  .complications-list,
+  .devices-list {
+    .complication-text,
+    .device-text {
+      margin: 0;
+      border-left: 4px solid #f57c00;
+      border-radius: 6px;
+      background-color: #fff3e0;
+      padding: 12px;
+      color: #333;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+  }
+
+  .notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .note-item {
+    border-left: 4px solid #2e7d32;
+    border-radius: 6px;
+    background-color: var(--niska-surface-container);
+    padding: 12px;
+
+    p {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    small {
+      color: #666;
+      font-style: italic;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// Loading, error, and empty states
+.loading-state,
+.error-state,
+.empty-state,
+.no-patient-state {
+  margin: 20px 0;
+
+  .loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 20px;
+
+    p {
+      margin: 0;
+      color: #666;
+      font-size: 0.875rem;
+    }
+  }
+
+  .mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.125rem;
+  }
+
+  .mat-card-content {
+    p {
+      margin: 0;
+      color: #666;
+      line-height: 1.5;
+    }
+  }
+
+  .mat-card-actions {
+    padding-top: 16px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+
+// Screen reader only content
+.sr-only {
+  position: absolute;
+  margin: -1px;
+  padding: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .procedures-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .code-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    .code-system {
+      min-width: auto;
+    }
+  }
+
+  .procedures-table {
+    .mat-header-cell,
+    .mat-cell {
+      padding: 8px 12px;
+    }
+
+    .procedure-name {
+      max-width: 200px;
+    }
+  }
+}

@@ -6,13 +6,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Subject, takeUntil } from 'rxjs';
 import {
+  AllergyIntolerance,
   Condition,
   FhirClientService,
   FhirContext,
   FhirMedicationRequest,
+  Immunization,
   MedicationRequest,
   Observation,
   Patient,
+  Procedure,
 } from '../../services/fhir-client.service';
 import { logger } from '../../utils/logger';
 
@@ -46,6 +49,9 @@ interface UploadStatus {
     conditions: Condition[];
     observations: Observation[];
     medicationRequests: MedicationRequest[];
+    allergyIntolerances: AllergyIntolerance[];
+    immunizations: Immunization[];
+    procedures: Procedure[];
   };
 }
 
@@ -78,6 +84,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       conditions: [],
       observations: [],
       medicationRequests: [],
+      allergyIntolerances: [],
+      immunizations: [],
+      procedures: [],
     },
   };
 
@@ -227,12 +236,18 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     conditions: Condition[];
     observations: Observation[];
     medicationRequests: MedicationRequest[];
+    allergyIntolerances: AllergyIntolerance[];
+    immunizations: Immunization[];
+    procedures: Procedure[];
   } {
     const resources = {
       patients: [] as Patient[],
       conditions: [] as Condition[],
       observations: [] as Observation[],
       medicationRequests: [] as MedicationRequest[],
+      allergyIntolerances: [] as AllergyIntolerance[],
+      immunizations: [] as Immunization[],
+      procedures: [] as Procedure[],
     };
 
     for (const entry of bundle.entry || []) {
@@ -255,6 +270,17 @@ export class FileUploadComponent implements OnInit, OnDestroy {
           resources.medicationRequests.push(
             this.mapMedicationRequest(resource),
           );
+          break;
+        case 'AllergyIntolerance':
+          resources.allergyIntolerances.push(
+            this.mapAllergyIntolerance(resource),
+          );
+          break;
+        case 'Immunization':
+          resources.immunizations.push(this.mapImmunization(resource));
+          break;
+        case 'Procedure':
+          resources.procedures.push(this.mapProcedure(resource));
           break;
       }
     }
@@ -372,11 +398,164 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     return mapped;
   }
 
+  private mapAllergyIntolerance(resource: FhirResource): AllergyIntolerance {
+    const allergyResource = resource as unknown as AllergyIntolerance;
+    const mapped: AllergyIntolerance = {
+      resourceType: 'AllergyIntolerance',
+      id: allergyResource.id ?? '',
+    };
+
+    if (allergyResource.clinicalStatus)
+      mapped.clinicalStatus = allergyResource.clinicalStatus;
+    if (allergyResource.verificationStatus)
+      mapped.verificationStatus = allergyResource.verificationStatus;
+    if (allergyResource.type) mapped.type = allergyResource.type;
+    if (allergyResource.category) mapped.category = allergyResource.category;
+    if (allergyResource.criticality)
+      mapped.criticality = allergyResource.criticality;
+    if (allergyResource.code) mapped.code = allergyResource.code;
+    if (allergyResource.patient) mapped.patient = allergyResource.patient;
+    if (allergyResource.onsetDateTime)
+      mapped.onsetDateTime = allergyResource.onsetDateTime;
+    if (allergyResource.onsetAge) mapped.onsetAge = allergyResource.onsetAge;
+    if (allergyResource.onsetPeriod)
+      mapped.onsetPeriod = allergyResource.onsetPeriod;
+    if (allergyResource.onsetRange)
+      mapped.onsetRange = allergyResource.onsetRange;
+    if (allergyResource.onsetString)
+      mapped.onsetString = allergyResource.onsetString;
+    if (allergyResource.recordedDate)
+      mapped.recordedDate = allergyResource.recordedDate;
+    if (allergyResource.recorder) mapped.recorder = allergyResource.recorder;
+    if (allergyResource.asserter) mapped.asserter = allergyResource.asserter;
+    if (allergyResource.lastOccurrence)
+      mapped.lastOccurrence = allergyResource.lastOccurrence;
+    if (allergyResource.note) mapped.note = allergyResource.note;
+    if (allergyResource.reaction) mapped.reaction = allergyResource.reaction;
+
+    return mapped;
+  }
+
+  private mapImmunization(resource: FhirResource): Immunization {
+    const immunizationResource = resource as unknown as Immunization;
+    const mapped: Immunization = {
+      resourceType: 'Immunization',
+      id: immunizationResource.id ?? '',
+      status: immunizationResource.status ?? 'unknown',
+      vaccineCode: immunizationResource.vaccineCode ?? { coding: [] },
+      patient: immunizationResource.patient ?? { reference: '' },
+    };
+
+    if (immunizationResource.occurrenceDateTime)
+      mapped.occurrenceDateTime = immunizationResource.occurrenceDateTime;
+    if (immunizationResource.occurrenceString)
+      mapped.occurrenceString = immunizationResource.occurrenceString;
+    if (immunizationResource.recorded)
+      mapped.recorded = immunizationResource.recorded;
+    if (immunizationResource.primarySource !== undefined)
+      mapped.primarySource = immunizationResource.primarySource;
+    if (immunizationResource.reportOrigin)
+      mapped.reportOrigin = immunizationResource.reportOrigin;
+    if (immunizationResource.location)
+      mapped.location = immunizationResource.location;
+    if (immunizationResource.manufacturer)
+      mapped.manufacturer = immunizationResource.manufacturer;
+    if (immunizationResource.lotNumber)
+      mapped.lotNumber = immunizationResource.lotNumber;
+    if (immunizationResource.expirationDate)
+      mapped.expirationDate = immunizationResource.expirationDate;
+    if (immunizationResource.site) mapped.site = immunizationResource.site;
+    if (immunizationResource.route) mapped.route = immunizationResource.route;
+    if (immunizationResource.doseQuantity)
+      mapped.doseQuantity = immunizationResource.doseQuantity;
+    if (immunizationResource.performer)
+      mapped.performer = immunizationResource.performer;
+    if (immunizationResource.note) mapped.note = immunizationResource.note;
+    if (immunizationResource.reasonCode)
+      mapped.reasonCode = immunizationResource.reasonCode;
+    if (immunizationResource.reasonReference)
+      mapped.reasonReference = immunizationResource.reasonReference;
+    if (immunizationResource.isSubpotent !== undefined)
+      mapped.isSubpotent = immunizationResource.isSubpotent;
+    if (immunizationResource.subpotentReason)
+      mapped.subpotentReason = immunizationResource.subpotentReason;
+    if (immunizationResource.education)
+      mapped.education = immunizationResource.education;
+    if (immunizationResource.programEligibility)
+      mapped.programEligibility = immunizationResource.programEligibility;
+    if (immunizationResource.fundingSource)
+      mapped.fundingSource = immunizationResource.fundingSource;
+    if (immunizationResource.reaction)
+      mapped.reaction = immunizationResource.reaction;
+    if (immunizationResource.protocolApplied)
+      mapped.protocolApplied = immunizationResource.protocolApplied;
+
+    return mapped;
+  }
+
+  private mapProcedure(resource: FhirResource): Procedure {
+    const procedureResource = resource as unknown as Procedure;
+    const mapped: Procedure = {
+      resourceType: 'Procedure',
+      id: procedureResource.id ?? '',
+      status: procedureResource.status ?? 'unknown',
+      subject: procedureResource.subject ?? { reference: '' },
+    };
+
+    if (procedureResource.code) mapped.code = procedureResource.code;
+    if (procedureResource.category)
+      mapped.category = procedureResource.category;
+    if (procedureResource.performedDateTime)
+      mapped.performedDateTime = procedureResource.performedDateTime;
+    if (procedureResource.performedPeriod)
+      mapped.performedPeriod = procedureResource.performedPeriod;
+    if (procedureResource.performedString)
+      mapped.performedString = procedureResource.performedString;
+    if (procedureResource.performedAge)
+      mapped.performedAge = procedureResource.performedAge;
+    if (procedureResource.performedRange)
+      mapped.performedRange = procedureResource.performedRange;
+    if (procedureResource.recorder)
+      mapped.recorder = procedureResource.recorder;
+    if (procedureResource.asserter)
+      mapped.asserter = procedureResource.asserter;
+    if (procedureResource.performer)
+      mapped.performer = procedureResource.performer;
+    if (procedureResource.location)
+      mapped.location = procedureResource.location;
+    if (procedureResource.reasonCode)
+      mapped.reasonCode = procedureResource.reasonCode;
+    if (procedureResource.reasonReference)
+      mapped.reasonReference = procedureResource.reasonReference;
+    if (procedureResource.bodySite)
+      mapped.bodySite = procedureResource.bodySite;
+    if (procedureResource.outcome) mapped.outcome = procedureResource.outcome;
+    if (procedureResource.report) mapped.report = procedureResource.report;
+    if (procedureResource.complication)
+      mapped.complication = procedureResource.complication;
+    if (procedureResource.complicationDetail)
+      mapped.complicationDetail = procedureResource.complicationDetail;
+    if (procedureResource.followUp)
+      mapped.followUp = procedureResource.followUp;
+    if (procedureResource.note) mapped.note = procedureResource.note;
+    if (procedureResource.focalDevice)
+      mapped.focalDevice = procedureResource.focalDevice;
+    if (procedureResource.usedReference)
+      mapped.usedReference = procedureResource.usedReference;
+    if (procedureResource.usedCode)
+      mapped.usedCode = procedureResource.usedCode;
+
+    return mapped;
+  }
+
   loadResourcesIntoService(resources: {
     patients: Patient[];
     conditions: Condition[];
     observations: Observation[];
     medicationRequests: MedicationRequest[];
+    allergyIntolerances: AllergyIntolerance[];
+    immunizations: Immunization[];
+    procedures: Procedure[];
   }): void {
     logger.info(
       'FileUploadComponent: loadResourcesIntoService called with resources:',
@@ -404,6 +583,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         conditions: resources.conditions,
         observations: resources.observations,
         medicationRequests: resources.medicationRequests,
+        allergyIntolerances: resources.allergyIntolerances,
+        immunizations: resources.immunizations,
+        procedures: resources.procedures,
       });
 
       logger.info('FileUploadComponent: Offline mode set successfully');
@@ -425,6 +607,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         conditions: [],
         observations: [],
         medicationRequests: [],
+        allergyIntolerances: [],
+        immunizations: [],
+        procedures: [],
       },
     };
   }

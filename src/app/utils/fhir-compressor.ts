@@ -10,32 +10,177 @@ export interface CompressedFhirBundle {
   compressionRatio: number;
 }
 
+// FHIR Resource interfaces for compression
+interface FhirResource {
+  resourceType: string;
+  id?: string;
+}
+
+interface FhirCodeableConcept {
+  coding?: FhirCoding[];
+  text?: string;
+}
+
+interface FhirCoding {
+  system?: string;
+  code?: string;
+  display?: string;
+}
+
+interface FhirHumanName {
+  family?: string;
+  given?: string[];
+  use?: string;
+}
+
+interface FhirQuantity {
+  value?: number;
+  unit?: string;
+  code?: string;
+}
+
+interface FhirPeriod {
+  start?: string;
+  end?: string;
+}
+
+interface FhirReference {
+  reference?: string;
+  display?: string;
+}
+
+interface FhirPatient extends FhirResource {
+  resourceType: 'Patient';
+  name?: FhirHumanName[];
+  birthDate?: string;
+  gender?: string;
+}
+
+interface FhirCondition extends FhirResource {
+  resourceType: 'Condition';
+  clinicalStatus?: FhirCodeableConcept;
+  verificationStatus?: FhirCodeableConcept;
+  code?: FhirCodeableConcept;
+  onsetDateTime?: string;
+  onsetPeriod?: FhirPeriod;
+  onsetAge?: { value?: number; unit?: string };
+}
+
+interface FhirMedicationRequest extends FhirResource {
+  resourceType: 'MedicationRequest';
+  status?: string;
+  intent?: string;
+  medicationCodeableConcept?: FhirCodeableConcept;
+  medicationReference?: FhirReference;
+  dosageInstruction?: FhirDosage[];
+}
+
+interface FhirDosage {
+  text?: string;
+  timing?: { code?: FhirCodeableConcept };
+  doseAndRate?: FhirDoseAndRate[];
+}
+
+interface FhirDoseAndRate {
+  doseQuantity?: FhirQuantity;
+}
+
+interface FhirObservation extends FhirResource {
+  resourceType: 'Observation';
+  status?: string;
+  code?: FhirCodeableConcept;
+  effectiveDateTime?: string;
+  effectivePeriod?: FhirPeriod;
+  valueQuantity?: FhirQuantity;
+  valueString?: string;
+  valueCodeableConcept?: FhirCodeableConcept;
+  component?: FhirObservationComponent[];
+}
+
+interface FhirObservationComponent {
+  code?: FhirCodeableConcept;
+  valueQuantity?: FhirQuantity;
+}
+
+interface FhirAllergyIntolerance extends FhirResource {
+  resourceType: 'AllergyIntolerance';
+  clinicalStatus?: FhirCodeableConcept;
+  code?: FhirCodeableConcept;
+  reaction?: FhirAllergyIntoleranceReaction[];
+}
+
+interface FhirAllergyIntoleranceReaction {
+  manifestation?: FhirCodeableConcept[];
+}
+
+interface FhirImmunization extends FhirResource {
+  resourceType: 'Immunization';
+  vaccineCode?: FhirCodeableConcept;
+  occurrenceDateTime?: string;
+}
+
+interface FhirProcedure extends FhirResource {
+  resourceType: 'Procedure';
+  code?: FhirCodeableConcept;
+  performedDateTime?: string;
+  performedPeriod?: FhirPeriod;
+}
+
+interface FhirDiagnosticReport extends FhirResource {
+  resourceType: 'DiagnosticReport';
+  code?: FhirCodeableConcept;
+  effectiveDateTime?: string;
+  effectivePeriod?: FhirPeriod;
+}
+
+interface FhirBundleEntry {
+  resource?: FhirResource;
+  fullUrl?: string;
+}
+
 /**
  * Compress a FHIR Bundle on the client side before sending to backend
  * @param bundle - FHIR Bundle to compress
  * @returns Compressed bundle data
  */
-export function compressFhirBundleClient(bundle: any): CompressedFhirBundle {
-  if (!bundle || !bundle.entry || !Array.isArray(bundle.entry)) {
-    const emptyResult = "Invalid or empty FHIR Bundle";
+export function compressFhirBundleClient(
+  bundle: unknown,
+): CompressedFhirBundle {
+  // Type guard to ensure we have a valid bundle
+  if (!bundle || typeof bundle !== 'object' || bundle === null) {
+    const emptyResult = 'Invalid or empty FHIR Bundle';
     return {
       compressedData: emptyResult,
       originalSize: 0,
       compressedSize: emptyResult.length,
-      compressionRatio: 0
+      compressionRatio: 0,
+    };
+  }
+
+  const bundleObj = bundle as { entry?: FhirBundleEntry[] };
+
+  if (!bundleObj.entry || !Array.isArray(bundleObj.entry)) {
+    const emptyResult = 'Invalid or empty FHIR Bundle';
+    return {
+      compressedData: emptyResult,
+      originalSize: 0,
+      compressedSize: emptyResult.length,
+      compressionRatio: 0,
     };
   }
 
   const originalJson = JSON.stringify(bundle);
   const originalSize = new Blob([originalJson]).size;
 
-  const resources = bundle.entry.map((entry: any) => entry.resource).filter(Boolean);
+  const resources = bundleObj.entry
+    .map((entry) => entry.resource)
+    .filter((resource): resource is FhirResource => Boolean(resource));
   const resourceGroups = groupResourcesByType(resources);
 
   // Compress each resource group
   const compressedParts: string[] = [];
 
-  if (resourceGroups['Patient']) {
+  if (resourceGroups['Patient']?.[0]) {
     compressedParts.push(compressPatient(resourceGroups['Patient'][0]));
   }
 
@@ -45,7 +190,9 @@ export function compressFhirBundleClient(bundle: any): CompressedFhirBundle {
   }
 
   if (resourceGroups['MedicationRequest']) {
-    const compressed = compressMedicationRequests(resourceGroups['MedicationRequest']);
+    const compressed = compressMedicationRequests(
+      resourceGroups['MedicationRequest'],
+    );
     if (compressed) compressedParts.push(compressed);
   }
 
@@ -55,7 +202,9 @@ export function compressFhirBundleClient(bundle: any): CompressedFhirBundle {
   }
 
   if (resourceGroups['AllergyIntolerance']) {
-    const compressed = compressAllergyIntolerances(resourceGroups['AllergyIntolerance']);
+    const compressed = compressAllergyIntolerances(
+      resourceGroups['AllergyIntolerance'],
+    );
     if (compressed) compressedParts.push(compressed);
   }
 
@@ -70,11 +219,13 @@ export function compressFhirBundleClient(bundle: any): CompressedFhirBundle {
   }
 
   if (resourceGroups['DiagnosticReport']) {
-    const compressed = compressDiagnosticReports(resourceGroups['DiagnosticReport']);
+    const compressed = compressDiagnosticReports(
+      resourceGroups['DiagnosticReport'],
+    );
     if (compressed) compressedParts.push(compressed);
   }
 
-  const compressedData = compressedParts.join("; ");
+  const compressedData = compressedParts.join('; ');
   const compressedSize = new Blob([compressedData]).size;
   const compressionRatio = originalSize > 0 ? compressedSize / originalSize : 0;
 
@@ -82,14 +233,16 @@ export function compressFhirBundleClient(bundle: any): CompressedFhirBundle {
     compressedData,
     originalSize,
     compressedSize,
-    compressionRatio
+    compressionRatio,
   };
 }
 
 // Helper functions (duplicated from backend for client-side use)
 
-function groupResourcesByType(resources: any[]): Record<string, any[]> {
-  const groups: Record<string, any[]> = {};
+function groupResourcesByType(
+  resources: FhirResource[],
+): Record<string, FhirResource[]> {
+  const groups: Record<string, FhirResource[]> = {};
 
   resources.forEach((resource) => {
     if (!resource.resourceType) return;
@@ -103,12 +256,15 @@ function groupResourcesByType(resources: any[]): Record<string, any[]> {
   return groups;
 }
 
-function compressPatient(patient: any): string {
-  if (!patient) return "";
+function compressPatient(patient: FhirResource): string {
+  if (!patient || patient.resourceType !== 'Patient') return '';
 
-  const name = getPatientName(patient);
-  const gender = patient?.gender ? patient.gender.charAt(0).toUpperCase() : "";
-  const dob = patient?.birthDate ? patient.birthDate : "";
+  const patientResource = patient as FhirPatient;
+  const name = getPatientName(patientResource);
+  const gender = patientResource.gender
+    ? patientResource.gender.charAt(0).toUpperCase()
+    : '';
+  const dob = patientResource.birthDate ? patientResource.birthDate : '';
 
   let result = `Pt: ${name}`;
   if (gender) result += `, ${gender}`;
@@ -117,29 +273,36 @@ function compressPatient(patient: any): string {
   return result;
 }
 
-function getPatientName(patient: any): string {
-  if (!patient?.name || !Array.isArray(patient.name) || patient.name.length === 0) {
-    return "Unknown";
+function getPatientName(patient: FhirPatient): string {
+  if (
+    !patient.name ||
+    !Array.isArray(patient.name) ||
+    patient.name.length === 0
+  ) {
+    return 'Unknown';
   }
 
   const name = patient.name[0];
-  const given = name?.given ? name.given.join(" ") : "";
-  const family = name?.family || "";
+  const given = name?.given ? name.given.join(' ') : '';
+  const family = name?.family || '';
 
-  return `${given} ${family}`.trim() || "Unknown";
+  return `${given} ${family}`.trim() || 'Unknown';
 }
 
-function compressConditions(conditions: any[]): string {
-  if (!conditions || conditions.length === 0) return "";
+function compressConditions(conditions: FhirResource[]): string {
+  if (!conditions || conditions.length === 0) return '';
 
-  const activeConditions = conditions.filter(
-    (condition) =>
-      condition?.clinicalStatus &&
-      condition.clinicalStatus.coding &&
-      condition.clinicalStatus.coding.some((coding: any) => coding?.code === "active")
+  const conditionResources = conditions.filter(
+    (res): res is FhirCondition => res.resourceType === 'Condition',
   );
 
-  if (activeConditions.length === 0) return "";
+  const activeConditions = conditionResources.filter((condition) =>
+    condition.clinicalStatus?.coding?.some(
+      (coding) => coding.code === 'active',
+    ),
+  );
+
+  if (activeConditions.length === 0) return '';
 
   const compressed = activeConditions
     .map((condition) => {
@@ -147,21 +310,26 @@ function compressConditions(conditions: any[]): string {
       const onset = getOnsetDate(condition);
       return onset ? `${display} (${onset})` : display;
     })
-    .join(", ");
+    .join(', ');
 
   return `Dx: ${compressed}`;
 }
 
-function compressMedicationRequests(medications: any[]): string {
-  if (!medications || medications.length === 0) return "";
+function compressMedicationRequests(medications: FhirResource[]): string {
+  if (!medications || medications.length === 0) return '';
 
-  const activeRequests = medications.filter(
-    (med) =>
-      med.status === "active" ||
-      (med.status === "unknown" && (!med.intent || med.intent === "order"))
+  const medicationResources = medications.filter(
+    (res): res is FhirMedicationRequest =>
+      res.resourceType === 'MedicationRequest',
   );
 
-  if (activeRequests.length === 0) return "";
+  const activeRequests = medicationResources.filter(
+    (med) =>
+      med.status === 'active' ||
+      (med.status === 'unknown' && (!med.intent || med.intent === 'order')),
+  );
+
+  if (activeRequests.length === 0) return '';
 
   const compressed = activeRequests
     .map((med) => {
@@ -169,18 +337,22 @@ function compressMedicationRequests(medications: any[]): string {
       const dose = getDosage(med);
       return dose ? `${name} ${dose}` : name;
     })
-    .join(", ");
+    .join(', ');
 
   return `Rx: ${compressed}`;
 }
 
-function compressObservations(observations: any[]): string {
-  if (!observations || observations.length === 0) return "";
+function compressObservations(observations: FhirResource[]): string {
+  if (!observations || observations.length === 0) return '';
+
+  const observationResources = observations.filter(
+    (res): res is FhirObservation => res.resourceType === 'Observation',
+  );
 
   // Group by LOINC code or display
-  const groupedObs: Record<string, any[]> = {};
+  const groupedObs: Record<string, FhirObservation[]> = {};
 
-  observations.forEach((obs) => {
+  observationResources.forEach((obs) => {
     const key = getObservationKey(obs);
     if (!groupedObs[key]) {
       groupedObs[key] = [];
@@ -215,20 +387,24 @@ function compressObservations(observations: any[]): string {
     });
   });
 
-  return compressed.length > 0 ? `Labs: ${compressed.join(", ")}` : "";
+  return compressed.length > 0 ? `Labs: ${compressed.join(', ')}` : '';
 }
 
-function compressAllergyIntolerances(allergies: any[]): string {
-  if (!allergies || allergies.length === 0) return "";
+function compressAllergyIntolerances(allergies: FhirResource[]): string {
+  if (!allergies || allergies.length === 0) return '';
 
-  const activeAllergies = allergies.filter(
-    (allergy) =>
-      !allergy.clinicalStatus ||
-      (allergy.clinicalStatus.coding &&
-        allergy.clinicalStatus.coding.some((coding: any) => coding.code === "active"))
+  const allergyResources = allergies.filter(
+    (res): res is FhirAllergyIntolerance =>
+      res.resourceType === 'AllergyIntolerance',
   );
 
-  if (activeAllergies.length === 0) return "";
+  const activeAllergies = allergyResources.filter(
+    (allergy) =>
+      !allergy.clinicalStatus ||
+      allergy.clinicalStatus.coding?.some((coding) => coding.code === 'active'),
+  );
+
+  if (activeAllergies.length === 0) return '';
 
   const compressed = activeAllergies
     .map((allergy) => {
@@ -236,106 +412,122 @@ function compressAllergyIntolerances(allergies: any[]): string {
       const reaction = getAllergyReaction(allergy);
       return reaction ? `${substance} (${reaction})` : substance;
     })
-    .join(", ");
+    .join(', ');
 
   return `Allergies: ${compressed}`;
 }
 
-function compressImmunizations(immunizations: any[]): string {
-  if (!immunizations || immunizations.length === 0) return "";
+function compressImmunizations(immunizations: FhirResource[]): string {
+  if (!immunizations || immunizations.length === 0) return '';
 
-  const compressed = immunizations
+  const immunizationResources = immunizations.filter(
+    (res): res is FhirImmunization => res.resourceType === 'Immunization',
+  );
+
+  const compressed = immunizationResources
     .map((imm) => {
       const vaccine = getVaccineName(imm);
       const date = getImmunizationDate(imm);
       return date ? `${vaccine} (${date})` : vaccine;
     })
-    .join(", ");
+    .join(', ');
 
   return `Vax: ${compressed}`;
 }
 
-function compressProcedures(procedures: any[]): string {
-  if (!procedures || procedures.length === 0) return "";
+function compressProcedures(procedures: FhirResource[]): string {
+  if (!procedures || procedures.length === 0) return '';
 
-  const compressed = procedures
+  const procedureResources = procedures.filter(
+    (res): res is FhirProcedure => res.resourceType === 'Procedure',
+  );
+
+  const compressed = procedureResources
     .map((proc) => {
       const name = getProcedureName(proc);
       const date = getProcedureDate(proc);
       return date ? `${name} (${date})` : name;
     })
-    .join(", ");
+    .join(', ');
 
   return `Proc: ${compressed}`;
 }
 
-function compressDiagnosticReports(reports: any[]): string {
-  if (!reports || reports.length === 0) return "";
+function compressDiagnosticReports(reports: FhirResource[]): string {
+  if (!reports || reports.length === 0) return '';
 
-  const compressed = reports
+  const reportResources = reports.filter(
+    (res): res is FhirDiagnosticReport =>
+      res.resourceType === 'DiagnosticReport',
+  );
+
+  const compressed = reportResources
     .map((report) => {
       const name = getReportName(report);
       const date = getReportDate(report);
       return date ? `${name} (${date})` : name;
     })
-    .join(", ");
+    .join(', ');
 
   return `Reports: ${compressed}`;
 }
 
 // Additional helper functions
 
-function getCodeDisplay(code: any): string {
-  if (!code) return "Unknown";
+function getCodeDisplay(code: FhirCodeableConcept | undefined): string {
+  if (!code) return 'Unknown';
 
   if (code.text) return code.text;
 
   if (code.coding && code.coding.length > 0) {
     const coding = code.coding[0];
-    return coding.display || coding.code || "Unknown";
+    return coding?.display || coding?.code || 'Unknown';
   }
 
-  return "Unknown";
+  return 'Unknown';
 }
 
-function getOnsetDate(condition: any): string {
+function getOnsetDate(condition: FhirCondition): string {
   if (condition.onsetDateTime) {
     return formatDate(condition.onsetDateTime);
   }
-  if (condition.onsetPeriod && condition.onsetPeriod.start) {
+  if (condition.onsetPeriod?.start) {
     return formatDate(condition.onsetPeriod.start);
   }
-  return "";
+  return '';
 }
 
-function getMedicationName(medRequest: any): string {
+function getMedicationName(medRequest: FhirMedicationRequest): string {
   if (medRequest.medicationCodeableConcept) {
     return getCodeDisplay(medRequest.medicationCodeableConcept);
   }
-  if (medRequest.medicationReference && medRequest.medicationReference.display) {
+  if (medRequest.medicationReference?.display) {
     return medRequest.medicationReference.display;
   }
-  return "Unknown Medication";
+  return 'Unknown Medication';
 }
 
-function getDosage(medRequest: any): string {
-  if (!medRequest.dosageInstruction || medRequest.dosageInstruction.length === 0) {
-    return "";
+function getDosage(medRequest: FhirMedicationRequest): string {
+  if (
+    !medRequest.dosageInstruction ||
+    medRequest.dosageInstruction.length === 0
+  ) {
+    return '';
   }
 
   const dosage = medRequest.dosageInstruction[0];
-  let result = "";
+  let result = '';
 
-  if (dosage.doseAndRate && dosage.doseAndRate.length > 0) {
+  if (dosage?.doseAndRate && dosage.doseAndRate.length > 0) {
     const dose = dosage.doseAndRate[0];
-    if (dose.doseQuantity) {
-      result += `${dose.doseQuantity.value}${dose.doseQuantity.unit || dose.doseQuantity.code || "mg"}`;
+    if (dose?.doseQuantity) {
+      result += `${dose.doseQuantity.value}${dose.doseQuantity.unit || dose.doseQuantity.code || 'mg'}`;
     }
   }
 
-  if (dosage.timing && dosage.timing.code) {
+  if (dosage?.timing?.code) {
     const freq = getCodeDisplay(dosage.timing.code);
-    if (freq !== "Unknown") {
+    if (freq !== 'Unknown') {
       result += ` ${freq}`;
     }
   }
@@ -343,48 +535,48 @@ function getDosage(medRequest: any): string {
   return result;
 }
 
-function getObservationKey(obs: any): string {
-  if (!obs.code) return "Unknown";
+function getObservationKey(obs: FhirObservation): string {
+  if (!obs.code) return 'Unknown';
 
   if (obs.code.coding && obs.code.coding.length > 0) {
     const coding = obs.code.coding[0];
-    return coding.code || coding.display || "Unknown";
+    return coding?.code || coding?.display || 'Unknown';
   }
 
-  return obs.code.text || "Unknown";
+  return obs.code.text || 'Unknown';
 }
 
-function getObservationDisplay(obs: any): string {
-  if (!obs.code) return "Unknown";
+function getObservationDisplay(obs: FhirObservation): string {
+  if (!obs.code) return 'Unknown';
 
   const display = getCodeDisplay(obs.code);
 
   // Common abbreviations
   const abbreviations: Record<string, string> = {
-    "Hemoglobin A1c": "A1c",
-    "Blood pressure": "BP",
-    "Systolic blood pressure": "SBP",
-    "Diastolic blood pressure": "DBP",
-    "Low density lipoprotein": "LDL",
-    "High density lipoprotein": "HDL",
-    "Total cholesterol": "TC",
-    "Triglycerides": "TG",
-    "Glucose": "Glc",
-    "Creatinine": "Cr",
-    "Blood urea nitrogen": "BUN",
-    "White blood cell count": "WBC",
-    "Red blood cell count": "RBC",
-    "Platelet count": "PLT",
-    "Hemoglobin": "Hgb",
-    "Hematocrit": "Hct",
+    'Hemoglobin A1c': 'A1c',
+    'Blood pressure': 'BP',
+    'Systolic blood pressure': 'SBP',
+    'Diastolic blood pressure': 'DBP',
+    'Low density lipoprotein': 'LDL',
+    'High density lipoprotein': 'HDL',
+    'Total cholesterol': 'TC',
+    Triglycerides: 'TG',
+    Glucose: 'Glc',
+    Creatinine: 'Cr',
+    'Blood urea nitrogen': 'BUN',
+    'White blood cell count': 'WBC',
+    'Red blood cell count': 'RBC',
+    'Platelet count': 'PLT',
+    Hemoglobin: 'Hgb',
+    Hematocrit: 'Hct',
   };
 
   return abbreviations[display] || display;
 }
 
-function getObservationValue(obs: any): string {
+function getObservationValue(obs: FhirObservation): string {
   if (obs.valueQuantity) {
-    const unit = obs.valueQuantity.unit || obs.valueQuantity.code || "";
+    const unit = obs.valueQuantity.unit || obs.valueQuantity.code || '';
     return `${obs.valueQuantity.value}${unit}`;
   }
 
@@ -398,23 +590,17 @@ function getObservationValue(obs: any): string {
 
   if (obs.component && obs.component.length > 0) {
     // Handle BP readings
-    const systolic = obs.component.find(
-      (c: any) =>
-        c.code &&
-        c.code.coding &&
-        c.code.coding.some(
-          (coding: any) =>
-            coding.code === "8480-6" || coding.display?.includes("Systolic")
-        )
+    const systolic = obs.component.find((c) =>
+      c.code?.coding?.some(
+        (coding) =>
+          coding.code === '8480-6' || coding.display?.includes('Systolic'),
+      ),
     );
-    const diastolic = obs.component.find(
-      (c: any) =>
-        c.code &&
-        c.code.coding &&
-        c.code.coding.some(
-          (coding: any) =>
-            coding.code === "8462-4" || coding.display?.includes("Diastolic")
-        )
+    const diastolic = obs.component.find((c) =>
+      c.code?.coding?.some(
+        (coding) =>
+          coding.code === '8462-4' || coding.display?.includes('Diastolic'),
+      ),
     );
 
     if (
@@ -427,20 +613,22 @@ function getObservationValue(obs: any): string {
     }
   }
 
-  return "";
+  return '';
 }
 
-function getObservationDate(obs: any): string {
+function getObservationDate(obs: FhirObservation): string {
   if (obs.effectiveDateTime) {
     return formatDate(obs.effectiveDateTime);
   }
-  if (obs.effectivePeriod && obs.effectivePeriod.start) {
+  if (obs.effectivePeriod?.start) {
     return formatDate(obs.effectivePeriod.start);
   }
-  return "";
+  return '';
 }
 
-function deduplicateObservations(observations: any[]): any[] {
+function deduplicateObservations(
+  observations: FhirObservation[],
+): FhirObservation[] {
   const seen = new Set<string>();
   return observations.filter((obs) => {
     const value = getObservationValue(obs);
@@ -455,78 +643,78 @@ function deduplicateObservations(observations: any[]): any[] {
   });
 }
 
-function getAllergySubstance(allergy: any): string {
+function getAllergySubstance(allergy: FhirAllergyIntolerance): string {
   if (allergy.code) {
     return getCodeDisplay(allergy.code);
   }
-  return "Unknown Allergen";
+  return 'Unknown Allergen';
 }
 
-function getAllergyReaction(allergy: any): string {
+function getAllergyReaction(allergy: FhirAllergyIntolerance): string {
   if (allergy.reaction && allergy.reaction.length > 0) {
     const reaction = allergy.reaction[0];
-    if (reaction.manifestation && reaction.manifestation.length > 0) {
+    if (reaction?.manifestation && reaction.manifestation.length > 0) {
       return getCodeDisplay(reaction.manifestation[0]);
     }
   }
-  return "";
+  return '';
 }
 
-function getVaccineName(immunization: any): string {
+function getVaccineName(immunization: FhirImmunization): string {
   if (immunization.vaccineCode) {
     return getCodeDisplay(immunization.vaccineCode);
   }
-  return "Unknown Vaccine";
+  return 'Unknown Vaccine';
 }
 
-function getImmunizationDate(immunization: any): string {
+function getImmunizationDate(immunization: FhirImmunization): string {
   if (immunization.occurrenceDateTime) {
     return formatDate(immunization.occurrenceDateTime);
   }
-  return "";
+  return '';
 }
 
-function getProcedureName(procedure: any): string {
+function getProcedureName(procedure: FhirProcedure): string {
   if (procedure.code) {
     return getCodeDisplay(procedure.code);
   }
-  return "Unknown Procedure";
+  return 'Unknown Procedure';
 }
 
-function getProcedureDate(procedure: any): string {
+function getProcedureDate(procedure: FhirProcedure): string {
   if (procedure.performedDateTime) {
     return formatDate(procedure.performedDateTime);
   }
-  if (procedure.performedPeriod && procedure.performedPeriod.start) {
+  if (procedure.performedPeriod?.start) {
     return formatDate(procedure.performedPeriod.start);
   }
-  return "";
+  return '';
 }
 
-function getReportName(report: any): string {
+function getReportName(report: FhirDiagnosticReport): string {
   if (report.code) {
     return getCodeDisplay(report.code);
   }
-  return "Unknown Report";
+  return 'Unknown Report';
 }
 
-function getReportDate(report: any): string {
+function getReportDate(report: FhirDiagnosticReport): string {
   if (report.effectiveDateTime) {
     return formatDate(report.effectiveDateTime);
   }
-  if (report.effectivePeriod && report.effectivePeriod.start) {
+  if (report.effectivePeriod?.start) {
     return formatDate(report.effectivePeriod.start);
   }
-  return "";
+  return '';
 }
 
 function formatDate(dateString: string | undefined): string {
-  if (!dateString) return "";
+  if (!dateString) return '';
 
   try {
-    const date = new Date(dateString!);
-    return date.toISOString().split("T")[0] || ""; // YYYY-MM-DD format
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0] || ''; // YYYY-MM-DD format
   } catch {
-    return ""; // Return empty string if parsing fails
+    return ''; // Return empty string if parsing fails
   }
 }

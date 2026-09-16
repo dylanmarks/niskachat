@@ -36,8 +36,6 @@ export class TaskCardComponent {
   @Output() editTask = new EventEmitter<FHIRTask>();
   @Output() deleteTask = new EventEmitter<string>();
 
-  constructor() {}
-
   onStatusToggle(): void {
     // Open edit dialog to allow user to add comment when changing status
     this.editTask.emit(this.task);
@@ -51,9 +49,9 @@ export class TaskCardComponent {
     this.deleteTask.emit(this.task.id);
   }
 
-  onCommentAdded(event: { task: FHIRTask; comment: any }): void {
-    // Task has been updated with new comment, emit update event
-    this.editTask.emit(event.task);
+  onCommentAdded(_event: { task: FHIRTask; comment: any }): void {
+    // Task has been updated with new comment, no need to emit edit event
+    // The task-comments component already handles the update internally
   }
 
   onCommentError(error: string): void {

@@ -60,22 +60,22 @@
     min-width: 0;
 
     .status-toggle-btn {
+      display: flex !important;
       flex-shrink: 0;
+      justify-content: center !important;
+      align-items: center !important;
       transition: all var(--niska-transition-standard);
       border-radius: var(--niska-radius-full);
-      width: 40px !important;
-      height: 40px !important;
-      min-width: 40px !important;
-      min-height: 40px !important;
       padding: 0 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
+      width: 40px !important;
+      min-width: 40px !important;
+      height: 40px !important;
+      min-height: 40px !important;
 
       .mat-icon {
-        font-size: 20px !important;
         width: 20px !important;
         height: 20px !important;
+        font-size: 20px !important;
         line-height: 20px !important;
       }
 

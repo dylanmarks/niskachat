@@ -496,6 +496,7 @@ describe('ConditionsListComponent', () => {
   describe('Metadata', () => {
     it('should return true when condition has metadata', () => {
       const hasMetadata = component.hasCodings(mockActiveCondition);
+
       expect(hasMetadata).toBeTrue();
     });
   });

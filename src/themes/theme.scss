@@ -17,6 +17,8 @@
   --niska-primary-700: #1976d2;
   --niska-primary-800: #1565c0;
   --niska-primary-900: #0d47a1;
+  // RGB tokens for transparency usage
+  --niska-primary-500-rgb: 33, 150, 243;
 
   // Accent colors - Teal palette
   --niska-accent-50: #e0f2f1;
@@ -45,9 +47,53 @@
   // Surface and background colors
   --niska-surface: #fff;
   --niska-surface-variant: #f5f5f5;
+  --niska-surface-container: #f7f7f7;
+  --niska-surface-container-high: #eee;
   --niska-background: #fafafa;
   --niska-error: #f44336;
+  --niska-error-50: #ffebee;
+  --niska-error-100: #ffcdd2;
+  --niska-error-200: #ef9a9a;
+  --niska-error-300: #e57373;
+  --niska-error-400: #ef5350;
+  --niska-error-500: #f44336;
+  --niska-error-600: #e53935;
+  --niska-error-700: #d32f2f;
+  --niska-error-800: #c62828;
+  --niska-error-900: #b71c1c;
   --niska-success: #4caf50;
+  --niska-success-50: #e8f5e8;
+  --niska-success-100: #c8e6c9;
+  --niska-success-200: #a5d6a7;
+  --niska-success-300: #81c784;
+  --niska-success-400: #66bb6a;
+  --niska-success-500: #4caf50;
+  --niska-success-600: #43a047;
+  --niska-success-700: #388e3c;
+  --niska-success-800: #2e7d32;
+  --niska-success-900: #1b5e20;
+  --niska-warning-50: #fff3e0;
+  --niska-warning-100: #ffe0b2;
+  --niska-warning-200: #ffcc80;
+  --niska-warning-300: #ffb74d;
+  --niska-warning-400: #ffa726;
+  --niska-warning-500: #ff9800;
+  --niska-warning-600: #fb8c00;
+  --niska-warning-700: #f57c00;
+  --niska-warning-800: #ef6c00;
+  --niska-warning-900: #e65100;
+  --niska-info-50: #e3f2fd;
+  --niska-info-100: #bbdefb;
+  --niska-info-200: #90caf9;
+  --niska-info-300: #64b5f6;
+  --niska-info-400: #42a5f5;
+  --niska-info-500: #2196f3;
+  --niska-info-600: #1e88e5;
+  --niska-info-700: #1976d2;
+  --niska-info-800: #1565c0;
+  --niska-info-900: #0d47a1;
+  --niska-outline: rgba(0, 0, 0, 0.12);
+  --niska-outline-variant: rgba(0, 0, 0, 0.08);
   --niska-on-surface: rgba(0, 0, 0, 0.87);
   --niska-on-surface-variant: rgba(0, 0, 0, 0.6);
   --niska-on-background: rgba(0, 0, 0, 0.87);
@@ -124,6 +170,8 @@
   --niska-transition-fast: 150ms ease-in-out;
   --niska-transition-normal: 250ms ease-in-out;
   --niska-transition-slow: 350ms ease-in-out;
+  // Standard transition alias used across components
+  --niska-transition-standard: var(--niska-transition-normal);
 
   // Breakpoint tokens
   --niska-breakpoint-xs: 0;
@@ -181,6 +229,17 @@
   --color-warning-light: var(--niska-accent-100);
   --color-warning-dark: var(--niska-accent-700);
   --color-accent: var(--niska-accent-500);
+  // Additional commonly used aliases
+  --color-outline: var(--niska-outline);
+  --color-surface-variant: var(--niska-surface-variant);
+  --color-error: var(--niska-error);
+  --color-info: var(--niska-info-500);
+
+  // Mono font alias used in tables/code chips
+  --font-family-mono: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+
+  // App-specific tokens
+  --niska-header-background: var(--niska-primary-900);
 
   /* Border radius */
   --border-radius: var(--niska-radius-md);
@@ -333,4 +392,131 @@
 }
 .niska-bg-background {
   background-color: var(--niska-background);
+}
+
+// ========================================
+// DARK MODE THEME
+// ========================================
+
+[data-theme="dark"] {
+  // Dark mode color overrides
+  --niska-primary-50: #1a1a2e;
+  --niska-primary-100: #16213e;
+  --niska-primary-200: #0f3460;
+  --niska-primary-300: #1565c0;
+  --niska-primary-400: #1976d2;
+  --niska-primary-500: #2196f3;
+  --niska-primary-600: #42a5f5;
+  --niska-primary-700: #64b5f6;
+  --niska-primary-800: #90caf9;
+  --niska-primary-900: #bbdefb;
+
+  // Accent colors for dark mode
+  --niska-accent-50: #1a2c27;
+  --niska-accent-100: #1d4837;
+  --niska-accent-200: #00695c;
+  --niska-accent-300: #00796b;
+  --niska-accent-400: #00897b;
+  --niska-accent-500: #009688;
+  --niska-accent-600: #26a69a;
+  --niska-accent-700: #4db6ac;
+  --niska-accent-800: #80cbc4;
+  --niska-accent-900: #b2dfdb;
+
+  // Dark surfaces and backgrounds
+  --niska-surface: #1e1e1e;
+  --niska-surface-variant: #2a2a2a;
+  --niska-surface-container: #242424;
+  --niska-surface-container-high: #2d2d2d;
+  --niska-background: #121212;
+  --niska-outline: rgba(255, 255, 255, 0.12);
+  --niska-outline-variant: rgba(255, 255, 255, 0.08);
+
+  // Dark mode text colors
+  --niska-on-surface: rgba(255, 255, 255, 0.87);
+  --niska-on-surface-variant: rgba(255, 255, 255, 0.6);
+  --niska-on-background: rgba(255, 255, 255, 0.87);
+
+  // Error colors for dark mode
+  --niska-error-50: #2d1618;
+  --niska-error-100: #3d1a1c;
+  --niska-error-200: #6f2c2c;
+  --niska-error-300: #b71c1c;
+  --niska-error-400: #c62828;
+  --niska-error-500: #d32f2f;
+  --niska-error-600: #e53935;
+  --niska-error-700: #ef5350;
+  --niska-error-800: #e57373;
+  --niska-error-900: #ef9a9a;
+
+  // Success colors for dark mode
+  --niska-success-50: #1b2a1e;
+  --niska-success-100: #1e3a21;
+  --niska-success-200: #2e5233;
+  --niska-success-300: #1b5e20;
+  --niska-success-400: #2e7d32;
+  --niska-success-500: #388e3c;
+  --niska-success-600: #43a047;
+  --niska-success-700: #4caf50;
+  --niska-success-800: #66bb6a;
+  --niska-success-900: #81c784;
+
+  // Warning colors for dark mode
+  --niska-warning-50: #2d2416;
+  --niska-warning-100: #3d3018;
+  --niska-warning-200: #6f5a1a;
+  --niska-warning-300: #e65100;
+  --niska-warning-400: #ef6c00;
+  --niska-warning-500: #f57c00;
+  --niska-warning-600: #fb8c00;
+  --niska-warning-700: #ff9800;
+  --niska-warning-800: #ffa726;
+  --niska-warning-900: #ffb74d;
+
+  // Info colors for dark mode
+  --niska-info-50: #16213e;
+  --niska-info-100: #1a2b4a;
+  --niska-info-200: #1e3a5f;
+  --niska-info-300: #0d47a1;
+  --niska-info-400: #1565c0;
+  --niska-info-500: #1976d2;
+  --niska-info-600: #1e88e5;
+  --niska-info-700: #2196f3;
+  --niska-info-800: #42a5f5;
+  --niska-info-900: #64b5f6;
+
+  // Update legacy color aliases for dark mode
+  --color-text-primary: var(--niska-on-surface);
+  --color-text-secondary: var(--niska-on-surface-variant);
+  --color-surface: var(--niska-surface);
+  --color-background: var(--niska-background);
+  --color-border: var(--niska-outline);
+  --color-border-light: var(--niska-outline-variant);
+  --color-outline: var(--niska-outline);
+  --color-surface-variant: var(--niska-surface-variant);
+  --color-error: var(--niska-error-500);
+  --color-info: var(--niska-info-500);
+
+  // Header background remains dark in dark mode
+  --niska-header-background: #0d47a1;
+
+  // Dark mode specific elevation shadows
+  --niska-elevation-1:
+    0px 2px 1px -1px rgba(0, 0, 0, 0.4), 0px 1px 1px 0px rgba(0, 0, 0, 0.28),
+    0px 1px 3px 0px rgba(0, 0, 0, 0.24);
+  --niska-elevation-2:
+    0px 3px 1px -2px rgba(0, 0, 0, 0.4), 0px 2px 2px 0px rgba(0, 0, 0, 0.28),
+    0px 1px 5px 0px rgba(0, 0, 0, 0.24);
+  --niska-elevation-3:
+    0px 3px 3px -2px rgba(0, 0, 0, 0.4), 0px 3px 4px 0px rgba(0, 0, 0, 0.28),
+    0px 1px 8px 0px rgba(0, 0, 0, 0.24);
+  --niska-elevation-4:
+    0px 2px 4px -1px rgba(0, 0, 0, 0.4), 0px 4px 5px 0px rgba(0, 0, 0, 0.28),
+    0px 1px 10px 0px rgba(0, 0, 0, 0.24);
+  --niska-elevation-6:
+    0px 3px 5px -1px rgba(0, 0, 0, 0.4), 0px 6px 10px 0px rgba(0, 0, 0, 0.28),
+    0px 1px 18px 0px rgba(0, 0, 0, 0.24);
+  --niska-elevation-8:
+    0px 5px 5px -3px rgba(0, 0, 0, 0.4), 0px 8px 10px 1px rgba(0, 0, 0, 0.28),
+    0px 3px 14px 2px rgba(0, 0, 0, 0.24);
 }

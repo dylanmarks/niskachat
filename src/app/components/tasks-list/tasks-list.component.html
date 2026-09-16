@@ -15,15 +15,16 @@
           </div>
         </div>
       </div>
-      
+
       <div class="header-actions">
-        <button 
-          mat-fab 
-          color="primary" 
+        <button
+          mat-fab
+          color="primary"
           (click)="onCreateNewTask()"
           class="create-task-fab"
           matTooltip="Create new clinical task"
-          aria-label="Create new task">
+          aria-label="Create new task"
+        >
           <mat-icon>add</mat-icon>
         </button>
       </div>
@@ -41,7 +42,7 @@
             <div class="stat-label">Total Tasks</div>
           </div>
         </div>
-        
+
         <div class="stat-card pending">
           <div class="stat-icon">
             <mat-icon>schedule</mat-icon>
@@ -51,7 +52,7 @@
             <div class="stat-label">Requested</div>
           </div>
         </div>
-        
+
         <div class="stat-card active">
           <div class="stat-icon">
             <mat-icon>play_circle</mat-icon>
@@ -61,7 +62,7 @@
             <div class="stat-label">In Progress</div>
           </div>
         </div>
-        
+
         <div class="stat-card completed">
           <div class="stat-icon">
             <mat-icon>check_circle</mat-icon>
@@ -77,15 +78,17 @@
       <div class="progress-section">
         <div class="progress-info">
           <span class="progress-label">Completion Progress</span>
-          <span class="progress-percentage">{{ getCompletionPercentage() }}%</span>
+          <span class="progress-percentage">
+            {{ getCompletionPercentage() }}%
+          </span>
         </div>
         <div class="progress-bar-container">
-          <mat-progress-bar 
-            mode="determinate" 
+          <mat-progress-bar
+            mode="determinate"
             [value]="getCompletionPercentage()"
             color="primary"
-            class="enhanced-progress">
-          </mat-progress-bar>
+            class="enhanced-progress"
+          ></mat-progress-bar>
         </div>
       </div>
     </div>
@@ -102,14 +105,18 @@
       </div>
       <div class="empty-text">
         <h2>No Clinical Tasks Yet</h2>
-        <p>Get started by creating your first task or generating recommendations using "Next Best Action" in the chat.</p>
+        <p>
+          Get started by creating your first task or generating recommendations
+          using "Next Best Action" in the chat.
+        </p>
       </div>
       <div class="empty-actions">
-        <button 
-          mat-raised-button 
-          color="primary" 
+        <button
+          mat-raised-button
+          color="primary"
           (click)="onCreateNewTask()"
-          class="primary-action">
+          class="primary-action"
+        >
           <mat-icon>add_task</mat-icon>
           Create Your First Task
         </button>
@@ -119,25 +126,37 @@
 
   <!-- Enhanced Task Groups -->
   <div class="task-groups" *ngIf="hasAnyTasks()">
-    <div class="task-group" *ngFor="let group of taskGroups; trackBy: trackTaskGroup">
+    <div
+      class="task-group"
+      *ngFor="let group of taskGroups; trackBy: trackTaskGroup"
+    >
       <!-- Enhanced Care Plan Header -->
       <div class="care-plan-header">
         <div class="care-plan-info">
           <div class="care-plan-icon-wrapper">
-            <mat-icon [class]="'status-' + (group.carePlan?.status || 'default')">
+            <mat-icon
+              [class]="'status-' + (group.carePlan?.status || 'default')"
+            >
               {{ getCarePlanIcon(group.carePlan) }}
             </mat-icon>
           </div>
           <div class="care-plan-details">
-            <h2 class="care-plan-title">{{ getCarePlanTitle(group.carePlan) }}</h2>
+            <h2 class="care-plan-title">
+              {{ getCarePlanTitle(group.carePlan) }}
+            </h2>
             <div class="care-plan-meta" *ngIf="group.carePlan">
               <span class="meta-item">
                 <mat-icon>calendar_today</mat-icon>
                 Created {{ formatCarePlanDate(group.carePlan) }}
               </span>
               <span class="meta-divider">•</span>
-              <span class="meta-item status-badge" [class]="'status-' + group.carePlan.status">
-                <mat-icon>{{ getCarePlanStatusIcon(group.carePlan.status) }}</mat-icon>
+              <span
+                class="meta-item status-badge"
+                [class]="'status-' + group.carePlan.status"
+              >
+                <mat-icon>
+                  {{ getCarePlanStatusIcon(group.carePlan.status) }}
+                </mat-icon>
                 {{ getCarePlanStatusDisplay(group.carePlan.status) }}
               </span>
             </div>
@@ -146,17 +165,21 @@
         <div class="care-plan-stats">
           <div class="task-summary">
             <span class="task-count-badge">
-              {{ group.tasks.length }} task{{ group.tasks.length !== 1 ? 's' : '' }}
+              {{ group.tasks.length }} task{{
+                group.tasks.length !== 1 ? "s" : ""
+              }}
             </span>
             <div class="task-progress-mini" *ngIf="group.tasks.length > 0">
               <div class="progress-mini-bar">
-                <div 
-                  class="progress-mini-fill" 
-                  [style.width.%]="getGroupCompletionPercentage(group.tasks)">
-                </div>
+                <div
+                  class="progress-mini-fill"
+                  [style.width.%]="getGroupCompletionPercentage(group.tasks)"
+                ></div>
               </div>
               <span class="progress-mini-text">
-                {{ getCompletedTasksCount(group.tasks) }}/{{ group.tasks.length }}
+                {{ getCompletedTasksCount(group.tasks) }}/{{
+                  group.tasks.length
+                }}
               </span>
             </div>
           </div>
@@ -171,8 +194,8 @@
           [showCarePlanInfo]="false"
           (statusToggle)="onTaskStatusToggle($event)"
           (editTask)="onEditTask($event)"
-          (deleteTask)="onDeleteTask($event)">
-        </app-task-card>
+          (deleteTask)="onDeleteTask($event)"
+        ></app-task-card>
       </div>
     </div>
   </div>

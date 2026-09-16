@@ -6,6 +6,7 @@ import {
 } from "../utils/fhirBundleCompressor.js";
 import logger from "../utils/logger.js";
 import { getFormattedPrompt } from "../utils/promptLoader.js";
+import { sanitizeInput } from "../utils/sanitize-input.js";
 
 const router = express.Router();
 
@@ -149,14 +150,18 @@ function formatClinicalData(data) {
  * Format conversation history for the LLM prompt
  */
 function formatConversationHistory(conversationHistory) {
-  if (!conversationHistory || !Array.isArray(conversationHistory) || conversationHistory.length === 0) {
+  if (
+    !conversationHistory ||
+    !Array.isArray(conversationHistory) ||
+    conversationHistory.length === 0
+  ) {
     return "";
   }
 
   // Format conversation history as a readable string
   const formattedHistory = conversationHistory
-    .filter(msg => !msg.isLoading) // Exclude loading messages
-    .map(msg => {
+    .filter((msg) => !msg.isLoading) // Exclude loading messages
+    .map((msg) => {
       const role = msg.isUser ? "Human" : "Assistant";
       const timestamp = new Date(msg.timestamp).toLocaleString();
       return `[${timestamp}] ${role}: ${msg.content}`;
@@ -169,7 +174,12 @@ function formatConversationHistory(conversationHistory) {
 /**
  * Generate appropriate prompt based on context type
  */
-function generatePrompt(context, data, userQuery = null, conversationHistory = null) {
+function generatePrompt(
+  context,
+  data,
+  userQuery = null,
+  conversationHistory = null,
+) {
   logger.debug("generatePrompt called", {
     context,
     dataType: typeof data,
@@ -279,13 +289,18 @@ function parseClinicalChatResponse(llmResponse) {
   try {
     logger.debug("Parsing clinical chat response", {
       responseLength: llmResponse.length,
-      responseStart: llmResponse.substring(0, 200)
+      responseStart: llmResponse.substring(0, 200),
+    });
+
+    // Log the full response for debugging JSON issues
+    logger.debug("Full LLM response for debugging:", {
+      fullResponse: llmResponse,
     });
 
     // Try to parse JSON from the response
     let parsedResponse;
     let jsonText = "";
-    
+
     // Handle cases where response might be wrapped in markdown code blocks
     const jsonMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {
@@ -293,47 +308,52 @@ function parseClinicalChatResponse(llmResponse) {
       logger.debug("Found JSON in code block", { jsonLength: jsonText.length });
     } else {
       // Try to find JSON-like content in the response
-      const jsonStart = llmResponse.indexOf('{');
-      const jsonEnd = llmResponse.lastIndexOf('}');
-      
+      const jsonStart = llmResponse.indexOf("{");
+      const jsonEnd = llmResponse.lastIndexOf("}");
+
       if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
         jsonText = llmResponse.substring(jsonStart, jsonEnd + 1).trim();
-        logger.debug("Extracted JSON-like content", { jsonLength: jsonText.length });
+        logger.debug("Extracted JSON-like content", {
+          jsonLength: jsonText.length,
+        });
       } else {
         // If no JSON structure found, treat as plain text response
         logger.debug("No JSON structure found, treating as plain text");
         return {
           response: llmResponse,
           suggestedActions: [],
-          isPlainText: true
+          isPlainText: true,
         };
       }
     }
 
     // Try to fix common JSON truncation issues
-    if (jsonText && !jsonText.endsWith('}')) {
+    if (jsonText && !jsonText.endsWith("}")) {
       logger.warn("JSON appears to be truncated, attempting to fix");
       // Count open braces to try to close properly
       const openBraces = (jsonText.match(/\{/g) || []).length;
       const closeBraces = (jsonText.match(/\}/g) || []).length;
       const missingBraces = openBraces - closeBraces;
-      
+
       if (missingBraces > 0) {
         // Add missing closing braces
-        jsonText += '}'.repeat(missingBraces);
+        jsonText += "}".repeat(missingBraces);
         logger.debug("Added missing closing braces", { count: missingBraces });
       }
-      
+
       // Try to complete arrays if they're incomplete
-      if (jsonText.includes('"tasks": [') && !jsonText.includes('"tasks": []')) {
+      if (
+        jsonText.includes('"tasks": [') &&
+        !jsonText.includes('"tasks": []')
+      ) {
         const tasksMatch = jsonText.match(/"tasks":\s*\[([^\]]*?)$/);
-        if (tasksMatch && !jsonText.endsWith(']]')) {
+        if (tasksMatch && !jsonText.endsWith("]]")) {
           // Try to close incomplete task array
-          if (jsonText.endsWith(',')) {
+          if (jsonText.endsWith(",")) {
             jsonText = jsonText.slice(0, -1); // Remove trailing comma
           }
-          if (!jsonText.endsWith(']')) {
-            jsonText += ']';
+          if (!jsonText.endsWith("]")) {
+            jsonText += "]";
             logger.debug("Closed incomplete tasks array");
           }
         }
@@ -343,24 +363,58 @@ function parseClinicalChatResponse(llmResponse) {
     try {
       parsedResponse = JSON.parse(jsonText);
     } catch (parseError) {
-      logger.debug("JSON parsing failed, treating as plain text", {
-        error: parseError.message
+      logger.warn("JSON parsing failed, attempting cleanup", {
+        error: parseError.message,
+        jsonSample: jsonText.substring(0, 200),
       });
-      // Fall back to plain text response
-      return {
-        response: llmResponse,
-        suggestedActions: [],
-        isPlainText: true
-      };
+
+      // Try progressive cleanup strategies
+      // eslint-disable-next-line no-control-regex
+      const controlCharsRegex = /[\x00-\x1F\x7F-\x9F]/g;
+      try {
+        // Strategy 1: Remove control characters and fix common issues
+        let cleanedJsonText = jsonText
+          .replace(controlCharsRegex, "") // Remove control characters
+          .replace(/,(\s*[}\]])/g, "$1") // Remove trailing commas
+          .trim();
+
+        parsedResponse = JSON.parse(cleanedJsonText);
+      } catch (cleanupError) {
+        try {
+          // Strategy 2: More aggressive character replacement
+          let aggressiveCleanup = jsonText
+            .replace(controlCharsRegex, " ") // Replace control chars with spaces
+            .replace(/,\s*([}\]])/g, "$1") // Remove trailing commas before closing
+            .replace(/([}\]]),\s*([}\]])/g, "$1$2") // Fix multiple trailing commas
+            .trim();
+
+          parsedResponse = JSON.parse(aggressiveCleanup);
+        } catch (aggressiveError) {
+          logger.debug(
+            "All JSON parsing attempts failed, treating as plain text",
+            {
+              originalError: parseError.message,
+              cleanupError: cleanupError.message,
+              aggressiveError: aggressiveError.message,
+            },
+          );
+          // Fall back to plain text response
+          return {
+            response: llmResponse,
+            suggestedActions: [],
+            isPlainText: true,
+          };
+        }
+      }
     }
 
     // Validate structure - be flexible about structure
-    if (typeof parsedResponse.response !== 'string') {
+    if (typeof parsedResponse.response !== "string") {
       logger.debug("Invalid response structure, using raw response");
       return {
         response: llmResponse,
         suggestedActions: [],
-        isPlainText: true
+        isPlainText: true,
       };
     }
 
@@ -370,24 +424,38 @@ function parseClinicalChatResponse(llmResponse) {
     }
 
     // Validate suggested actions structure
-    parsedResponse.suggestedActions = parsedResponse.suggestedActions.filter((action, index) => {
-      if (!action.id || !action.title || !action.description) {
-        logger.debug(`Invalid suggested action at index ${index}, filtering out`);
-        return false;
-      }
-      return true;
-    });
+    parsedResponse.suggestedActions = parsedResponse.suggestedActions.filter(
+      (action, index) => {
+        if (!action.id || !action.title || !action.description) {
+          logger.debug(
+            `Invalid suggested action at index ${index}, filtering out`,
+          );
+          return false;
+        }
+        return true;
+      },
+    );
 
     // Check if this response includes FHIR task generation (when user requests comprehensive actions)
     let taskGeneration = null;
-    if (parsedResponse.carePlan && parsedResponse.tasks && Array.isArray(parsedResponse.tasks)) {
+    if (
+      parsedResponse.carePlan &&
+      parsedResponse.tasks &&
+      Array.isArray(parsedResponse.tasks)
+    ) {
       // Validate CarePlan structure
       const carePlan = parsedResponse.carePlan;
-      if (carePlan.resourceType === "CarePlan" && carePlan.id && carePlan.title) {
+      if (
+        carePlan.resourceType === "CarePlan" &&
+        carePlan.id &&
+        carePlan.title
+      ) {
         // Validate Task structures
         const validTasks = parsedResponse.tasks.filter((task, index) => {
           if (task.resourceType !== "Task" || !task.id || !task.code?.text) {
-            logger.debug(`Invalid Task structure at index ${index}, filtering out`);
+            logger.debug(
+              `Invalid Task structure at index ${index}, filtering out`,
+            );
             return false;
           }
           return true;
@@ -398,11 +466,11 @@ function parseClinicalChatResponse(llmResponse) {
             summary: parsedResponse.response,
             carePlan: carePlan,
             tasks: validTasks,
-            source: "clinical_chat"
+            source: "clinical_chat",
           };
           logger.info("Successfully parsed FHIR task generation", {
             carePlanId: carePlan.id,
-            taskCount: validTasks.length
+            taskCount: validTasks.length,
           });
         }
       }
@@ -411,29 +479,28 @@ function parseClinicalChatResponse(llmResponse) {
     logger.info("Successfully parsed clinical chat response", {
       responseLength: parsedResponse.response.length,
       suggestedActionsCount: parsedResponse.suggestedActions.length,
-      hasTaskGeneration: !!taskGeneration
+      hasTaskGeneration: !!taskGeneration,
     });
 
     return {
       response: parsedResponse.response,
       suggestedActions: parsedResponse.suggestedActions,
       taskGeneration: taskGeneration,
-      isPlainText: false
+      isPlainText: false,
     };
   } catch (error) {
     logger.warn("Failed to parse clinical chat response, using fallback", {
-      error: error.message
+      error: error.message,
     });
-    
+
     // Return fallback structure with plain text response
     return {
       response: llmResponse,
       suggestedActions: [],
-      isPlainText: true
+      isPlainText: true,
     };
   }
 }
-
 
 /**
  * Generate concise fallback summary without LLM
@@ -511,7 +578,6 @@ router.post("/", async (req, res) => {
       conversationHistory,
     } = req.body;
 
-
     // For chat context, we can accept either bundle, patientData, or compressedData
     if (!bundle && !patientData && !compressedData) {
       return res.status(400).json({
@@ -580,37 +646,44 @@ router.post("/", async (req, res) => {
         });
 
         // Generate appropriate prompt based on context
-        const prompt = generatePrompt(context, clinicalData, query, conversationHistory);
+        const sanitizedQuery = query ? sanitizeInput(query) : null;
+        const prompt = generatePrompt(
+          context,
+          clinicalData,
+          sanitizedQuery,
+          conversationHistory,
+        );
         logger.debug(`Generated prompt length: ${prompt.length}`);
 
         // Use more tokens for clinical chat to handle complex FHIR JSON responses
-        const llmOptions = context === CONTEXT_TYPES.CLINICAL_CHAT 
-          ? { maxTokens: 4000 } // Increase tokens for complex FHIR JSON response
-          : {};
+        const llmOptions =
+          context === CONTEXT_TYPES.CLINICAL_CHAT
+            ? { maxTokens: 4000 } // Increase tokens for complex FHIR JSON response
+            : {};
 
         const llmResult = await callLLM(prompt, llmOptions);
-        
+
         // Handle clinical chat responses (which now includes both simple and comprehensive actions)
         if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
           const parsedResponse = parseClinicalChatResponse(llmResult.response);
           summary = parsedResponse.response;
           provider = llmResult.provider;
           llmUsed = true;
-          
+
           // Add the parsed suggested actions to the response
           response.suggestedActions = parsedResponse.suggestedActions;
           response.isStructuredResponse = !parsedResponse.isPlainText;
-          
+
           // Add task generation if present (for comprehensive action requests)
           if (parsedResponse.taskGeneration) {
             response.taskGeneration = parsedResponse.taskGeneration;
           }
-          
+
           logger.info("✅ Clinical chat LLM call successful, parsed response", {
             responseLength: summary.length,
             suggestedActionsCount: parsedResponse.suggestedActions?.length || 0,
             hasTaskGeneration: !!parsedResponse.taskGeneration,
-            isPlainText: parsedResponse.isPlainText || false
+            isPlainText: parsedResponse.isPlainText || false,
           });
         } else {
           summary = llmResult.response;

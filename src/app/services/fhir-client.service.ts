@@ -267,6 +267,247 @@ export interface MedicationRequest {
   substitution?: unknown;
 }
 
+// FHIR AllergyIntolerance Resource Interface
+export interface FhirAllergyIntolerance extends FhirResource {
+  resourceType: 'AllergyIntolerance';
+  clinicalStatus?: FhirCodeableConcept;
+  verificationStatus?: FhirCodeableConcept;
+  type?: string;
+  category?: string[];
+  criticality?: string;
+  code?: FhirCodeableConcept;
+  patient?: FhirReference;
+  onsetDateTime?: string;
+  onsetAge?: FhirAge;
+  onsetPeriod?: FhirPeriod;
+  onsetRange?: FhirRange;
+  onsetString?: string;
+  recordedDate?: string;
+  recorder?: FhirReference;
+  asserter?: FhirReference;
+  lastOccurrence?: string;
+  note?: FhirAnnotation[];
+  reaction?: FhirAllergyIntoleranceReaction[];
+}
+
+interface FhirAnnotation {
+  authorReference?: FhirReference;
+  authorString?: string;
+  time?: string;
+  text: string;
+}
+
+interface FhirAllergyIntoleranceReaction {
+  substance?: FhirCodeableConcept;
+  manifestation: FhirCodeableConcept[];
+  description?: string;
+  onset?: string;
+  severity?: string;
+  exposureRoute?: FhirCodeableConcept;
+  note?: FhirAnnotation[];
+}
+
+// Application AllergyIntolerance Interface (for our components)
+export interface AllergyIntolerance {
+  resourceType: 'AllergyIntolerance';
+  id: string;
+  clinicalStatus?: FhirCodeableConcept;
+  verificationStatus?: FhirCodeableConcept;
+  type?: string;
+  category?: string[];
+  criticality?: string;
+  code?: FhirCodeableConcept;
+  patient?: FhirReference;
+  onsetDateTime?: string;
+  onsetAge?: FhirAge;
+  onsetPeriod?: FhirPeriod;
+  onsetRange?: FhirRange;
+  onsetString?: string;
+  recordedDate?: string;
+  recorder?: FhirReference;
+  asserter?: FhirReference;
+  lastOccurrence?: string;
+  note?: FhirAnnotation[];
+  reaction?: FhirAllergyIntoleranceReaction[];
+}
+
+// FHIR Immunization Resource Interface
+export interface FhirImmunization extends FhirResource {
+  resourceType: 'Immunization';
+  status: string;
+  vaccineCode: FhirCodeableConcept;
+  patient: FhirReference;
+  occurrenceDateTime?: string;
+  occurrenceString?: string;
+  recorded?: string;
+  primarySource?: boolean;
+  reportOrigin?: FhirCodeableConcept;
+  location?: FhirReference;
+  manufacturer?: FhirReference;
+  lotNumber?: string;
+  expirationDate?: string;
+  site?: FhirCodeableConcept;
+  route?: FhirCodeableConcept;
+  doseQuantity?: FhirQuantity;
+  performer?: FhirImmunizationPerformer[];
+  note?: FhirAnnotation[];
+  reasonCode?: FhirCodeableConcept[];
+  reasonReference?: FhirReference[];
+  isSubpotent?: boolean;
+  subpotentReason?: FhirCodeableConcept[];
+  education?: FhirImmunizationEducation[];
+  programEligibility?: FhirCodeableConcept[];
+  fundingSource?: FhirCodeableConcept;
+  reaction?: FhirImmunizationReaction[];
+  protocolApplied?: FhirImmunizationProtocol[];
+}
+
+interface FhirImmunizationPerformer {
+  function?: FhirCodeableConcept;
+  actor: FhirReference;
+}
+
+interface FhirImmunizationEducation {
+  documentType?: string;
+  reference?: string;
+  publicationDate?: string;
+  presentationDate?: string;
+}
+
+interface FhirImmunizationReaction {
+  date?: string;
+  detail?: FhirReference;
+  reported?: boolean;
+}
+
+interface FhirImmunizationProtocol {
+  doseNumberPositiveInt?: number;
+  doseNumberString?: string;
+  seriesDosesPositiveInt?: number;
+  seriesDosesString?: string;
+  targetDisease?: FhirCodeableConcept[];
+  doseStatus: FhirCodeableConcept;
+  doseStatusReason?: FhirCodeableConcept[];
+}
+
+// Application Immunization Interface (for our components)
+export interface Immunization {
+  resourceType: 'Immunization';
+  id: string;
+  status: string;
+  vaccineCode: FhirCodeableConcept;
+  patient: FhirReference;
+  occurrenceDateTime?: string;
+  occurrenceString?: string;
+  recorded?: string;
+  primarySource?: boolean;
+  reportOrigin?: FhirCodeableConcept;
+  location?: FhirReference;
+  manufacturer?: FhirReference;
+  lotNumber?: string;
+  expirationDate?: string;
+  site?: FhirCodeableConcept;
+  route?: FhirCodeableConcept;
+  doseQuantity?: FhirQuantity;
+  performer?: FhirImmunizationPerformer[];
+  note?: FhirAnnotation[];
+  reasonCode?: FhirCodeableConcept[];
+  reasonReference?: FhirReference[];
+  isSubpotent?: boolean;
+  subpotentReason?: FhirCodeableConcept[];
+  education?: FhirImmunizationEducation[];
+  programEligibility?: FhirCodeableConcept[];
+  fundingSource?: FhirCodeableConcept;
+  reaction?: FhirImmunizationReaction[];
+  protocolApplied?: FhirImmunizationProtocol[];
+}
+
+// FHIR Procedure Resource Interface
+export interface FhirProcedure extends FhirResource {
+  resourceType: 'Procedure';
+  identifier?: FhirIdentifier[];
+  instantiatesCanonical?: string[];
+  instantiatesUri?: string[];
+  basedOn?: FhirReference[];
+  partOf?: FhirReference[];
+  status: string;
+  statusReason?: FhirCodeableConcept;
+  category?: FhirCodeableConcept;
+  code?: FhirCodeableConcept;
+  subject: FhirReference;
+  encounter?: FhirReference;
+  performedDateTime?: string;
+  performedPeriod?: FhirPeriod;
+  performedString?: string;
+  performedAge?: FhirAge;
+  performedRange?: FhirRange;
+  recorder?: FhirReference;
+  asserter?: FhirReference;
+  performer?: FhirProcedurePerformer[];
+  location?: FhirReference;
+  reasonCode?: FhirCodeableConcept[];
+  reasonReference?: FhirReference[];
+  bodySite?: FhirCodeableConcept[];
+  outcome?: FhirCodeableConcept;
+  report?: FhirReference[];
+  complication?: FhirCodeableConcept[];
+  complicationDetail?: FhirReference[];
+  followUp?: FhirCodeableConcept[];
+  note?: FhirAnnotation[];
+  focalDevice?: FhirProcedureFocalDevice[];
+  usedReference?: FhirReference[];
+  usedCode?: FhirCodeableConcept[];
+}
+
+interface FhirProcedurePerformer {
+  function?: FhirCodeableConcept;
+  actor: FhirReference;
+  onBehalfOf?: FhirReference;
+}
+
+interface FhirProcedureFocalDevice {
+  action?: FhirCodeableConcept;
+  manipulated: FhirReference;
+}
+
+// Application Procedure Interface (for our components)
+export interface Procedure {
+  resourceType: 'Procedure';
+  id: string;
+  identifier?: FhirIdentifier[];
+  instantiatesCanonical?: string[];
+  instantiatesUri?: string[];
+  basedOn?: FhirReference[];
+  partOf?: FhirReference[];
+  status: string;
+  statusReason?: FhirCodeableConcept;
+  category?: FhirCodeableConcept;
+  code?: FhirCodeableConcept;
+  subject: FhirReference;
+  encounter?: FhirReference;
+  performedDateTime?: string;
+  performedPeriod?: FhirPeriod;
+  performedString?: string;
+  performedAge?: FhirAge;
+  performedRange?: FhirRange;
+  recorder?: FhirReference;
+  asserter?: FhirReference;
+  performer?: FhirProcedurePerformer[];
+  location?: FhirReference;
+  reasonCode?: FhirCodeableConcept[];
+  reasonReference?: FhirReference[];
+  bodySite?: FhirCodeableConcept[];
+  outcome?: FhirCodeableConcept;
+  report?: FhirReference[];
+  complication?: FhirCodeableConcept[];
+  complicationDetail?: FhirReference[];
+  followUp?: FhirCodeableConcept[];
+  note?: FhirAnnotation[];
+  focalDevice?: FhirProcedureFocalDevice[];
+  usedReference?: FhirReference[];
+  usedCode?: FhirCodeableConcept[];
+}
+
 export interface FhirContext {
   patient?: Patient;
   clientId?: string;
@@ -282,6 +523,9 @@ export interface OfflineModeData {
   conditions: Condition[];
   observations: Observation[];
   medicationRequests: MedicationRequest[];
+  allergyIntolerances: AllergyIntolerance[];
+  immunizations: Immunization[];
+  procedures: Procedure[];
 }
 
 @Injectable({
@@ -878,6 +1122,369 @@ export class FhirClientService {
   }
 
   /**
+   * Get allergy intolerances for current patient
+   */
+  getAllergyIntolerances(
+    params: Record<string, string> = {},
+  ): Observable<AllergyIntolerance[]> {
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      return throwError(() => new Error('No current patient'));
+    }
+
+    // If in offline mode, return offline data
+    if (this.isOfflineMode() && this.offlineData) {
+      let allergyIntolerances = this.offlineData.allergyIntolerances;
+
+      // Apply basic filtering based on clinical-status parameter
+      if (params['clinical-status']) {
+        const statusFilter = params['clinical-status'].split(',');
+        allergyIntolerances = allergyIntolerances.filter((allergy) => {
+          return (
+            allergy.clinicalStatus?.coding?.[0]?.code &&
+            statusFilter.includes(allergy.clinicalStatus.coding[0].code)
+          );
+        });
+      }
+
+      return of(allergyIntolerances);
+    }
+
+    const searchParams = {
+      patient: currentPatient.id,
+      ...params,
+    };
+
+    return this.search('AllergyIntolerance', searchParams).pipe(
+      map((bundle) => {
+        if (bundle?.entry) {
+          return bundle.entry
+            .map((entry: FhirBundleEntry) => entry.resource)
+            .filter(
+              (
+                allergyIntolerance: unknown,
+              ): allergyIntolerance is FhirResource => !!allergyIntolerance,
+            )
+            .map((allergyIntolerance: unknown) =>
+              this.mapFhirAllergyIntolerance(allergyIntolerance),
+            );
+        }
+        return [];
+      }),
+      catchError((error: unknown) => {
+        logger.error('Error fetching allergy intolerances:', error);
+        const fhirError: FhirError = {
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error fetching allergy intolerances',
+          details: error,
+        };
+        return throwError(() => fhirError);
+      }),
+    );
+  }
+
+  /**
+   * Type guard to check if object is a FHIR AllergyIntolerance
+   */
+  private isFhirAllergyIntolerance(
+    obj: unknown,
+  ): obj is FhirAllergyIntolerance {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] ===
+        'AllergyIntolerance' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
+    );
+  }
+
+  /**
+   * Map FHIR AllergyIntolerance resource to our interface
+   */
+  private mapFhirAllergyIntolerance(
+    fhirAllergyIntolerance: unknown,
+  ): AllergyIntolerance {
+    if (!this.isFhirAllergyIntolerance(fhirAllergyIntolerance)) {
+      throw new Error('Invalid FHIR AllergyIntolerance resource');
+    }
+
+    const mapped: AllergyIntolerance = {
+      resourceType: 'AllergyIntolerance',
+      id: fhirAllergyIntolerance.id ?? 'unknown',
+    };
+    if (fhirAllergyIntolerance.clinicalStatus)
+      mapped.clinicalStatus = fhirAllergyIntolerance.clinicalStatus;
+    if (fhirAllergyIntolerance.verificationStatus)
+      mapped.verificationStatus = fhirAllergyIntolerance.verificationStatus;
+    if (fhirAllergyIntolerance.type) mapped.type = fhirAllergyIntolerance.type;
+    if (fhirAllergyIntolerance.category)
+      mapped.category = fhirAllergyIntolerance.category;
+    if (fhirAllergyIntolerance.criticality)
+      mapped.criticality = fhirAllergyIntolerance.criticality;
+    if (fhirAllergyIntolerance.code) mapped.code = fhirAllergyIntolerance.code;
+    if (fhirAllergyIntolerance.patient)
+      mapped.patient = fhirAllergyIntolerance.patient;
+    if (fhirAllergyIntolerance.onsetDateTime)
+      mapped.onsetDateTime = fhirAllergyIntolerance.onsetDateTime;
+    if (fhirAllergyIntolerance.onsetAge)
+      mapped.onsetAge = fhirAllergyIntolerance.onsetAge;
+    if (fhirAllergyIntolerance.onsetPeriod)
+      mapped.onsetPeriod = fhirAllergyIntolerance.onsetPeriod;
+    if (fhirAllergyIntolerance.onsetRange)
+      mapped.onsetRange = fhirAllergyIntolerance.onsetRange;
+    if (fhirAllergyIntolerance.onsetString)
+      mapped.onsetString = fhirAllergyIntolerance.onsetString;
+    if (fhirAllergyIntolerance.recordedDate)
+      mapped.recordedDate = fhirAllergyIntolerance.recordedDate;
+    if (fhirAllergyIntolerance.recorder)
+      mapped.recorder = fhirAllergyIntolerance.recorder;
+    if (fhirAllergyIntolerance.asserter)
+      mapped.asserter = fhirAllergyIntolerance.asserter;
+    if (fhirAllergyIntolerance.lastOccurrence)
+      mapped.lastOccurrence = fhirAllergyIntolerance.lastOccurrence;
+    if (fhirAllergyIntolerance.note) mapped.note = fhirAllergyIntolerance.note;
+    if (fhirAllergyIntolerance.reaction)
+      mapped.reaction = fhirAllergyIntolerance.reaction;
+    return mapped;
+  }
+
+  /**
+   * Get immunizations for current patient
+   */
+  getImmunizations(
+    params: Record<string, string> = {},
+  ): Observable<Immunization[]> {
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      return throwError(() => new Error('No current patient'));
+    }
+
+    // If in offline mode, return offline data
+    if (this.isOfflineMode() && this.offlineData) {
+      let immunizations = this.offlineData.immunizations;
+
+      // Apply basic filtering based on status parameter
+      if (params['status']) {
+        const statusFilter = params['status'].split(',');
+        immunizations = immunizations.filter((immunization) => {
+          return (
+            immunization.status && statusFilter.includes(immunization.status)
+          );
+        });
+      }
+
+      return of(immunizations);
+    }
+
+    const searchParams = {
+      patient: currentPatient.id,
+      ...params,
+    };
+
+    return this.search('Immunization', searchParams).pipe(
+      map((bundle) => {
+        if (bundle?.entry) {
+          return bundle.entry
+            .map((entry: FhirBundleEntry) => entry.resource)
+            .filter(
+              (immunization: unknown): immunization is FhirResource =>
+                !!immunization,
+            )
+            .map((immunization: unknown) =>
+              this.mapFhirImmunization(immunization),
+            );
+        }
+        return [];
+      }),
+      catchError((error: unknown) => {
+        logger.error('Error fetching immunizations:', error);
+        const fhirError: FhirError = {
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Unknown error fetching immunizations',
+          details: error,
+        };
+        return throwError(() => fhirError);
+      }),
+    );
+  }
+
+  /**
+   * Type guard to check if object is a FHIR Immunization
+   */
+  private isFhirImmunization(obj: unknown): obj is FhirImmunization {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'Immunization' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
+    );
+  }
+
+  /**
+   * Map FHIR Immunization resource to our interface
+   */
+  private mapFhirImmunization(fhirImmunization: unknown): Immunization {
+    if (!this.isFhirImmunization(fhirImmunization)) {
+      throw new Error('Invalid FHIR Immunization resource');
+    }
+
+    const mapped: Immunization = {
+      resourceType: 'Immunization',
+      id: fhirImmunization.id ?? 'unknown',
+      status: fhirImmunization.status,
+      vaccineCode: fhirImmunization.vaccineCode,
+      patient: fhirImmunization.patient,
+    };
+    if (fhirImmunization.occurrenceDateTime)
+      mapped.occurrenceDateTime = fhirImmunization.occurrenceDateTime;
+    if (fhirImmunization.occurrenceString)
+      mapped.occurrenceString = fhirImmunization.occurrenceString;
+    if (fhirImmunization.recorded) mapped.recorded = fhirImmunization.recorded;
+    if (fhirImmunization.primarySource !== undefined)
+      mapped.primarySource = fhirImmunization.primarySource;
+    if (fhirImmunization.reportOrigin)
+      mapped.reportOrigin = fhirImmunization.reportOrigin;
+    if (fhirImmunization.location) mapped.location = fhirImmunization.location;
+    if (fhirImmunization.manufacturer)
+      mapped.manufacturer = fhirImmunization.manufacturer;
+    if (fhirImmunization.lotNumber)
+      mapped.lotNumber = fhirImmunization.lotNumber;
+    if (fhirImmunization.expirationDate)
+      mapped.expirationDate = fhirImmunization.expirationDate;
+    if (fhirImmunization.site) mapped.site = fhirImmunization.site;
+    if (fhirImmunization.route) mapped.route = fhirImmunization.route;
+    if (fhirImmunization.doseQuantity)
+      mapped.doseQuantity = fhirImmunization.doseQuantity;
+    if (fhirImmunization.performer)
+      mapped.performer = fhirImmunization.performer;
+    if (fhirImmunization.note) mapped.note = fhirImmunization.note;
+    if (fhirImmunization.reasonCode)
+      mapped.reasonCode = fhirImmunization.reasonCode;
+    if (fhirImmunization.reasonReference)
+      mapped.reasonReference = fhirImmunization.reasonReference;
+    if (fhirImmunization.isSubpotent !== undefined)
+      mapped.isSubpotent = fhirImmunization.isSubpotent;
+    if (fhirImmunization.subpotentReason)
+      mapped.subpotentReason = fhirImmunization.subpotentReason;
+    if (fhirImmunization.education)
+      mapped.education = fhirImmunization.education;
+    if (fhirImmunization.programEligibility)
+      mapped.programEligibility = fhirImmunization.programEligibility;
+    if (fhirImmunization.fundingSource)
+      mapped.fundingSource = fhirImmunization.fundingSource;
+    if (fhirImmunization.reaction) mapped.reaction = fhirImmunization.reaction;
+    if (fhirImmunization.protocolApplied)
+      mapped.protocolApplied = fhirImmunization.protocolApplied;
+    return mapped;
+  }
+
+  private isFhirProcedure(obj: unknown): obj is FhirProcedure {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'resourceType' in obj &&
+      (obj as Record<string, unknown>)['resourceType'] === 'Procedure' &&
+      'id' in obj &&
+      typeof (obj as Record<string, unknown>)['id'] === 'string'
+    );
+  }
+
+  /**
+   * Map FHIR Procedure resource to our interface
+   */
+  private mapFhirProcedure(fhirProcedure: unknown): Procedure {
+    if (!this.isFhirProcedure(fhirProcedure)) {
+      throw new Error('Invalid FHIR Procedure resource');
+    }
+
+    const mapped: Procedure = {
+      resourceType: 'Procedure',
+      id: fhirProcedure.id ?? 'unknown',
+      status: fhirProcedure.status,
+      subject: fhirProcedure.subject,
+    };
+    if (fhirProcedure.code) mapped.code = fhirProcedure.code;
+    if (fhirProcedure.category) mapped.category = fhirProcedure.category;
+    if (fhirProcedure.performedDateTime)
+      mapped.performedDateTime = fhirProcedure.performedDateTime;
+    if (fhirProcedure.performedPeriod)
+      mapped.performedPeriod = fhirProcedure.performedPeriod;
+    if (fhirProcedure.performedString)
+      mapped.performedString = fhirProcedure.performedString;
+    if (fhirProcedure.performedAge)
+      mapped.performedAge = fhirProcedure.performedAge;
+    if (fhirProcedure.performedRange)
+      mapped.performedRange = fhirProcedure.performedRange;
+    if (fhirProcedure.recorder) mapped.recorder = fhirProcedure.recorder;
+    if (fhirProcedure.asserter) mapped.asserter = fhirProcedure.asserter;
+    if (fhirProcedure.performer) mapped.performer = fhirProcedure.performer;
+    if (fhirProcedure.location) mapped.location = fhirProcedure.location;
+    if (fhirProcedure.reasonCode) mapped.reasonCode = fhirProcedure.reasonCode;
+    if (fhirProcedure.reasonReference)
+      mapped.reasonReference = fhirProcedure.reasonReference;
+    if (fhirProcedure.bodySite) mapped.bodySite = fhirProcedure.bodySite;
+    if (fhirProcedure.outcome) mapped.outcome = fhirProcedure.outcome;
+    if (fhirProcedure.report) mapped.report = fhirProcedure.report;
+    if (fhirProcedure.complication)
+      mapped.complication = fhirProcedure.complication;
+    if (fhirProcedure.complicationDetail)
+      mapped.complicationDetail = fhirProcedure.complicationDetail;
+    if (fhirProcedure.followUp) mapped.followUp = fhirProcedure.followUp;
+    if (fhirProcedure.note) mapped.note = fhirProcedure.note;
+    if (fhirProcedure.focalDevice)
+      mapped.focalDevice = fhirProcedure.focalDevice;
+    if (fhirProcedure.usedReference)
+      mapped.usedReference = fhirProcedure.usedReference;
+    if (fhirProcedure.usedCode) mapped.usedCode = fhirProcedure.usedCode;
+    return mapped;
+  }
+
+  /**
+   * Get procedures for the current patient
+   */
+  getProcedures(): Observable<Procedure[]> {
+    const currentPatient = this.getCurrentPatient();
+    if (!currentPatient) {
+      return throwError(() => new Error('No current patient'));
+    }
+
+    // If in offline mode, return offline data
+    if (this.isOfflineMode() && this.offlineData) {
+      return of(this.offlineData.procedures ?? []);
+    }
+
+    // Use the search method like other resource methods
+    return this.search('Procedure', {
+      patient: currentPatient.id,
+    }).pipe(
+      map((response: FhirBundle) => {
+        const procedures: Procedure[] = [];
+        if (response?.entry && Array.isArray(response.entry)) {
+          for (const entry of response.entry) {
+            if (entry.resource?.resourceType === 'Procedure') {
+              const mapped = this.mapFhirProcedure(entry.resource);
+              procedures.push(mapped);
+            }
+          }
+        }
+        return procedures;
+      }),
+      catchError((error) => {
+        logger.error('Error fetching procedures:', error);
+        return of([]);
+      }),
+    );
+  }
+
+  /**
    * Check if FHIR client is ready
    */
   isClientReady(): boolean {
@@ -986,6 +1593,28 @@ export class FhirClientService {
             resource: medicationRequest,
           });
         });
+
+        // Add allergy intolerances
+        logger.debug(
+          'Adding allergy intolerances:',
+          this.offlineData.allergyIntolerances?.length || 0,
+        );
+        this.offlineData.allergyIntolerances?.forEach((allergyIntolerance) => {
+          bundle.entry?.push({
+            resource: allergyIntolerance,
+          });
+        });
+
+        // Add immunizations
+        logger.debug(
+          'Adding immunizations:',
+          this.offlineData.immunizations?.length || 0,
+        );
+        this.offlineData.immunizations?.forEach((immunization) => {
+          bundle.entry?.push({
+            resource: immunization,
+          });
+        });
       } else {
         // Fetch all available resources using the existing methods
         try {
@@ -1023,22 +1652,18 @@ export class FhirClientService {
           logger.warn('Could not fetch medication requests:', error);
         }
 
-        // Try to fetch other common resource types that might be available
+        // Add allergy intolerances
         try {
-          const allergyResponse = await firstValueFrom(
-            this.search('AllergyIntolerance', {
-              patient: currentPatient.id,
-            }),
+          const allergyIntolerances = await firstValueFrom(
+            this.getAllergyIntolerances(),
           );
-          if (allergyResponse?.entry) {
-            allergyResponse.entry.forEach((entry: FhirBundleEntry) => {
-              if (entry.resource) {
-                bundle.entry?.push({ resource: entry.resource });
-              }
+          allergyIntolerances?.forEach((allergyIntolerance) => {
+            bundle.entry?.push({
+              resource: allergyIntolerance,
             });
-          }
+          });
         } catch (error) {
-          logger.warn('Could not fetch allergies:', error);
+          logger.warn('Could not fetch allergy intolerances:', error);
         }
 
         try {
@@ -1092,19 +1717,14 @@ export class FhirClientService {
           logger.warn('Could not fetch encounters:', error);
         }
 
+        // Add immunizations
         try {
-          const immunizationResponse = await firstValueFrom(
-            this.search('Immunization', {
-              patient: currentPatient.id,
-            }),
-          );
-          if (immunizationResponse?.entry) {
-            immunizationResponse.entry.forEach((entry: FhirBundleEntry) => {
-              if (entry.resource) {
-                bundle.entry?.push({ resource: entry.resource });
-              }
+          const immunizations = await firstValueFrom(this.getImmunizations());
+          immunizations?.forEach((immunization) => {
+            bundle.entry?.push({
+              resource: immunization,
             });
-          }
+          });
         } catch (error) {
           logger.warn('Could not fetch immunizations:', error);
         }
