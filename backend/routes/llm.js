@@ -594,7 +594,19 @@ router.post("/", async (req, res) => {
       // Client-side compressed data - use directly
       clinicalData = compressedData;
     } else if (bundle) {
-      // If we have a bundle, use it directly for FHIR bundle processing
+      // If we have a bundle, validate its structure before processing
+      if (
+        bundle.resourceType !== "Bundle" ||
+        !Array.isArray(bundle.entry) ||
+        bundle.entry.length === 0 ||
+        !bundle.entry.some((entry) => entry && entry.resource)
+      ) {
+        return res.status(400).json({
+          error: "Invalid FHIR Bundle",
+          message:
+            "Bundle must have resourceType 'Bundle' and at least one entry with a resource",
+        });
+      }
       clinicalData = bundle;
     } else if (patientData) {
       // Check if patientData is actually a FHIR bundle
