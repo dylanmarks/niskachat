@@ -5,9 +5,13 @@
 ## 🌐 Project Overview
 
 <p align="center">
-  <img src="src/assets/niska-logo.png"
-       alt="Logo icon of a goose from above with medical cross"
-       width="150">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="src/assets/niska-logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="src/assets/niska-logo.png">
+    <img src="src/assets/niska-logo.png"
+         alt="Logo icon of a goose from above with medical cross"
+         width="150">
+  </picture>
 </p>
 
 Niska Chat draws its name from the Indigenous Cree word niska (“goose”). Just as geese fly in cooperative V-formation, the app promotes shared direction and mutual support among clinicians and patients. Geese navigate with an innate magnetic compass, mirroring the platform’s goal of steering users confidently through complex health data. Niska Chat was built in Calgary on the traditional territories of Treaty 7: the Blackfoot Confederacy (Siksika, Piikani, Kainai), the Tsuut’ina Nation, the Stoney Nakoda Nations, and the Métis Nation of Alberta, Region 3.
