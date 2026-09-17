@@ -80,15 +80,14 @@
 
         .message-content {
           margin-left: 20%;
-          background: linear-gradient(
-            135deg,
-            var(--niska-primary-500) 0%,
-            var(--niska-primary-700) 100%
-          );
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+          border-radius: 18px 18px 4px 18px;
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
           color: white;
         }
 
         .message-time {
+          color: #94a3b8;
           text-align: right;
         }
       }
@@ -97,21 +96,22 @@
         align-items: flex-start;
 
         .message-content {
-          margin-right: 20%;
-          border: 1px solid var(--niska-primary-100);
-          background: var(--niska-surface);
-          color: var(--niska-on-surface);
+          margin-right: 15%;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+          border: 1px solid #e2e8f0;
+          border-radius: 18px 18px 18px 4px;
+          background: #fff;
+          color: #1e293b;
         }
 
         .message-time {
+          color: #94a3b8;
           text-align: left;
         }
       }
 
       .message-content {
         position: relative;
-        box-shadow: var(--niska-elevation-2);
-        border-radius: var(--niska-radius-2xl);
         padding: var(--niska-spacing-md) var(--niska-spacing-lg);
         max-width: 80%;
         word-wrap: break-word;

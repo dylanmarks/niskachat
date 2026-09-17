@@ -16,7 +16,6 @@ import { PatientSummaryComponent } from './components/patient-summary/patient-su
 import { ProceduresListComponent } from './components/procedures-list/procedures-list.component';
 import { SmartLaunchComponent } from './components/smart-launch/smart-launch.component';
 import { TasksListComponent } from './components/tasks-list/tasks-list.component';
-import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 import { FhirClientService, FhirContext } from './services/fhir-client.service';
 import { ThemeService } from './services/theme.service';
 
@@ -39,7 +38,6 @@ import { ThemeService } from './services/theme.service';
     FileUploadComponent,
     ChatComponent,
     TasksListComponent,
-    ThemeToggleComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

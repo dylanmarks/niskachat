@@ -64,8 +64,10 @@
 }
 
 .procedures-table-container {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
   overflow: hidden;
 
   .table-wrapper {
@@ -75,36 +77,41 @@
 }
 
 .procedures-table {
-  background: var(--niska-surface);
+  border-collapse: collapse;
+  background: #fff;
   width: 100%;
 
   .mat-header-cell {
-    border-bottom: 2px solid #2e7d32;
-    background-color: var(--niska-surface-variant);
-    padding: 12px 16px;
-    color: var(--niska-on-surface);
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #f8fafc !important;
+    padding: 0.85rem 1rem;
+    color: #475569 !important;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.825rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
   }
 
   .mat-cell {
-    border-bottom: 1px solid #e0e0e0;
-    padding: 12px 16px;
-    font-size: 0.875rem;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 0.85rem 1rem;
+    color: #1e293b;
+    font-size: 0.9rem;
     line-height: 1.4;
   }
 
   .mat-row {
-    transition: background-color 0.2s ease;
+    transition: background-color 0.15s ease;
     cursor: pointer;
+    background-color: #fff !important;
 
     &:hover {
-      background-color: var(--niska-surface-variant);
+      background-color: #f8fafc !important;
     }
 
     &.selected {
-      border-left: 4px solid #2e7d32;
-      background-color: #e8f5e8;
+      border-left: 4px solid #16a34a;
+      background-color: #f0fdf4 !important;
     }
   }
 

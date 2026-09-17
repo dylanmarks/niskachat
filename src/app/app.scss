@@ -35,14 +35,14 @@
 .app-header {
   box-sizing: border-box;
   margin: 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  background: var(
-    --niska-header-background
-  ); // Use solid dark background for accessibility
-
-  padding: 1rem 1rem 1.5rem 1rem; // Added extra bottom padding to prevent button overlap
+  box-shadow:
+    0 4px 16px -2px rgba(13, 71, 161, 0.15),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, #0d3b66 0%, #1565c0 50%, #1976d2 100%);
+  padding: 1.1rem 1.5rem;
   width: 100%;
-  color: var(--color-surface);
+  color: #fff;
   text-align: center;
 }
 
@@ -74,21 +74,20 @@
 }
 
 .app-title {
-  margin: 0 0 0.5rem 0;
-  color: #fff !important; // Force white text for maximum contrast
-  font-weight: 600;
-  font-size: 2.5rem;
-  letter-spacing: -0.02em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); // Stronger shadow for better readability
+  margin: 0 0 0.25rem 0;
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 2.25rem;
+  letter-spacing: -0.025em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .app-subtitle {
-  opacity: 1; // Remove opacity that reduces contrast
   margin: 0;
-  color: #fff !important; // Force white text for maximum contrast
+  color: rgba(255, 255, 255, 0.9) !important;
   font-weight: 400;
-  font-size: 1.1rem;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); // Stronger shadow for better readability
+  font-size: 1rem;
+  letter-spacing: 0.01em;
 }
 
 .app-main {
@@ -180,17 +179,18 @@
 }
 
 .patient-name {
-  margin: 0 0 0.25rem 0;
-  color: var(--color-surface);
-  font-weight: 600;
-  font-size: 2rem;
+  margin: 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.85rem;
   letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .patient-details {
   opacity: 0.9;
   margin: 0;
-  color: var(--color-surface);
+  color: #fff;
   font-weight: 400;
   font-size: 1rem;
 }
@@ -203,8 +203,46 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem; // Add margin to create space from patient name
+  gap: 0.6rem;
+
+  button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    backdrop-filter: blur(8px) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 9999px !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    padding: 0 1.15rem !important;
+    height: 38px !important;
+    color: #fff !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.01em !important;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16) !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0) !important;
+    }
+
+    &:disabled {
+      opacity: 0.55 !important;
+    }
+
+    mat-icon {
+      width: 1.1rem !important;
+      height: 1.1rem !important;
+      color: #fff !important;
+      font-size: 1.1rem !important;
+    }
+  }
 
   // Specific styles for default header (no patient)
   .header-content & {
@@ -214,16 +252,6 @@
     transform: translateY(-50%);
     z-index: 10;
     margin-top: 0;
-
-    // Ensure theme toggle buttons are visible in header
-    button {
-      color: rgba(255, 255, 255, 0.9);
-
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 1);
-      }
-    }
   }
 }
 
@@ -231,28 +259,30 @@
   margin-left: 0.5rem;
 }
 
-// Patient card styles - full width with no margin
+// Patient card styles
 .patient-card {
-  margin: 0; // No margin for seamless connection
-  box-shadow: none; // Remove shadow for seamless connection
-  border-bottom: 1px solid var(--color-outline);
-  border-radius: 0; // Remove border radius to connect with header
-  background: var(--color-surface);
-  padding: 1.5rem;
+  margin: 1.25rem 0;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.05),
+    0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 1.25rem 1.5rem;
 }
 
 // Patient tile styles for patient details section
 .patient-tile {
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--color-outline);
-  padding-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 0.75rem;
 
   .patient-details {
     margin: 0;
-    color: var(--color-text-primary);
-    font-weight: 400;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    color: #334155;
+    font-weight: 500;
+    font-size: 0.95rem;
+    line-height: 1.6;
     white-space: pre-line;
   }
 }
@@ -455,9 +485,11 @@
 // Custom Tab Styling
 .custom-tab-header {
   display: flex;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid var(--color-outline);
-  background: var(--color-surface);
+  gap: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0 1rem;
 }
 
 .custom-tab-button {
@@ -471,38 +503,41 @@
   cursor: pointer;
   border: none;
   background: transparent;
-  padding: 1rem 1.5rem;
-  color: var(--color-text-primary);
+  padding: 0.95rem 1.5rem;
+  color: #64748b;
   font-weight: 500;
   font-size: 0.95rem;
 
   mat-icon {
     width: 20px;
     height: 20px;
+    color: inherit;
     font-size: 20px;
   }
 
   &:hover {
-    background: rgba(var(--niska-primary-500-rgb), 0.1);
-    color: var(--niska-primary-500);
+    background: #f8fafc;
+    color: #1e293b;
   }
 
   &.active {
-    color: var(--niska-primary-500);
+    color: #2563eb;
+    font-weight: 600;
 
     &::after {
       position: absolute;
       right: 0;
       bottom: 0;
       left: 0;
-      background: var(--niska-primary-500);
-      height: 2px;
+      border-radius: 3px 3px 0 0;
+      background: #2563eb;
+      height: 3px;
       content: "";
     }
   }
 
   &:focus {
-    outline: 2px solid var(--niska-primary-500);
+    outline: 2px solid #2563eb;
     outline-offset: -2px;
   }
 }

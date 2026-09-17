@@ -579,7 +579,7 @@ export class ChatComponent {
         const taskRequest: TaskCreationRequest = {
           ...result,
           source: 'clinical_chat',
-          patientReference: task.for.reference,
+          patientReference: task.for?.reference || 'Patient/current',
           relatedResource: task.focus,
         };
 

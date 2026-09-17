@@ -8,15 +8,12 @@ export type Theme = 'light' | 'dark' | 'system';
 export class ThemeService {
   private readonly THEME_KEY = 'niska-theme';
 
-  // Reactive signals for theme management
-  private readonly _selectedTheme = signal<Theme>('system');
+  // Reactive signals for theme management - light mode only
+  private readonly _selectedTheme = signal<Theme>('light');
   private readonly _systemTheme = signal<'light' | 'dark'>('light');
 
-  // Computed signal for the effective theme
-  readonly effectiveTheme = computed(() => {
-    const selected = this._selectedTheme();
-    return selected === 'system' ? this._systemTheme() : selected;
-  });
+  // Computed signal for the effective theme (always light)
+  readonly effectiveTheme = computed(() => 'light' as const);
 
   // Public getters
   readonly selectedTheme = this._selectedTheme.asReadonly();
@@ -24,63 +21,38 @@ export class ThemeService {
 
   constructor() {
     this.initializeTheme();
-    this.setupSystemThemeDetection();
     this.setupThemeEffect();
   }
 
   /**
-   * Set the theme preference
+   * Set the theme preference (locks to light)
    */
-  setTheme(theme: Theme): void {
-    this._selectedTheme.set(theme);
-    localStorage.setItem(this.THEME_KEY, theme);
+  setTheme(_theme: Theme): void {
+    this._selectedTheme.set('light');
+    localStorage.setItem(this.THEME_KEY, 'light');
   }
 
   /**
-   * Toggle between light and dark themes
+   * Toggle between light and dark themes (no-op in light mode only)
    */
   toggleTheme(): void {
-    const current = this.effectiveTheme();
-    this.setTheme(current === 'light' ? 'dark' : 'light');
+    this.setTheme('light');
   }
 
   /**
    * Check if dark mode is currently active
    */
   isDarkMode(): boolean {
-    return this.effectiveTheme() === 'dark';
+    return false;
   }
 
   /**
-   * Initialize theme from localStorage or system preference
+   * Initialize theme to light mode
    */
   private initializeTheme(): void {
-    const saved = localStorage.getItem(this.THEME_KEY) as Theme;
-
-    if (saved && ['light', 'dark', 'system'].includes(saved)) {
-      this._selectedTheme.set(saved);
-    } else {
-      // Default to system preference
-      this._selectedTheme.set('system');
-    }
-  }
-
-  /**
-   * Set up system theme detection using media query
-   */
-  private setupSystemThemeDetection(): void {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-      // Set initial system theme
-      this._systemTheme.set(mediaQuery.matches ? 'dark' : 'light');
-
-      // Listen for changes
-      const handleChange = (e: MediaQueryListEvent) => {
-        this._systemTheme.set(e.matches ? 'dark' : 'light');
-      };
-
-      mediaQuery.addEventListener('change', handleChange);
+    this._selectedTheme.set('light');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(this.THEME_KEY, 'light');
     }
   }
 

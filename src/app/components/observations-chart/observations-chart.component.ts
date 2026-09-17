@@ -94,7 +94,8 @@ type GroupedObservations = Record<string, Observation[]>;
       .observations-chart-container {
         box-sizing: border-box;
         margin: 16px 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
         background: white;
         padding: 24px;
@@ -113,7 +114,7 @@ type GroupedObservations = Record<string, Observation[]>;
 
       .observations-header h3 {
         margin: 0;
-        color: #1f2937;
+        color: #0f172a;
         font-weight: 600;
         font-size: 1.5rem;
       }
@@ -121,42 +122,49 @@ type GroupedObservations = Record<string, Observation[]>;
       .observations-controls {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
       }
 
       .observations-controls label {
-        color: #374151;
+        color: #475569;
         font-weight: 500;
+        font-size: 14px;
       }
 
       .category-select {
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
         background-color: white;
         padding: 8px 12px;
-        min-width: 150px;
+        min-width: 160px;
+        color: #1e293b;
         font-size: 14px;
       }
 
       .category-select:focus {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        border-color: #2563eb;
       }
 
       .back-button {
-        transition: background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
         cursor: pointer;
-        border: none;
-        border-radius: 6px;
-        background-color: #6b7280;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background-color: #ffffff;
         padding: 8px 16px;
-        color: white;
+        color: #1e293b;
+        font-weight: 500;
         font-size: 14px;
       }
 
       .back-button:hover {
-        background-color: #4b5563;
+        border-color: #94a3b8;
+        background-color: #f8fafc;
       }
 
       .observations-content {
@@ -220,25 +228,28 @@ type GroupedObservations = Record<string, Observation[]>;
 
       /* Table Styles */
       .observations-table-container {
-        border-radius: 8px;
-        background: #f9fafb;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
         padding: 16px;
       }
 
       .observations-summary h4 {
         margin: 0 0 8px 0;
-        color: #1f2937;
+        color: #0f172a;
+        font-weight: 600;
       }
 
       .observations-summary p {
         margin: 0 0 16px 0;
-        color: #6b7280;
+        color: #64748b;
         font-style: italic;
       }
 
       .table-container {
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
         overflow-x: auto;
       }
 
@@ -250,30 +261,34 @@ type GroupedObservations = Record<string, Observation[]>;
       }
 
       .observations-table th {
-        border-bottom: 1px solid #e5e7eb;
-        background: #f3f4f6;
-        padding: 12px;
-        color: #374151;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 12px 16px;
+        color: #475569;
         font-weight: 600;
+        font-size: 0.825rem;
+        letter-spacing: 0.03em;
         text-align: left;
+        text-transform: uppercase;
       }
 
       .observation-row {
-        transition: background-color 0.2s;
+        transition: background-color 0.15s ease;
         cursor: pointer;
       }
 
       .observation-row:hover {
-        background-color: #f9fafb;
+        background-color: #f8fafc;
       }
 
       .observation-row:active {
-        background-color: #f3f4f6;
+        background-color: #f1f5f9;
       }
 
       .observations-table td {
-        border-bottom: 1px solid #f3f4f6;
-        padding: 12px;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 12px 16px;
+        color: #1e293b;
       }
 
       .obs-type.clickable {
@@ -323,33 +338,37 @@ type GroupedObservations = Record<string, Observation[]>;
 
       /* Chart Styles */
       .chart-container {
-        border-radius: 8px;
-        background: #f9fafb;
-        padding: 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 20px;
       }
 
       .chart-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
       }
 
       .chart-header h4 {
         margin: 0;
-        color: #1f2937;
+        color: #0f172a;
+        font-weight: 600;
+        font-size: 1.25rem;
       }
 
       .chart-header p {
-        margin: 0;
-        color: #6b7280;
+        margin: 4px 0 0 0;
+        color: #64748b;
         font-size: 14px;
       }
 
       .chart-wrapper {
         position: relative;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border-radius: 6px;
+        box-shadow: none;
+        border: 1px solid #f1f5f9;
+        border-radius: 8px;
         background: white;
         padding: 16px;
         height: 400px;
@@ -667,13 +686,13 @@ export class ObservationsChartComponent
         .filter((point): point is ChartDataPoint => point !== null);
 
       if (data.length > 0) {
-        const color = colors[colorIndex % colors.length] ?? '#3b82f6';
+        const color = colors[colorIndex % colors.length] ?? '#2563eb';
         datasets.push({
           label,
           data,
           borderColor: color,
-          backgroundColor: color + '20',
-          tension: 0.1,
+          backgroundColor: color + '15',
+          tension: 0.35,
         });
         colorIndex++;
         logger.info(
@@ -846,22 +865,34 @@ export class ObservationsChartComponent
       return;
     }
 
-    // Simplified chart configuration to prevent freezing
+    // Modern line chart configuration with smooth curves and crisp points
     const config: ChartConfiguration<'line'> = {
       type: 'line',
       data: {
-        datasets: this.chartData.datasets.map((dataset) => ({
-          label: dataset.label,
-          data: dataset.data.map((point) => ({
-            x: new Date(point.x).getTime(),
-            y: point.y,
-          })),
-          borderColor: dataset.borderColor ?? '#3b82f6',
-          backgroundColor: dataset.backgroundColor ?? '#3b82f620',
-          tension: 0.1,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-        })),
+        datasets: this.chartData.datasets.map((dataset) => {
+          const mainColor = dataset.borderColor ?? '#2563eb';
+          return {
+            label: dataset.label,
+            data: dataset.data.map((point) => ({
+              x: new Date(point.x).getTime(),
+              y: point.y,
+            })),
+            borderColor: mainColor,
+            backgroundColor:
+              dataset.backgroundColor ?? 'rgba(37, 99, 235, 0.08)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: mainColor,
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: mainColor,
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 2,
+          };
+        }),
       },
       options: {
         responsive: true,
@@ -875,6 +906,16 @@ export class ObservationsChartComponent
             title: {
               display: true,
               text: 'Date',
+              color: '#64748b',
+              font: {
+                weight: 500,
+              },
+            },
+            grid: {
+              color: 'rgba(226, 232, 240, 0.6)',
+            },
+            ticks: {
+              color: '#64748b',
             },
           },
           y: {
@@ -882,6 +923,16 @@ export class ObservationsChartComponent
             title: {
               display: true,
               text: 'Value',
+              color: '#64748b',
+              font: {
+                weight: 500,
+              },
+            },
+            grid: {
+              color: 'rgba(226, 232, 240, 0.6)',
+            },
+            ticks: {
+              color: '#64748b',
             },
           },
         },
@@ -889,10 +940,24 @@ export class ObservationsChartComponent
           legend: {
             display: true,
             position: 'top',
+            labels: {
+              color: '#1e293b',
+              usePointStyle: true,
+              pointStyle: 'circle',
+              padding: 16,
+              font: {
+                weight: 500,
+              },
+            },
           },
           tooltip: {
             mode: 'index',
             intersect: false,
+            backgroundColor: '#0f172a',
+            titleColor: '#ffffff',
+            bodyColor: '#f8fafc',
+            cornerRadius: 8,
+            padding: 10,
           },
         },
       },

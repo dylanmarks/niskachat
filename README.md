@@ -24,13 +24,17 @@ Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, w
 
 ## 📸 Application Showcase
 
-|                Clinical AI Assistant & Suggested Actions                |            Longitudinal Observation Trends (Chart.js)             |
-| :---------------------------------------------------------------------: | :---------------------------------------------------------------: |
-| ![Clinical Chat & Actions](docs/screenshots/04-clinical-ai-discuss.png) | ![Observation Charts](docs/screenshots/03-observation-charts.png) |
+|                Clinical AI Assistant & Suggested Actions                |               FHIR CarePlan & Clinical Tasks Management               |
+| :---------------------------------------------------------------------: | :-------------------------------------------------------------------: |
+| ![Clinical Chat & Actions](docs/screenshots/04-clinical-ai-discuss.png) | ![FHIR CarePlan & Tasks](docs/screenshots/05-fhir-careplan-tasks.png) |
 
-|                 Patient Overview & Demographics                  |              Privacy-First Offline FHIR Bundle Ingestion              |
-| :--------------------------------------------------------------: | :-------------------------------------------------------------------: |
-| ![Patient Demographics](docs/screenshots/02-patient-records.png) | ![Offline Landing Mode](docs/screenshots/01-landing-offline-mode.png) |
+|            Longitudinal Observation Trends (Chart.js)             |             Patient Overview & Medical Records              |
+| :---------------------------------------------------------------: | :---------------------------------------------------------: |
+| ![Observation Charts](docs/screenshots/03-observation-charts.png) | ![Patient Records](docs/screenshots/02-patient-records.png) |
+
+|                 Privacy-First Offline FHIR Ingestion                  |
+| :-------------------------------------------------------------------: |
+| ![Offline Landing Mode](docs/screenshots/01-landing-offline-mode.png) |
 
 ---
 
