@@ -90,6 +90,25 @@ async function testProviders() {
       logger.info(`Best provider: ${result.provider}`);
       logger.info(`Response: "${result.response}"`);
       logger.info("✅ Factory test successful");
+
+      logger.info("🌊 Testing Streaming Response:");
+      try {
+        let streamTokens = "";
+        let streamChunkCount = 0;
+        for await (const chunk of factory.streamResponse("Count: 1, 2, 3", {
+          maxTokens: 10,
+        })) {
+          if (chunk.text) {
+            streamTokens += chunk.text;
+            streamChunkCount++;
+          }
+        }
+        logger.info(`   Received ${streamChunkCount} chunks`);
+        logger.info(`   Streamed text: "${streamTokens.trim()}"`);
+        logger.info("✅ Streaming test successful");
+      } catch (streamError) {
+        logger.info(`❌ Streaming test failed: ${streamError.message}`);
+      }
     } else {
       logger.info("❌ No providers available for testing");
     }

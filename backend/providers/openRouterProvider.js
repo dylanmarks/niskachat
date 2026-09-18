@@ -142,6 +142,121 @@ export class OpenRouterProvider extends BaseLLMProvider {
     }
   }
 
+  /**
+   * Stream a response from OpenRouter via SSE
+   * @param {string} prompt
+   * @param {Object} options
+   * @yields {{type: string, text?: string}}
+   */
+  async *streamResponse(prompt, options = {}) {
+    if (!this.isConfigured()) {
+      throw new Error(
+        "OpenRouter not configured: OPENROUTER_API_KEY is required",
+      );
+    }
+
+    const maxTokens = options.maxTokens || this.maxTokens;
+    const temperature =
+      options.temperature !== undefined
+        ? options.temperature
+        : this.temperature;
+
+    const requestBody = {
+      model: options.model || this.model,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      max_tokens: maxTokens,
+      temperature,
+      stream: true,
+      ...options.llmOptions,
+    };
+
+    const signal = options.signal
+      ? AbortSignal.any([AbortSignal.timeout(this.timeout), options.signal])
+      : AbortSignal.timeout(this.timeout);
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        "HTTP-Referer": this.siteUrl,
+        "X-Title": this.siteName,
+      },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `OpenRouter API error: ${response.status} ${response.statusText} ${errorText}`,
+      );
+    }
+
+    yield* this.parseSseStream(
+      response,
+      (data) => {
+        const parsed = JSON.parse(data);
+        const text = parsed.choices?.[0]?.delta?.content;
+        return typeof text === "string" && text.length > 0 ? text : null;
+      },
+      options.signal,
+    );
+  }
+
+  /**
+   * Shared SSE stream parser: yields text chunks extracted by extractText
+   * @protected
+   * @param {Response} response
+   * @param {(data: string) => string|null} extractText
+   * @param {AbortSignal} [signal]
+   */
+  async *parseSseStream(response, extractText, signal) {
+    const decoder = new TextDecoder();
+    let buffer = "";
+    const maxBufferSize = 512 * 1024;
+
+    for await (const value of response.body) {
+      if (signal?.aborted) {
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+
+      if (buffer.length > maxBufferSize) {
+        throw new Error(
+          "OpenRouter stream buffer exceeded maximum safe size (512KB)",
+        );
+      }
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) {
+          continue;
+        }
+        const data = trimmed.slice(5).trim();
+        if (data === "[DONE]") {
+          return;
+        }
+        try {
+          const text = extractText(data);
+          if (text) {
+            yield { type: "chunk", text };
+          }
+        } catch {
+          // Skip malformed JSON lines rather than aborting the stream
+        }
+      }
+    }
+  }
+
   async getStatus() {
     return {
       provider: this.getName(),

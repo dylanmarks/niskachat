@@ -196,12 +196,35 @@ async function proxyFhirRequest(req, res) {
   }
 }
 
+// Allowed origins for CORS validation
+const allowedOriginsEnv = process.env.CORS_ORIGINS || "";
+const allowedOrigins = allowedOriginsEnv
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length === 0) {
+  allowedOrigins.push(
+    process.env.NODE_ENV === "production"
+      ? "https://yourdomain.com"
+      : "http://localhost:4200",
+  );
+}
+
 /**
- * Handle OPTIONS requests for CORS preflight
+ * Handle OPTIONS requests for CORS preflight with origin validation
  */
 router.options("*", (req, res) => {
-  const origin = req.headers.origin || "*";
-  res.set("Access-Control-Allow-Origin", origin);
+  const origin = req.headers.origin;
+  if (origin) {
+    if (allowedOrigins.includes(origin)) {
+      res.set("Access-Control-Allow-Origin", origin);
+    } else {
+      return res.sendStatus(403);
+    }
+  } else {
+    res.set("Access-Control-Allow-Origin", "*");
+  }
   res.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(200);

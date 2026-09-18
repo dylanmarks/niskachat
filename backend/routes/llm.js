@@ -147,7 +147,7 @@ function formatClinicalData(data) {
 }
 
 /**
- * Format conversation history for the LLM prompt
+ * Format conversation history for the LLM prompt with context window budgeting
  */
 function formatConversationHistory(conversationHistory) {
   if (
@@ -158,13 +158,22 @@ function formatConversationHistory(conversationHistory) {
     return "";
   }
 
-  // Format conversation history as a readable string
-  const formattedHistory = conversationHistory
-    .filter((msg) => !msg.isLoading) // Exclude loading messages
+  // Bound history to the most recent 6 messages to protect context limits
+  const recentHistory = conversationHistory
+    .filter((msg) => !msg.isLoading && msg.content)
+    .slice(-6);
+
+  // Format conversation history as a readable string, truncating long assistant responses
+  const formattedHistory = recentHistory
     .map((msg) => {
       const role = msg.isUser ? "Human" : "Assistant";
       const timestamp = new Date(msg.timestamp).toLocaleString();
-      return `[${timestamp}] ${role}: ${msg.content}`;
+      let content = msg.content;
+      // Assistant responses can be very long (CarePlans/JSON); trim past turns to 400 chars
+      if (!msg.isUser && content.length > 400) {
+        content = `${content.substring(0, 400)}... [truncated]`;
+      }
+      return `[${timestamp}] ${role}: ${content}`;
     })
     .join("\n");
 
@@ -565,71 +574,222 @@ function generateFallbackSummary(data) {
 }
 
 /**
+ * Extract and validate clinicalData from request body
+ */
+function resolveClinicalData(body) {
+  const { bundle, patientData, compressedData } = body;
+  if (!bundle && !patientData && !compressedData) {
+    return {
+      error: "Missing patient data",
+      message:
+        "Please provide either a FHIR Bundle, patient data, or compressed data in the request body",
+    };
+  }
+
+  let clinicalData;
+  if (compressedData) {
+    clinicalData = compressedData;
+  } else if (bundle) {
+    if (
+      bundle.resourceType !== "Bundle" ||
+      !Array.isArray(bundle.entry) ||
+      bundle.entry.length === 0 ||
+      !bundle.entry.some((entry) => entry && entry.resource)
+    ) {
+      return {
+        error: "Invalid FHIR Bundle",
+        message:
+          "Bundle must have resourceType 'Bundle' and at least one entry with a resource",
+      };
+    }
+    clinicalData = bundle;
+  } else if (patientData) {
+    if (
+      patientData &&
+      patientData.resourceType === "Bundle" &&
+      patientData.entry
+    ) {
+      clinicalData = patientData;
+    } else {
+      clinicalData = patientData;
+    }
+  }
+
+  if (!clinicalData) {
+    return {
+      error: "Invalid patient data",
+      message: "No valid clinical data found in the request",
+    };
+  }
+
+  return { clinicalData };
+}
+
+/**
+ * POST /llm/stream - Stream clinical chat response via Server-Sent Events (SSE)
+ */
+router.post("/stream", async (req, res) => {
+  try {
+    const {
+      context = CONTEXT_TYPES.CLINICAL_CHAT,
+      query,
+      conversationHistory,
+    } = req.body;
+
+    const resolved = resolveClinicalData(req.body);
+    if (resolved.error) {
+      return res.status(400).json({
+        error: resolved.error,
+        message: resolved.message,
+      });
+    }
+
+    const { clinicalData } = resolved;
+    const llmFactory = getLLMProviderFactory();
+    const hasProvider = await llmFactory.hasAvailableProvider();
+
+    if (!hasProvider) {
+      return res.status(503).json({
+        error: "Service Unavailable",
+        message: "No LLM providers are available for streaming",
+      });
+    }
+
+    // Set SSE headers
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders?.();
+
+    const sendEvent = (event, data) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    const sanitizedQuery = query ? sanitizeInput(query) : null;
+    const prompt = generatePrompt(
+      context,
+      clinicalData,
+      sanitizedQuery,
+      conversationHistory,
+    );
+
+    const abortController = new AbortController();
+    let isClientDisconnected = false;
+
+    req.on("close", () => {
+      if (!res.writableEnded) {
+        isClientDisconnected = true;
+        abortController.abort();
+        logger.info(
+          "Client disconnected from SSE stream, aborted upstream request",
+        );
+      }
+    });
+
+    const llmOptions = {
+      signal: abortController.signal,
+      ...(context === CONTEXT_TYPES.CLINICAL_CHAT ? { maxTokens: 4000 } : {}),
+    };
+
+    let accumulatedText = "";
+    let usedProvider = null;
+
+    try {
+      for await (const chunk of llmFactory.streamResponse(prompt, llmOptions)) {
+        if (isClientDisconnected || res.writableEnded) {
+          break;
+        }
+        if (chunk.provider && !usedProvider) {
+          usedProvider = chunk.provider;
+          sendEvent("start", { provider: usedProvider, context });
+        }
+        if (chunk.text) {
+          accumulatedText += chunk.text;
+          sendEvent("chunk", { text: chunk.text });
+        }
+      }
+
+      if (isClientDisconnected || res.writableEnded) {
+        return;
+      }
+
+      let parsedActions = null;
+      let taskGeneration = null;
+      let isStructuredResponse = false;
+      let cleanResponseText = accumulatedText;
+
+      if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
+        const parsed = parseClinicalChatResponse(accumulatedText);
+        cleanResponseText = parsed.response;
+        parsedActions = parsed.suggestedActions;
+        taskGeneration = parsed.taskGeneration;
+        isStructuredResponse = !parsed.isPlainText;
+      }
+
+      sendEvent("done", {
+        success: true,
+        summary: cleanResponseText,
+        fullText: accumulatedText,
+        provider: usedProvider,
+        suggestedActions: parsedActions,
+        taskGeneration,
+        isStructuredResponse,
+        context,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (streamError) {
+      if (
+        isClientDisconnected ||
+        res.writableEnded ||
+        abortController.signal.aborted
+      ) {
+        logger.debug("SSE stream ended due to client disconnect");
+        return;
+      }
+      logger.error("Error during streaming generation:", streamError);
+      sendEvent("error", {
+        error: "Stream generation failed",
+        message: streamError.message,
+      });
+    } finally {
+      if (!res.writableEnded) {
+        res.end();
+      }
+    }
+  } catch (error) {
+    logger.error("Streaming setup error:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: "Streaming failed",
+        message: error.message,
+      });
+    } else {
+      res.end();
+    }
+  }
+});
+
+/**
  * POST /llm - Generate clinical summary or chat response from FHIR Bundle
  */
 router.post("/", async (req, res) => {
   try {
     const {
-      bundle,
       context = CONTEXT_TYPES.SUMMARY,
       query,
-      patientData,
-      compressedData,
       conversationHistory,
     } = req.body;
 
-    // For chat context, we can accept either bundle, patientData, or compressedData
-    if (!bundle && !patientData && !compressedData) {
+    const resolved = resolveClinicalData(req.body);
+    if (resolved.error) {
       return res.status(400).json({
-        error: "Missing patient data",
-        message:
-          "Please provide either a FHIR Bundle, patient data, or compressed data in the request body",
+        error: resolved.error,
+        message: resolved.message,
       });
     }
 
-    let clinicalData;
-
-    // Handle different input types
-    if (compressedData) {
-      // Client-side compressed data - use directly
-      clinicalData = compressedData;
-    } else if (bundle) {
-      // If we have a bundle, validate its structure before processing
-      if (
-        bundle.resourceType !== "Bundle" ||
-        !Array.isArray(bundle.entry) ||
-        bundle.entry.length === 0 ||
-        !bundle.entry.some((entry) => entry && entry.resource)
-      ) {
-        return res.status(400).json({
-          error: "Invalid FHIR Bundle",
-          message:
-            "Bundle must have resourceType 'Bundle' and at least one entry with a resource",
-        });
-      }
-      clinicalData = bundle;
-    } else if (patientData) {
-      // Check if patientData is actually a FHIR bundle
-      if (
-        patientData &&
-        patientData.resourceType === "Bundle" &&
-        patientData.entry
-      ) {
-        // patientData is a FHIR bundle
-        clinicalData = patientData;
-      } else {
-        // Legacy structured data or minimal patient data
-        clinicalData = patientData;
-      }
-    }
-
-    // Validate we have some clinical data
-    if (!clinicalData) {
-      return res.status(400).json({
-        error: "Invalid patient data",
-        message: "No valid clinical data found in the request",
-      });
-    }
+    const { clinicalData } = resolved;
 
     let summary;
     let llmUsed = false;

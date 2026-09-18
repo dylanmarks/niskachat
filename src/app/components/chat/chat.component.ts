@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -42,6 +47,7 @@ export interface ChatMessage {
   isUser: boolean;
   timestamp: Date;
   isLoading?: boolean;
+  rawContent?: string;
   taskGeneration?: TaskGenerationResponse;
   suggestedActions?: SuggestedAction[];
   showTaskActions?: boolean;
@@ -99,6 +105,7 @@ export class ChatComponent {
     private fhirClientService: FhirClientService,
     private taskManagementService: TaskManagementService,
     private dialog: MatDialog,
+    private cdr: ChangeDetectorRef,
   ) {
     // Add a welcome message
     this.addMessage(
@@ -167,18 +174,25 @@ export class ChatComponent {
 
       logger.debug('Sending chat request', { phi: true });
 
-      // Call the backend
-      const response = await firstValueFrom(
-        this.http.post<ChatResponse>('/api/llm', chatRequest),
+      // Attempt streaming response via SSE first
+      const streamedSuccessfully = await this.streamChatResponse(
+        loadingMessageId,
+        chatRequest,
       );
 
-      // Replace loading message with response
-      this.updateLoadingMessage(
-        loadingMessageId,
-        response?.summary || 'No response received',
-        response?.taskGeneration,
-        response?.suggestedActions,
-      );
+      // Fall back to standard POST /api/llm if streaming was not supported or failed before emitting
+      if (!streamedSuccessfully) {
+        const response = await firstValueFrom(
+          this.http.post<ChatResponse>('/api/llm', chatRequest),
+        );
+
+        this.updateLoadingMessage(
+          loadingMessageId,
+          response?.summary || 'No response received',
+          response?.taskGeneration,
+          response?.suggestedActions,
+        );
+      }
     } catch (error: unknown) {
       logger.error('Chat error:', error);
 
@@ -201,6 +215,162 @@ export class ChatComponent {
       this.isLoading = false;
       this.scrollToBottom();
     }
+  }
+
+  /**
+   * Stream chat response via SSE from /api/llm/stream
+   * Returns true if stream completed successfully, false to trigger fallback
+   */
+  private async streamChatResponse(
+    loadingMessageId: string,
+    chatRequest: ChatRequest,
+  ): Promise<boolean> {
+    try {
+      const response = await fetch('/api/llm/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+        },
+        body: JSON.stringify(chatRequest),
+      });
+
+      if (!response.ok || !response.body) {
+        logger.warn('Streaming endpoint returned non-OK status or no body', {
+          status: response.status,
+        });
+        return false;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let receivedAnyChunk = false;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        let currentEvent = 'message';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            continue;
+          }
+
+          if (trimmed.startsWith('event:')) {
+            currentEvent = trimmed.slice(6).trim();
+            continue;
+          }
+
+          if (trimmed.startsWith('data:')) {
+            const dataStr = trimmed.slice(5).trim();
+            try {
+              const data = JSON.parse(dataStr);
+              if (currentEvent === 'chunk' && data.text) {
+                receivedAnyChunk = true;
+                this.appendStreamChunk(loadingMessageId, data.text);
+              } else if (currentEvent === 'done') {
+                receivedAnyChunk = true;
+                this.updateLoadingMessage(
+                  loadingMessageId,
+                  data.summary || data.text || 'No response received',
+                  data.taskGeneration,
+                  data.suggestedActions,
+                );
+                return true;
+              } else if (currentEvent === 'error') {
+                logger.error('Stream event error:', data);
+                if (receivedAnyChunk) {
+                  return true;
+                }
+                return false;
+              }
+            } catch (err) {
+              logger.warn('Failed to parse SSE data:', err);
+            }
+          }
+        }
+      }
+
+      return receivedAnyChunk;
+    } catch (error) {
+      logger.warn('Stream request failed, falling back:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Append an incremental text chunk to a streaming message
+   */
+  private appendStreamChunk(messageId: string, textChunk: string): void {
+    const messageIndex = this.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex !== -1 && this.messages[messageIndex]) {
+      const msg = this.messages[messageIndex];
+      const updatedRaw = (msg.rawContent || '') + textChunk;
+      msg.rawContent = updatedRaw;
+      msg.content = this.extractStreamingPreview(updatedRaw);
+      this.cdr.markForCheck();
+      this.scrollToBottom();
+    }
+  }
+
+  /**
+   * Extract user-friendly text while streaming, even if the model outputs JSON
+   */
+  private extractStreamingPreview(raw: string): string {
+    const trimmed = raw.trim();
+
+    const isJson =
+      trimmed.startsWith('{') ||
+      trimmed.startsWith('```json') ||
+      trimmed.startsWith('```');
+
+    if (!isJson) {
+      return raw;
+    }
+
+    const match = /"response"\s*:\s*"/.exec(raw);
+    if (match?.index === undefined) {
+      return '';
+    }
+
+    const startIndex = match.index + match[0].length;
+    let extracted = '';
+    let escaped = false;
+
+    for (let i = startIndex; i < raw.length; i++) {
+      const char = raw[i];
+      if (!char) {
+        break;
+      }
+      if (escaped) {
+        if (char === 'n') {
+          extracted += '\n';
+        } else if (char === 't') {
+          extracted += '\t';
+        } else if (char === 'r') {
+          extracted += '\r';
+        } else {
+          extracted += char;
+        }
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        break;
+      } else {
+        extracted += char;
+      }
+    }
+
+    return extracted;
   }
 
   /**
@@ -276,8 +446,7 @@ export class ChatComponent {
         suggestedActionsCount: suggestedActions?.length || 0,
       });
 
-      // Temporary debug log to console (will be visible in browser dev tools)
-      console.log('CHAT DEBUG - Raw content received:', {
+      logger.debug('Raw content received in updateLoadingMessage', {
         content: content.substring(0, 500),
         startsWithBrace: content.trim().startsWith('{'),
         includesResponse: content.includes('"response"'),
@@ -350,6 +519,7 @@ export class ChatComponent {
       }
 
       this.messages[messageIndex] = updatedMessage;
+      this.cdr.markForCheck();
     }
   }
 

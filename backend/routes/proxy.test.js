@@ -103,6 +103,15 @@ describe("FHIR Proxy Routes", () => {
         "GET, POST, PUT, DELETE, OPTIONS",
       );
     });
+
+    it("should reject OPTIONS preflight requests from unauthorized origins", async () => {
+      const response = await request(app)
+        .options("/proxy/fhir/Patient")
+        .set("Origin", "https://malicious-site.example.com");
+
+      expect(response.status).toBe(403);
+      expect(response.headers["access-control-allow-origin"]).toBeUndefined();
+    });
   });
 
   describe("Rate Limiting", () => {

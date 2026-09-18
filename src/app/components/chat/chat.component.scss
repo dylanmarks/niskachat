@@ -148,6 +148,19 @@
           em {
             font-style: italic;
           }
+
+          &.streaming {
+            white-space: pre-wrap;
+
+            &::after {
+              display: inline-block;
+              vertical-align: baseline;
+              animation: blink 1s infinite;
+              margin-left: 2px;
+              content: "▊";
+              color: var(--niska-primary-500);
+            }
+          }
         }
 
         .loading-indicator {
@@ -507,6 +520,17 @@
   40% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
   }
 }
 

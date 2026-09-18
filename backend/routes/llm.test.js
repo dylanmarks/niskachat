@@ -275,6 +275,42 @@ describe("Summarization API", () => {
     });
   });
 
+  describe("POST /llm/stream", () => {
+    it("should return 400 for missing patient data", async () => {
+      const response = await request(app)
+        .post("/llm/stream")
+        .send({})
+        .expect(400);
+
+      expect(response.body).toHaveProperty("error", "Missing patient data");
+    });
+
+    it("should return 400 for empty bundle", async () => {
+      const emptyBundle = {
+        resourceType: "Bundle",
+        id: "empty-bundle",
+        type: "collection",
+        entry: [],
+      };
+
+      const response = await request(app)
+        .post("/llm/stream")
+        .send({ bundle: emptyBundle })
+        .expect(400);
+
+      expect(response.body).toHaveProperty("error", "Invalid FHIR Bundle");
+    });
+
+    it("should return 503 when no LLM providers are available", async () => {
+      const response = await request(app)
+        .post("/llm/stream")
+        .send({ bundle: mockFhirBundle, query: "Recommend next steps" })
+        .expect(503);
+
+      expect(response.body).toHaveProperty("error", "Service Unavailable");
+    });
+  });
+
   describe("GET /llm/status", () => {
     it("should return LLM status", async () => {
       const response = await request(app).get("/llm/status").expect(200);

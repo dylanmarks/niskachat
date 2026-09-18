@@ -141,6 +141,101 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
     }
   }
 
+  /**
+   * Stream a response from Claude API via SSE
+   * @param {string} prompt
+   * @param {Object} options
+   * @yields {{type: string, text?: string}}
+   */
+  async *streamResponse(prompt, options = {}) {
+    if (!this.isConfigured()) {
+      throw new Error(
+        "Claude Haiku not configured: ANTHROPIC_API_KEY is required",
+      );
+    }
+
+    const requestOptions = {
+      model: this.model,
+      max_tokens: options.maxTokens || this.maxTokens,
+      temperature: options.temperature || this.temperature,
+      stream: true,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      ...options.llmOptions,
+    };
+
+    const signal = options.signal
+      ? AbortSignal.any([AbortSignal.timeout(this.timeout), options.signal])
+      : AbortSignal.timeout(this.timeout);
+
+    const response = await fetch(`${this.baseUrl}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": this.apiKey,
+        "anthropic-version": this.version,
+      },
+      body: JSON.stringify(requestOptions),
+      signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Claude API error: ${response.status} ${response.statusText} ${errorText}`,
+      );
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+    const maxBufferSize = 512 * 1024;
+
+    for await (const value of response.body) {
+      if (options.signal?.aborted) {
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+
+      if (buffer.length > maxBufferSize) {
+        throw new Error(
+          "Claude stream buffer exceeded maximum safe size (512KB)",
+        );
+      }
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) {
+          continue;
+        }
+        const data = trimmed.slice(5).trim();
+        if (!data) {
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(data);
+          if (
+            parsed.type === "content_block_delta" &&
+            parsed.delta?.type === "text_delta" &&
+            parsed.delta.text
+          ) {
+            yield { type: "chunk", text: parsed.delta.text };
+          } else if (parsed.type === "message_stop") {
+            return;
+          }
+        } catch {
+          // Skip malformed SSE lines
+        }
+      }
+    }
+  }
+
   async getStatus() {
     const status = {
       provider: this.getName(),

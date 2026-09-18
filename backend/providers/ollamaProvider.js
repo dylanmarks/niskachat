@@ -93,6 +93,87 @@ export class OllamaProvider extends BaseLLMProvider {
     }
   }
 
+  /**
+   * Stream a response from local Ollama via NDJSON
+   * @param {string} prompt
+   * @param {Object} options
+   * @yields {{type: string, text?: string}}
+   */
+  async *streamResponse(prompt, options = {}) {
+    const maxTokens = options.maxTokens || this.maxTokens;
+    const temperature =
+      options.temperature !== undefined
+        ? options.temperature
+        : this.temperature;
+
+    const requestBody = {
+      model: options.model || this.model,
+      prompt,
+      stream: true,
+      options: {
+        num_predict: maxTokens,
+        temperature,
+      },
+    };
+
+    const signal = options.signal
+      ? AbortSignal.any([AbortSignal.timeout(this.timeout), options.signal])
+      : AbortSignal.timeout(this.timeout);
+
+    const response = await fetch(`${this.baseUrl}/api/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Ollama returned status ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+    const maxBufferSize = 512 * 1024;
+
+    for await (const value of response.body) {
+      if (options.signal?.aborted) {
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+
+      if (buffer.length > maxBufferSize) {
+        throw new Error(
+          "Ollama stream buffer exceeded maximum safe size (512KB)",
+        );
+      }
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed.response) {
+            yield { type: "chunk", text: parsed.response };
+          }
+          if (parsed.done) {
+            return;
+          }
+        } catch {
+          // Skip malformed NDJSON lines
+        }
+      }
+    }
+  }
+
   async getStatus() {
     return {
       provider: this.getName(),

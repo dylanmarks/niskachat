@@ -27,6 +27,20 @@ export class BaseLLMProvider {
   }
 
   /**
+   * Stream a response from the LLM
+   * Yields {type: 'chunk'|'done', text?, provider?} objects.
+   * Providers that do not support streaming may throw; callers should
+   * fall back to generateResponse().
+   * @param {string} _prompt - The prompt to send to the LLM
+   * @param {Object} _options - Additional options for the request
+   * @returns {AsyncGenerator<{type: string, text?: string, provider?: string}>}
+   */
+  // eslint-disable-next-line require-yield, no-unused-vars
+  async *streamResponse(_prompt, _options) {
+    throw new Error("streamResponse() not supported by this provider");
+  }
+
+  /**
    * Get provider-specific status information
    * @returns {Promise<Object>}
    */

@@ -155,6 +155,50 @@ export class GeminiVertexProvider extends BaseLLMProvider {
     }
   }
 
+  /**
+   * Stream a response from Gemini Vertex API
+   * @param {string} prompt
+   * @param {Object} options
+   * @yields {{type: string, text?: string}}
+   */
+  async *streamResponse(prompt, options = {}) {
+    if (!this.isConfigured()) {
+      throw new Error(
+        "Gemini Vertex not configured: GEMINI_API_KEY is required",
+      );
+    }
+
+    const ai = await this._initializeClient();
+
+    const requestOptions = {
+      model: `models/${this.model}`,
+      contents: [
+        {
+          parts: [{ text: prompt }],
+          role: "user",
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: options.maxTokens || this.maxTokens,
+        temperature: options.temperature || this.temperature,
+        ...options.llmOptions?.generationConfig,
+      },
+      ...options.llmOptions,
+    };
+
+    const responseStream =
+      await ai.models.generateContentStream(requestOptions);
+
+    for await (const chunk of responseStream) {
+      if (options.signal?.aborted) {
+        return;
+      }
+      if (chunk.text) {
+        yield { type: "chunk", text: chunk.text };
+      }
+    }
+  }
+
   async getStatus() {
     const status = {
       provider: this.getName(),

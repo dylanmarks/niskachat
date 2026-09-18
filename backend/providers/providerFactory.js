@@ -141,6 +141,65 @@ export class LLMProviderFactory {
   }
 
   /**
+   * Stream a response using the best available provider.
+   * Falls back to other providers if the selected one fails mid-selection;
+   * once streaming has started, errors are surfaced to the caller.
+   * @param {string} prompt
+   * @param {Object} options
+   * @yields {{type: string, text?: string, provider?: string}}
+   */
+  async *streamResponse(prompt, options = {}) {
+    const provider = await this.getBestProvider();
+
+    if (!provider) {
+      throw new Error("No LLM providers are available");
+    }
+
+    let emittedAnyChunk = false;
+
+    try {
+      for await (const chunk of provider.streamResponse(prompt, options)) {
+        emittedAnyChunk = true;
+        yield { ...chunk, provider: provider.getName() };
+      }
+    } catch (error) {
+      logger.warn(
+        `Provider ${provider.getName()} stream failed: ${error.message}`,
+      );
+
+      // Only fall back if nothing has streamed yet; otherwise the fallback
+      // would concatenate a second provider's text onto a partial response
+      if (emittedAnyChunk) {
+        throw error;
+      }
+
+      for (const [name, fallbackProvider] of this.providers) {
+        if (name === provider.getName() || !fallbackProvider.isConfigured()) {
+          continue;
+        }
+        try {
+          if (await fallbackProvider.isAvailable()) {
+            logger.info(`Streaming via fallback provider: ${name}`);
+            for await (const chunk of fallbackProvider.streamResponse(
+              prompt,
+              options,
+            )) {
+              yield { ...chunk, provider: name };
+            }
+            return;
+          }
+        } catch (fallbackError) {
+          logger.warn(
+            `Fallback provider ${name} stream also failed: ${fallbackError.message}`,
+          );
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  /**
    * Get status of all providers
    * @returns {Promise<Object>}
    */
