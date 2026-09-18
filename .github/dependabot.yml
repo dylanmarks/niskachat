@@ -1,0 +1,33 @@
+version: 2
+updates:
+  # Maintain dependencies for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      angular-core:
+        patterns:
+          - "@angular/*"
+          - "zone.js"
+      linters-and-formatters:
+        patterns:
+          - "eslint*"
+          - "stylelint*"
+          - "prettier*"
+          - "cspell*"
+          - "@commitlint/*"
+      testing:
+        patterns:
+          - "jest*"
+          - "karma*"
+          - "jasmine*"
+          - "supertest"
+    open-pull-requests-limit: 5
+
+  # Maintain GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3

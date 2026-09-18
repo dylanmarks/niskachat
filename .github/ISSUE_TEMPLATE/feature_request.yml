@@ -1,0 +1,32 @@
+name: 🚀 Feature Request
+description: Suggest an idea, enhancement, or new clinical tool for NiskaChat
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggest an enhancement or new feature to improve clinician or patient experience in NiskaChat.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement / User Need
+      description: What clinical or user problem does this feature solve?
+      placeholder: As a clinician, I need to see patient timeline events chronologically because...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / Design
+      description: Describe the solution you'd like to see implemented.
+      placeholder: Add a unified timeline component aggregating Conditions, Procedures, and Observations...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Approaches Considered
+      description: Any alternative solutions or features you've considered.
+    validations:
+      required: false

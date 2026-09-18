@@ -8,9 +8,26 @@ import path from "path";
  * @returns {string|null} - The sanitized path or null if traversal is detected.
  */
 export function sanitizePath(inputPath, basePath) {
-  const resolvedPath = path.resolve(path.join(basePath, inputPath));
+  if (typeof inputPath !== "string") {
+    return null;
+  }
 
-  if (resolvedPath.startsWith(basePath)) {
+  // Explicitly reject directory traversal sequences, windows backslashes, and home directory shortcuts
+  if (
+    inputPath.includes("..") ||
+    inputPath.includes("\\") ||
+    inputPath.startsWith("~")
+  ) {
+    return null;
+  }
+
+  const normalizedBase = path.resolve(basePath);
+  const resolvedPath = path.resolve(path.join(normalizedBase, inputPath));
+  const basePrefix = normalizedBase.endsWith(path.sep)
+    ? normalizedBase
+    : normalizedBase + path.sep;
+
+  if (resolvedPath === normalizedBase || resolvedPath.startsWith(basePrefix)) {
     return resolvedPath;
   }
 

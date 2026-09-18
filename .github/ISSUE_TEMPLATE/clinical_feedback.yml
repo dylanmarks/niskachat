@@ -1,0 +1,33 @@
+name: 🩺 Clinical & FHIR Accuracy Feedback
+description: Report an issue regarding FHIR standard compliance or clinical terminology mapping
+title: "[CLINICAL]: "
+labels: ["clinical", "fhir", "standards"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Accurate clinical representation and adherence to HL7 FHIR R4 & US Core are paramount. Thank you for helping keep NiskaChat clinically sound!
+  - type: textarea
+    id: clinical-context
+    attributes:
+      label: FHIR Resource or Terminology Concerned
+      description: Specific FHIR resource type (e.g. Condition, Observation, CarePlan) or code system (LOINC, SNOMED CT, RxNorm).
+      placeholder: LOINC 85354-9 (Blood Pressure panel) / Condition clinicalStatus
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: Expected vs. Actual Clinical Behavior
+      description: What was displayed vs. what standard clinical practice or US Core specification recommends.
+      placeholder: The diastolic component is being mapped to systolic chart series when...
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Specification Reference (HL7 / US Core link)
+      description: Link to relevant FHIR / HL7 implementation guide.
+      placeholder: https://hl7.org/fhir/us/core/StructureDefinition-us-core-blood-pressure.html
+    validations:
+      required: false

@@ -1,6 +1,13 @@
 name: "On Pull Request"
 
-on: pull_request
+on:
+  pull_request:
+    branches: ["main"]
+
+# Concurrency group cancels redundant in-flight builds when someone pushes new commits to the same PR
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

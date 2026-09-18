@@ -11,7 +11,7 @@ export class GeminiVertexProvider extends BaseLLMProvider {
     super(config);
 
     this.apiKey = process.env.GEMINI_API_KEY;
-    this.model = process.env.GEMINI_MODEL || "gemini-2.5-pro";
+    this.model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     this.maxTokens = parseInt(process.env.GEMINI_MAX_TOKENS) || 1000;
     this.temperature = parseFloat(process.env.GEMINI_TEMPERATURE) || 0.3;
     this.timeout = parseInt(process.env.GEMINI_TIMEOUT) || 30000;

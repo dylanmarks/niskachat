@@ -49,3 +49,26 @@ _Based on code review of `src/app/**` and `backend/**`, Sept 2026._
 ### 8. Debug/console cleanup
 
 - Stray `console.log('CHAT DEBUG'...)` (`chat.component.ts:280`) bypasses the logger; remove and rely on `logger.debug`.
+
+## Priority 4 — Engineering Excellence & GitHub Showcase
+
+### 9. Rich PR Test & Coverage Summaries (GitHub Actions Step Summary)
+
+- **What:** Pull requests automatically summarize Jest (backend) + Karma (frontend) coverage and test outcomes directly into the `$GITHUB_STEP_SUMMARY` markdown dashboard and PR status check.
+- **How:** Add coverage summary extraction script in `.github/workflows/validate-code.yml` and publish formatted markdown tables.
+- **Effort:** Low-Medium. **Impact:** Direct proof of modern CI/CD presentation and quality gate enforcement.
+
+### 10. Automated Release Governance (Release Please / Conventional Changelog)
+
+- **What:** Leverage repository's existing `@commitlint/config-conventional` setup to automate semantic version bumps, CHANGELOG generation, and GitHub Releases.
+- **Effort:** Low. **Impact:** Demonstrates professional open-source release management.
+
+### 11. Enterprise Security Scanning & Dependency Governance
+
+- **What:** Integrate CodeQL AST security analysis (`codeql.yml`), GitHub Secret Scanning alerts, and Dependabot with grouped updates (`.github/dependabot.yml`).
+- **Effort:** Low. **Impact:** Essential compliance and supply chain posture for healthcare/clinical software.
+
+### 12. Community & Repository Health Infrastructure
+
+- **What:** Add GitHub issue forms (`.github/ISSUE_TEMPLATE/*.yml`) for bugs, features, and clinical feedback, alongside a clinical-aware `.github/PULL_REQUEST_TEMPLATE.md`.
+- **Effort:** Low. **Impact:** Standardizes contribution workflows and projects engineering maturity.
