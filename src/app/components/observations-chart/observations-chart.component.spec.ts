@@ -223,7 +223,7 @@ describe('ObservationsChartComponent', () => {
         ...mockObservations[0],
         valueString: 'text value',
       } as Observation;
-      delete (obsWithoutValue as any).valueQuantity;
+      delete obsWithoutValue.valueQuantity;
       const value = component.extractObservationValue(obsWithoutValue);
 
       expect(value).toBeNull();
@@ -244,7 +244,7 @@ describe('ObservationsChartComponent', () => {
       const obsWithoutDate = {
         ...mockObservations[0],
       } as Observation;
-      delete (obsWithoutDate as any).effectiveDateTime;
+      delete obsWithoutDate.effectiveDateTime;
       const date = component.extractObservationDate(obsWithoutDate);
 
       expect(date).toBeNull();

@@ -96,7 +96,13 @@ export default config(
       },
     },
     plugins: { jasmine: jasminePlugin },
-    rules: {},
+    rules: {
+      // Jasmine spies intentionally expose methods as unbound functions in
+      // expectations; these rules produce false positives for that pattern.
+      "@typescript-eslint/unbound-method": "off",
+      "jasmine/prefer-toHaveBeenCalledWith": "off",
+      "jasmine/no-unsafe-spy": "off",
+    },
   },
   {
     files: ["backend/**/*.test.js"],

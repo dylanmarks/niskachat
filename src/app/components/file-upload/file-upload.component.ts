@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -69,6 +69,8 @@ interface UploadStatus {
   styleUrl: './file-upload.component.scss',
 })
 export class FileUploadComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+
   context: FhirContext | null = null;
   isDragOver = false;
   selectedFile: File | null = null;
@@ -91,8 +93,6 @@ export class FileUploadComponent implements OnInit, OnDestroy {
   };
 
   private destroy$ = new Subject<void>();
-
-  constructor(private fhirClient: FhirClientService) {}
 
   ngOnInit(): void {
     this.fhirClient.context$
@@ -214,10 +214,6 @@ export class FileUploadComponent implements OnInit, OnDestroy {
   }
 
   validateBundle(bundle: FhirBundle): void {
-    if (!bundle || typeof bundle !== 'object') {
-      throw new Error('Invalid JSON format');
-    }
-
     if (bundle.resourceType !== 'Bundle') {
       throw new Error('File is not a FHIR Bundle resource');
     }
@@ -250,7 +246,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       procedures: [] as Procedure[],
     };
 
-    for (const entry of bundle.entry || []) {
+    for (const entry of bundle.entry ?? []) {
       const resource = entry.resource;
       if (!resource?.resourceType) {
         continue;
@@ -402,7 +398,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     const allergyResource = resource as unknown as AllergyIntolerance;
     const mapped: AllergyIntolerance = {
       resourceType: 'AllergyIntolerance',
-      id: allergyResource.id ?? '',
+      id: allergyResource.id,
     };
 
     if (allergyResource.clinicalStatus)
@@ -440,10 +436,10 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     const immunizationResource = resource as unknown as Immunization;
     const mapped: Immunization = {
       resourceType: 'Immunization',
-      id: immunizationResource.id ?? '',
-      status: immunizationResource.status ?? 'unknown',
-      vaccineCode: immunizationResource.vaccineCode ?? { coding: [] },
-      patient: immunizationResource.patient ?? { reference: '' },
+      id: immunizationResource.id,
+      status: immunizationResource.status,
+      vaccineCode: immunizationResource.vaccineCode,
+      patient: immunizationResource.patient,
     };
 
     if (immunizationResource.occurrenceDateTime)
@@ -497,9 +493,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     const procedureResource = resource as unknown as Procedure;
     const mapped: Procedure = {
       resourceType: 'Procedure',
-      id: procedureResource.id ?? '',
-      status: procedureResource.status ?? 'unknown',
-      subject: procedureResource.subject ?? { reference: '' },
+      id: procedureResource.id,
+      status: procedureResource.status,
+      subject: procedureResource.subject,
     };
 
     if (procedureResource.code) mapped.code = procedureResource.code;

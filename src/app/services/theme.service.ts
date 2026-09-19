@@ -27,7 +27,8 @@ export class ThemeService {
   /**
    * Set the theme preference (locks to light)
    */
-  setTheme(_theme: Theme): void {
+  setTheme(theme: Theme): void {
+    void theme;
     this._selectedTheme.set('light');
     localStorage.setItem(this.THEME_KEY, 'light');
   }

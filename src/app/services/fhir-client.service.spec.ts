@@ -77,7 +77,7 @@ describe('FhirClientService', () => {
   });
 
   describe('OAuth2 Ready Flow', () => {
-    it('should handle OAuth2 ready successfully', async () => {
+    it('should handle OAuth2 ready successfully', () => {
       // Mock the service to simulate successful authentication
       spyOn(service, 'isAuthenticated').and.returnValue(true);
       spyOn(service, 'getCurrentContext').and.returnValue({
@@ -96,7 +96,7 @@ describe('FhirClientService', () => {
       expect(context.patient?.id).toBe('test-patient-123');
     });
 
-    it('should handle OAuth2 ready failure gracefully', async () => {
+    it('should handle OAuth2 ready failure gracefully', () => {
       spyOn(service, 'isAuthenticated').and.returnValue(false);
       spyOn(service, 'getCurrentContext').and.returnValue({
         authenticated: false,
@@ -184,7 +184,7 @@ describe('FhirClientService', () => {
           done();
         },
         error: (error) => {
-          fail(`Should not have failed: ${error}`);
+          fail(`Should not have failed: ${String(error)}`);
           done();
         },
       });
@@ -227,7 +227,7 @@ describe('FhirClientService', () => {
           done();
         },
         error: (error) => {
-          fail(`Should not have failed: ${error}`);
+          fail(`Should not have failed: ${String(error)}`);
           done();
         },
       });
@@ -252,7 +252,7 @@ describe('FhirClientService', () => {
           done();
         },
         error: (error) => {
-          fail(`Should not have failed: ${error}`);
+          fail(`Should not have failed: ${String(error)}`);
           done();
         },
       });

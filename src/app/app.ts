@@ -175,12 +175,10 @@ export class App implements OnInit, OnDestroy {
 
     // Wait for the chat component to be rendered
     setTimeout(() => {
-      if (this.chatComponent) {
-        this.chatComponent.currentMessage = 'summarize this patient';
-        void this.chatComponent.sendMessage().finally(() => {
-          this.isSummarizing = false;
-        });
-      }
+      this.chatComponent.currentMessage = 'summarize this patient';
+      void this.chatComponent.sendMessage().finally(() => {
+        this.isSummarizing = false;
+      });
     }, 100);
   }
 
@@ -190,13 +188,11 @@ export class App implements OnInit, OnDestroy {
 
     // Wait for the chat component to be rendered
     setTimeout(() => {
-      if (this.chatComponent) {
-        // Set the chat input and send the NBA message
-        this.chatComponent.currentMessage =
-          'Please suggest next best actions and clinical recommendations for this patient.';
-        void this.chatComponent.sendMessage();
-        this.isProcessing = false;
-      }
+      // Set the chat input and send the NBA message
+      this.chatComponent.currentMessage =
+        'Please suggest next best actions and clinical recommendations for this patient.';
+      void this.chatComponent.sendMessage();
+      this.isProcessing = false;
     }, 100);
   }
 

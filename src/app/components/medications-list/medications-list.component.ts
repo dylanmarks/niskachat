@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +31,8 @@ import { logger } from '../../utils/logger';
   styleUrls: ['./medications-list.component.scss'],
 })
 export class MedicationsListComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+
   medications: MedicationRequest[] = [];
   context: FhirContext | null = null;
   isLoading = false;
@@ -42,15 +44,13 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fhirClient: FhirClientService) {}
-
   ngOnInit(): void {
     // Subscribe to FHIR context changes
     this.fhirClient.context$
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context?.authenticated && context.patient) {
+        if (context.authenticated && context.patient) {
           void this.loadMedications();
         }
       });
@@ -75,7 +75,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
       const medications = await firstValueFrom(
         this.fhirClient.getMedicationRequests(),
       );
-      this.medications = this.sortMedicationsByDate(medications ?? []);
+      this.medications = this.sortMedicationsByDate(medications);
     } catch (error) {
       logger.error('Error loading medications:', error);
       this.errorMessage = `Failed to load medications: ${String(error)}`;
@@ -213,11 +213,12 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
 
     const timing = dosageInstruction.timing;
 
-    if (timing.repeat?.frequency && timing.repeat?.period) {
-      const frequency = timing.repeat.frequency;
-      const period = timing.repeat.period;
-      const periodUnit = timing.repeat.periodUnit ?? 'day';
-      return `${String(frequency)} times per ${String(period)} ${periodUnit}${(period ?? 0) > 1 ? 's' : ''}`;
+    const repeat = timing.repeat;
+    if (repeat?.frequency && repeat.period) {
+      const frequency = repeat.frequency;
+      const period = repeat.period;
+      const periodUnit = repeat.periodUnit ?? 'day';
+      return `${String(frequency)} times per ${String(period)} ${periodUnit}${period > 1 ? 's' : ''}`;
     }
 
     return '';
@@ -229,8 +230,12 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
   }
 
   getQuantityText(medication: MedicationRequest): string {
-    const medicationAny = medication as any;
-    const quantity = medicationAny.dispenseRequest?.quantity;
+    const medicationWithDispense = medication as MedicationRequest & {
+      dispenseRequest?: {
+        quantity?: { value?: number; unit?: string; code?: string };
+      };
+    };
+    const quantity = medicationWithDispense.dispenseRequest?.quantity;
     if (!quantity) return '';
 
     return `${String(quantity.value ?? '')} ${quantity.unit ?? quantity.code ?? ''}`;
@@ -286,7 +291,7 @@ export class MedicationsListComponent implements OnInit, OnDestroy {
   }
 
   trackMedication(_index: number, medication: MedicationRequest): string {
-    return medication.id ?? _index.toString();
+    return medication.id;
   }
 
   toggleInactive(): void {

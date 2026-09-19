@@ -188,7 +188,7 @@ describe('FileUploadComponent', () => {
       expect(resources.conditions[0]?.id).toBe('condition-1');
     });
 
-    it('should handle bundle with no Patient resources', async () => {
+    it('should handle bundle with no Patient resources', () => {
       const bundleWithoutPatient = {
         resourceType: 'Bundle',
         entry: [
@@ -268,9 +268,9 @@ describe('FileUploadComponent', () => {
         type: 'application/json',
       });
 
-      const mockDataTransfer = {
+      const mockDataTransfer: DataTransfer = {
         files: [file],
-      } as any;
+      } as unknown as DataTransfer;
 
       const event = new DragEvent('drop');
       Object.defineProperty(event, 'dataTransfer', {

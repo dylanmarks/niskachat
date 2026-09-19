@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +31,8 @@ import { logger } from '../../utils/logger';
   styleUrls: ['./allergies-list.component.scss'],
 })
 export class AllergiesListComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+
   allergies: AllergyIntolerance[] = [];
   context: FhirContext | null = null;
   isLoading = false;
@@ -42,15 +44,13 @@ export class AllergiesListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fhirClient: FhirClientService) {}
-
   ngOnInit(): void {
     // Subscribe to FHIR context changes
     this.fhirClient.context$
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context?.authenticated && context.patient) {
+        if (context.authenticated && context.patient) {
           void this.loadAllergies();
         }
       });
@@ -75,7 +75,7 @@ export class AllergiesListComponent implements OnInit, OnDestroy {
       const allergies = await firstValueFrom(
         this.fhirClient.getAllergyIntolerances(),
       );
-      this.allergies = this.sortAllergiesBySeverityAndDate(allergies ?? []);
+      this.allergies = this.sortAllergiesBySeverityAndDate(allergies);
     } catch (error) {
       logger.error('Error loading allergies:', error);
       this.errorMessage = `Failed to load allergies: ${String(error)}`;
@@ -210,15 +210,13 @@ export class AllergiesListComponent implements OnInit, OnDestroy {
 
     if (allergy.reaction) {
       allergy.reaction.forEach((reaction) => {
-        if (reaction.manifestation) {
-          reaction.manifestation.forEach((manifestation) => {
-            if (manifestation.text) {
-              reactions.push(manifestation.text);
-            } else if (manifestation.coding?.[0]?.display) {
-              reactions.push(manifestation.coding[0].display);
-            }
-          });
-        }
+        reaction.manifestation.forEach((manifestation) => {
+          if (manifestation.text) {
+            reactions.push(manifestation.text);
+          } else if (manifestation.coding?.[0]?.display) {
+            reactions.push(manifestation.coding[0].display);
+          }
+        });
       });
     }
 
@@ -284,7 +282,7 @@ export class AllergiesListComponent implements OnInit, OnDestroy {
   }
 
   trackAllergy(_index: number, allergy: AllergyIntolerance): string {
-    return allergy.id ?? _index.toString();
+    return allergy.id;
   }
 
   toggleInactive(): void {

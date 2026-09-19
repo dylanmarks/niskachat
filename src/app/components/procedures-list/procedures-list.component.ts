@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +31,8 @@ import { logger } from '../../utils/logger';
   styleUrls: ['./procedures-list.component.scss'],
 })
 export class ProceduresListComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+
   procedures: Procedure[] = [];
   context: FhirContext | null = null;
   isLoading = false;
@@ -41,15 +43,13 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fhirClient: FhirClientService) {}
-
   ngOnInit(): void {
     // Subscribe to FHIR context changes
     this.fhirClient.context$
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context?.authenticated && context.patient) {
+        if (context.authenticated && context.patient) {
           void this.loadProcedures();
         }
       });
@@ -72,7 +72,7 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
 
     try {
       const procedures = await firstValueFrom(this.fhirClient.getProcedures());
-      this.procedures = this.sortProceduresByDateAndType(procedures ?? []);
+      this.procedures = this.sortProceduresByDateAndType(procedures);
     } catch (error) {
       logger.error('Error loading procedures:', error);
       this.errorMessage = `Failed to load procedures: ${String(error)}`;
@@ -152,7 +152,7 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
       case 'unknown':
         return 'Unknown';
       default:
-        return status ?? 'Unknown';
+        return status;
     }
   }
 
@@ -212,22 +212,22 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
     if (!procedure.category) return '';
 
     return (
-      procedure.category.text ||
-      procedure.category.coding?.[0]?.display ||
-      procedure.category.coding?.[0]?.code ||
+      procedure.category.text ??
+      procedure.category.coding?.[0]?.display ??
+      procedure.category.coding?.[0]?.code ??
       ''
     );
   }
 
   getLocationText(procedure: Procedure): string {
-    return procedure.location?.display || '';
+    return procedure.location?.display ?? '';
   }
 
   getPerformerText(procedure: Procedure): string {
     if (!procedure.performer || procedure.performer.length === 0) return '';
 
     const performers = procedure.performer.map(
-      (performer) => performer.actor.display || 'Unknown Performer',
+      (performer) => performer.actor.display ?? 'Unknown Performer',
     );
 
     return performers.join(', ');
@@ -263,7 +263,7 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
     const bodySites = procedure.bodySite
       .map(
         (site) =>
-          site.text || site.coding?.[0]?.display || site.coding?.[0]?.code,
+          site.text ?? site.coding?.[0]?.display ?? site.coding?.[0]?.code,
       )
       .filter(Boolean);
 
@@ -274,9 +274,9 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
     if (!procedure.outcome) return '';
 
     return (
-      procedure.outcome.text ||
-      procedure.outcome.coding?.[0]?.display ||
-      procedure.outcome.coding?.[0]?.code ||
+      procedure.outcome.text ??
+      procedure.outcome.coding?.[0]?.display ??
+      procedure.outcome.coding?.[0]?.code ??
       ''
     );
   }
@@ -308,7 +308,7 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
   }
 
   trackProcedure(_index: number, procedure: Procedure): string {
-    return procedure.id ?? _index.toString();
+    return procedure.id;
   }
 
   hasComplications(procedure: Procedure): boolean {
@@ -322,8 +322,8 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
     const complications = procedure.complication
       .map(
         (complication) =>
-          complication.text ||
-          complication.coding?.[0]?.display ||
+          complication.text ??
+          complication.coding?.[0]?.display ??
           complication.coding?.[0]?.code,
       )
       .filter(Boolean);
@@ -340,10 +340,10 @@ export class ProceduresListComponent implements OnInit, OnDestroy {
 
     const devices = procedure.focalDevice
       .map((device) => {
-        if (device.manipulated?.display) {
-          return `${device.action?.text || 'Device'}: ${device.manipulated.display}`;
+        if (device.manipulated.display) {
+          return `${device.action?.text ?? 'Device'}: ${device.manipulated.display}`;
         }
-        return device.action?.text || 'Device';
+        return device.action?.text ?? 'Device';
       })
       .filter(Boolean);
 

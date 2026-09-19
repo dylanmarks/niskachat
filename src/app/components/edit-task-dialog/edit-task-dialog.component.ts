@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -42,6 +42,9 @@ export interface EditTaskDialogResult {
   styleUrl: './edit-task-dialog.component.scss',
 })
 export class EditTaskDialogComponent {
+  dialogRef = inject<MatDialogRef<EditTaskDialogComponent>>(MatDialogRef);
+  data = inject<EditTaskDialogData>(MAT_DIALOG_DATA);
+
   // Form data
   title: string;
   description: string;
@@ -84,14 +87,13 @@ export class EditTaskDialogComponent {
     { value: 'stat', label: 'STAT', icon: 'error', color: 'warn' },
   ];
 
-  constructor(
-    public dialogRef: MatDialogRef<EditTaskDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: EditTaskDialogData,
-  ) {
+  constructor() {
+    const data = this.data;
+
     // Initialize form with current task values
     this.title = data.task.code.text;
-    this.description = data.task.description || '';
-    this.priority = data.task.priority || 'routine';
+    this.description = data.task.description ?? '';
+    this.priority = data.task.priority ?? 'routine';
     this.status = data.task.status;
   }
 
@@ -113,7 +115,7 @@ export class EditTaskDialogComponent {
       result.title = this.title.trim();
     }
 
-    if (this.description !== (this.data.task.description || '')) {
+    if (this.description !== (this.data.task.description ?? '')) {
       result.description = this.description.trim();
     }
 
@@ -126,7 +128,7 @@ export class EditTaskDialogComponent {
     }
 
     // Include comment if provided
-    if (this.newComment?.trim()) {
+    if (this.newComment.trim()) {
       result.comment = this.newComment.trim();
     }
 
@@ -139,7 +141,7 @@ export class EditTaskDialogComponent {
   hasChanges(): boolean {
     return (
       this.title !== this.data.task.code.text ||
-      this.description !== (this.data.task.description || '') ||
+      this.description !== (this.data.task.description ?? '') ||
       this.priority !== this.data.task.priority ||
       this.status !== this.data.task.status
     );

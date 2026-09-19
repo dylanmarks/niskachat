@@ -353,11 +353,11 @@ describe('ChatComponent', () => {
       component.clearChat();
 
       expect(component.messages.length).toBe(1);
-      expect(component.messages[0]!.content).toBe(
+      expect(component.messages[0]?.content).toBe(
         '<p>Chat cleared. How can I help you analyze the patient data?</p>',
       );
 
-      expect(component.messages[0]!.isUser).toBe(false);
+      expect(component.messages[0]?.isUser).toBe(false);
     });
 
     it('should determine if message can be sent', () => {
@@ -465,6 +465,7 @@ describe('ChatComponent', () => {
 
     it('should render chat container', () => {
       const container = fixture.debugElement.query(By.css('.chat-container'));
+
       expect(container).toBeTruthy();
     });
 
@@ -472,9 +473,9 @@ describe('ChatComponent', () => {
       const clearButton = fixture.debugElement.query(By.css('.clear-button'));
 
       expect(clearButton).toBeTruthy();
-      expect(clearButton.nativeElement.getAttribute('aria-label')).toBe(
-        'Clear chat history',
-      );
+      expect(
+        (clearButton.nativeElement as HTMLElement).getAttribute('aria-label'),
+      ).toBe('Clear chat history');
     });
 
     it('should render messages area', () => {
@@ -504,9 +505,9 @@ describe('ChatComponent', () => {
 
       expect(messageElements.length).toBe(1);
 
-      const welcomeMessage = messageElements[0]!;
+      const welcomeMessage = messageElements[0];
 
-      expect(welcomeMessage.classes['ai-message']).toBe(true);
+      expect(welcomeMessage?.classes['ai-message']).toBe(true);
     });
 
     it('should disable send button when cannot send', () => {
@@ -515,7 +516,9 @@ describe('ChatComponent', () => {
 
       const sendButton = fixture.debugElement.query(By.css('.send-button'));
 
-      expect(sendButton.nativeElement.disabled).toBe(true);
+      expect((sendButton.nativeElement as HTMLButtonElement).disabled).toBe(
+        true,
+      );
     });
 
     it('should enable send button when can send', () => {
@@ -524,7 +527,9 @@ describe('ChatComponent', () => {
 
       const sendButton = fixture.debugElement.query(By.css('.send-button'));
 
-      expect(sendButton.nativeElement.disabled).toBe(false);
+      expect((sendButton.nativeElement as HTMLButtonElement).disabled).toBe(
+        false,
+      );
     });
   });
 });

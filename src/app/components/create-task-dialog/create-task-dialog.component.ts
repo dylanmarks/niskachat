@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -40,6 +40,9 @@ export interface TaskDialogData {
   styleUrl: './create-task-dialog.component.scss',
 })
 export class CreateTaskDialogComponent {
+  dialogRef = inject<MatDialogRef<CreateTaskDialogComponent>>(MatDialogRef);
+  data = inject<TaskDialogData | null>(MAT_DIALOG_DATA);
+
   // Form data
   title = '';
   description = '';
@@ -69,16 +72,15 @@ export class CreateTaskDialogComponent {
     { value: 'stat', label: 'STAT', icon: 'error', color: 'warn' },
   ];
 
-  constructor(
-    public dialogRef: MatDialogRef<CreateTaskDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: TaskDialogData | null,
-  ) {
+  constructor() {
+    const data = this.data;
+
     // Initialize form with provided data
     if (data) {
-      this.title = data.title || '';
-      this.description = data.description || '';
-      this.priority = data.priority || 'routine';
-      this.initialComment = data.initialComment || '';
+      this.title = data.title ?? '';
+      this.description = data.description ?? '';
+      this.priority = data.priority ?? 'routine';
+      this.initialComment = data.initialComment ?? '';
     }
   }
 

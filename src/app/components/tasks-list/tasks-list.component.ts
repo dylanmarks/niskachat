@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
@@ -38,16 +38,14 @@ import { TaskCardComponent } from '../task-card/task-card.component';
   styleUrl: './tasks-list.component.scss',
 })
 export class TasksListComponent implements OnInit, OnDestroy {
+  private taskService = inject(TaskManagementService);
+  private dialog = inject(MatDialog);
+  private fhirClientService = inject(FhirClientService);
+
   private destroy$ = new Subject<void>();
 
   taskGroups: { carePlan: FHIRCarePlan | null; tasks: FHIRTask[] }[] = [];
   taskStats = { total: 0, requested: 0, inProgress: 0, completed: 0 };
-
-  constructor(
-    private taskService: TaskManagementService,
-    private dialog: MatDialog,
-    private fhirClientService: FhirClientService,
-  ) {}
 
   ngOnInit(): void {
     // Subscribe to task updates
@@ -158,12 +156,8 @@ export class TasksListComponent implements OnInit, OnDestroy {
           // Create task via backend API
           this.taskService
             .createTask(taskRequest)
-            .then((createdTask) => {
-              if (createdTask) {
-                logger.info('Task created successfully');
-              } else {
-                logger.error('Failed to create task');
-              }
+            .then(() => {
+              logger.info('Task created successfully');
             })
             .catch((error: unknown) => {
               logger.error('Error creating task:', error);
@@ -267,7 +261,7 @@ export class TasksListComponent implements OnInit, OnDestroy {
     index: number,
     group: { carePlan: FHIRCarePlan | null; tasks: FHIRTask[] },
   ): string {
-    return group.carePlan?.id || `unassigned-${index}`;
+    return group.carePlan?.id ?? `unassigned-${String(index)}`;
   }
 
   trackTask(_index: number, task: FHIRTask): string {

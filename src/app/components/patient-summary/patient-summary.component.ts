@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -68,6 +68,9 @@ export interface CompressedSummaryResponse {
   styleUrl: './patient-summary.component.scss',
 })
 export class PatientSummaryComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+  private http = inject(HttpClient);
+
   private destroy$ = new Subject<void>();
 
   isLoading = false;
@@ -88,23 +91,18 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   // Compressed summary for header display
   compressedSummary: string | null = null;
 
-  constructor(
-    private fhirClient: FhirClientService,
-    private http: HttpClient,
-  ) {}
-
   ngOnInit(): void {
     // Subscribe to FHIR context changes
     this.fhirClient.context$
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context?.authenticated && context.patient) {
+        if (context.authenticated && context.patient) {
           this.patient = context.patient;
           this.errorMessage = '';
           // Generate compressed summary for header
           void this.generateCompressedSummary();
-        } else if (context?.authenticated && !context.patient) {
+        } else if (context.authenticated && !context.patient) {
           void this.loadPatient();
         }
       });
@@ -130,12 +128,10 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
     try {
       const patient = await firstValueFrom(this.fhirClient.getPatient());
-      this.patient = patient ?? null;
+      this.patient = patient;
 
       // Generate compressed summary for header
-      if (this.patient) {
-        await this.generateCompressedSummary();
-      }
+      await this.generateCompressedSummary();
     } catch (error) {
       this.errorMessage = `Failed to load patient: ${String(error)}`;
       logger.error('Error loading patient:', error);
@@ -282,10 +278,10 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
    * Check if metadata should be shown
    */
   hasMetadata(): boolean {
+    const context = this.context;
     return !!(
-      this.context?.clientId ||
-      this.context?.serverUrl ||
-      this.context?.scope
+      context &&
+      (context.clientId ?? context.serverUrl ?? context.scope)
     );
   }
 
@@ -342,31 +338,25 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           const conditions = await firstValueFrom(
             this.fhirClient.getConditions(),
           );
-          if (conditions) {
-            conditions.forEach((condition) => {
-              bundle.entry.push({ resource: condition });
-            });
-          }
+          conditions.forEach((condition) => {
+            bundle.entry.push({ resource: condition });
+          });
 
           // Try to get observations
           const observations = await firstValueFrom(
             this.fhirClient.getObservations(),
           );
-          if (observations) {
-            observations.forEach((observation) => {
-              bundle.entry.push({ resource: observation });
-            });
-          }
+          observations.forEach((observation) => {
+            bundle.entry.push({ resource: observation });
+          });
 
           // Try to get medications
           const medications = await firstValueFrom(
             this.fhirClient.getMedicationRequests(),
           );
-          if (medications) {
-            medications.forEach((medication) => {
-              bundle.entry.push({ resource: medication });
-            });
-          }
+          medications.forEach((medication) => {
+            bundle.entry.push({ resource: medication });
+          });
         } catch (fetchError) {
           logger.warn('Additional FHIR resources could not be loaded');
           // Continue with just patient data
@@ -391,7 +381,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
       this.summaryProvider = response.provider || null;
       this.summaryEvidenceReferences = response.evidenceReferences || [];
       this.summaryTimestamp = new Date();
-      this.summaryWarning = response.warning || null;
+      this.summaryWarning = response.warning ?? null;
 
       // Show warning if LLM failed
       if (response.warning) {
@@ -401,8 +391,8 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
       logger.error('AI summary request failed');
       const httpError = error as HttpErrorResponse;
       this.summaryError =
-        httpError.error?.error ||
-        httpError.message ||
+        httpError.error?.error ??
+        httpError.message ??
         'Failed to generate summary';
     } finally {
       this.isSummarizing = false;
@@ -437,31 +427,25 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
           const conditions = await firstValueFrom(
             this.fhirClient.getConditions(),
           );
-          if (conditions) {
-            conditions.forEach((condition) => {
-              bundle.entry.push({ resource: condition });
-            });
-          }
+          conditions.forEach((condition) => {
+            bundle.entry.push({ resource: condition });
+          });
 
           // Try to get observations
           const observations = await firstValueFrom(
             this.fhirClient.getObservations(),
           );
-          if (observations) {
-            observations.forEach((observation) => {
-              bundle.entry.push({ resource: observation });
-            });
-          }
+          observations.forEach((observation) => {
+            bundle.entry.push({ resource: observation });
+          });
 
           // Try to get medications
           const medications = await firstValueFrom(
             this.fhirClient.getMedicationRequests(),
           );
-          if (medications) {
-            medications.forEach((medication) => {
-              bundle.entry.push({ resource: medication });
-            });
-          }
+          medications.forEach((medication) => {
+            bundle.entry.push({ resource: medication });
+          });
         } catch (fetchError) {
           logger.warn('Additional FHIR resources could not be loaded');
           // Continue with just patient data

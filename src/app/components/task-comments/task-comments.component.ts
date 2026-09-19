@@ -7,6 +7,7 @@ import {
   Input,
   Output,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -42,6 +43,9 @@ import { logger } from '../../utils/logger';
   styleUrl: './task-comments.component.scss',
 })
 export class TaskCommentsComponent {
+  private http = inject(HttpClient);
+  private snackBar = inject(MatSnackBar);
+
   @Input() task!: FHIRTask;
   @Input() showExpanded = false;
   @Output() commentAdded = new EventEmitter<{
@@ -57,13 +61,8 @@ export class TaskCommentsComponent {
   showAllComments = false;
   pendingComment: TaskNote | null = null;
 
-  constructor(
-    private http: HttpClient,
-    private snackBar: MatSnackBar,
-  ) {}
-
   get comments(): TaskNote[] {
-    return this.task.note || [];
+    return this.task.note ?? [];
   }
 
   get visibleComments(): TaskNote[] {
@@ -169,9 +168,9 @@ export class TaskCommentsComponent {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 60) return `${String(diffMins)}m ago`;
+    if (diffHours < 24) return `${String(diffHours)}h ago`;
+    if (diffDays < 7) return `${String(diffDays)}d ago`;
 
     return date.toLocaleDateString();
   }
@@ -186,7 +185,7 @@ export class TaskCommentsComponent {
         ? parts[1]
         : comment.authorReference.reference;
     }
-    return comment.authorString || 'Unknown User';
+    return comment.authorString ?? 'Unknown User';
   }
 
   isCommentPending(comment: TaskNote): boolean {
@@ -205,7 +204,7 @@ export class TaskCommentsComponent {
     } else {
       // Enter: submit comment
       keyboardEvent.preventDefault();
-      this.addComment();
+      void this.addComment();
     }
   }
 }

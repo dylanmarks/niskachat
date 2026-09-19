@@ -11,9 +11,7 @@ let currentLevel: LogLevel = 'info';
 let logPHI = false;
 
 export function setLogLevel(level: LogLevel): void {
-  if (LEVELS[level] !== undefined) {
-    currentLevel = level;
-  }
+  currentLevel = level;
 }
 
 export function enablePHILogging(enable = true): void {
