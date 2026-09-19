@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { oauth2 } from 'fhirclient';
 import { FhirClientService, FhirContext } from './fhir-client.service';
 
 // Mock FHIR client
 const mockFhirClient = {
   patient: {
     read: jasmine.createSpy('read').and.resolveTo({
+      resourceType: 'Patient',
       id: 'test-patient-123',
       name: [
         {
@@ -45,30 +47,22 @@ const mockFhirClient = {
     .and.returnValue({ access_token: 'test-token' }),
 };
 
-const mockWindow = {
-  FHIR: {
-    oauth2: {
-      init: jasmine.createSpy('init').and.resolveTo(mockFhirClient),
-      ready: jasmine.createSpy('ready').and.resolveTo(mockFhirClient),
-    },
-  },
-};
-
 describe('FhirClientService', () => {
   let service: FhirClientService;
+  let initSpy: jasmine.Spy;
+  let readySpy: jasmine.Spy;
 
   beforeEach(() => {
+    initSpy = spyOn(oauth2, 'init').and.resolveTo(mockFhirClient as never);
+    readySpy = spyOn(oauth2, 'ready').and.resolveTo(mockFhirClient as never);
     TestBed.configureTestingModule({});
     service = TestBed.inject(FhirClientService);
-
-    // Mock window.FHIR
-    (window as any).FHIR = mockWindow.FHIR;
   });
 
   afterEach(() => {
-    // Clean up
-    delete (window as any).FHIR;
     service.clearSession();
+    mockFhirClient.patient.read.calls.reset();
+    mockFhirClient.request.calls.reset();
   });
 
   it('should be created', () => {
@@ -115,7 +109,7 @@ describe('FhirClientService', () => {
     });
 
     it('should throw error when FHIR client not loaded', async () => {
-      delete (window as any).FHIR;
+      readySpy.and.rejectWith(new Error('FHIR client library not loaded'));
 
       try {
         await service.handleOAuth2Ready();
@@ -133,10 +127,10 @@ describe('FhirClientService', () => {
     it('should initialize SMART launch with default parameters', async () => {
       await service.initializeSmartLaunch();
 
-      expect(mockWindow.FHIR.oauth2.init).toHaveBeenCalledWith({
+      expect(initSpy).toHaveBeenCalledWith({
         iss: 'https://launch.smarthealthit.org/v/r4/fhir',
         clientId: 'your-client-id',
-        scope: 'openid profile patient/*.read',
+        scope: 'openid profile launch/patient patient/*.read',
         redirectUri: window.location.origin + '/callback',
       });
 
@@ -149,10 +143,10 @@ describe('FhirClientService', () => {
 
       await service.initializeSmartLaunch(customIss, customClientId);
 
-      expect(mockWindow.FHIR.oauth2.init).toHaveBeenCalledWith({
+      expect(initSpy).toHaveBeenCalledWith({
         iss: customIss,
         clientId: customClientId,
-        scope: 'openid profile patient/*.read',
+        scope: 'openid profile launch/patient patient/*.read',
         redirectUri: window.location.origin + '/callback',
       });
     });
@@ -176,6 +170,7 @@ describe('FhirClientService', () => {
     it('should get patient by ID', (done) => {
       const patientId = 'specific-patient-456';
       mockFhirClient.request.and.resolveTo({
+        resourceType: 'Patient',
         id: patientId,
         name: [{ family: 'Smith', given: ['Jane'] }],
       });

@@ -5,7 +5,7 @@ import {
   FhirClientService,
   FhirContext,
 } from '../../services/fhir-client.service';
-import { SmartLaunchComponent } from './smart-launch.component';
+import { BROWSER_WINDOW, SmartLaunchComponent } from './smart-launch.component';
 
 describe('SmartLaunchComponent', () => {
   let component: SmartLaunchComponent;
@@ -13,6 +13,7 @@ describe('SmartLaunchComponent', () => {
   let mockFhirClient: jasmine.SpyObj<FhirClientService>;
   let mockRouter: jasmine.SpyObj<Router>;
   let contextSubject: BehaviorSubject<FhirContext>;
+  let mockWindow: Window;
 
   beforeEach(async () => {
     // Create context subject for mocking
@@ -28,12 +29,16 @@ describe('SmartLaunchComponent', () => {
     );
 
     mockRouter = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    mockWindow = {
+      location: { pathname: '/', search: '' },
+    } as unknown as Window;
 
     await TestBed.configureTestingModule({
       imports: [SmartLaunchComponent],
       providers: [
         { provide: FhirClientService, useValue: mockFhirClient },
         { provide: Router, useValue: mockRouter },
+        { provide: BROWSER_WINDOW, useValue: mockWindow },
       ],
     }).compileComponents();
 
@@ -140,17 +145,8 @@ describe('SmartLaunchComponent', () => {
   });
 
   describe('Auto-launch detection', () => {
-    beforeEach(() => {
-      // Reset location
-      delete (window as any).location;
-      (window as any).location = {
-        pathname: '/',
-        search: '',
-      };
-    });
-
     it('should detect callback URL', () => {
-      (window as any).location.pathname = '/callback';
+      mockWindow.location.pathname = '/callback';
       spyOn(component, 'handleCallback');
 
       fixture.detectChanges();
@@ -159,7 +155,7 @@ describe('SmartLaunchComponent', () => {
     });
 
     it('should detect EHR launch parameters', () => {
-      (window as any).location.search =
+      mockWindow.location.search =
         '?launch=test-launch&iss=https://test.fhir.org';
       spyOn(component, 'handleEhrLaunch');
 

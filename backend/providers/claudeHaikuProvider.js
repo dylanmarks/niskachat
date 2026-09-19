@@ -55,7 +55,7 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
         signal: AbortSignal.timeout(10000),
       });
 
-      return response.ok || response.status === 400; // 400 might be rate limit, but API is available
+      return response.ok;
     } catch (error) {
       logger.warn(`Claude Haiku unavailable: ${error.message}`);
       return false;

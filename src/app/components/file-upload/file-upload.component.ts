@@ -194,7 +194,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.uploadStatus.isUploading = false;
     } catch (error) {
       logger.error('Error processing FHIR bundle:', error);
-      this.uploadStatus.error = `Failed to process file: ${error instanceof Error ? error.message : String(error)}`;
+      this.uploadStatus.error = `Failed to process bundle: ${error instanceof Error ? error.message : String(error)}`;
       this.uploadStatus.isUploading = false;
       this.uploadStatus.progress = 0;
     }

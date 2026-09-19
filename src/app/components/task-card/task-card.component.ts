@@ -7,7 +7,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { FHIRTask } from '../../models/fhir-task.interface';
+import { FHIRTask, TaskNote } from '../../models/fhir-task.interface';
+import { logger } from '../../utils/logger';
 import { TaskCommentsComponent } from '../task-comments/task-comments.component';
 
 @Component({
@@ -49,14 +50,14 @@ export class TaskCardComponent {
     this.deleteTask.emit(this.task.id);
   }
 
-  onCommentAdded(_event: { task: FHIRTask; comment: any }): void {
+  onCommentAdded(_event: { task: FHIRTask; comment: TaskNote }): void {
     // Task has been updated with new comment, no need to emit edit event
     // The task-comments component already handles the update internally
   }
 
   onCommentError(error: string): void {
     // Handle comment error - could emit to parent or log
-    console.error('Comment error:', error);
+    logger.error('Comment error:', error);
   }
 
   getStatusIcon(): string {

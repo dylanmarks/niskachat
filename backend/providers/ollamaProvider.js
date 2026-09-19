@@ -2,9 +2,9 @@ import logger from "../utils/logger.js";
 import { BaseLLMProvider } from "./baseProvider.js";
 
 /**
- * Ollama Provider (Local / Offline)
- * Connects to a local Ollama instance for completely private, zero-data-egress inference.
- * Ideal for air-gapped environments, on-prem clinical workstations, or HIPAA compliance.
+ * Ollama provider for a caller-managed local model runtime.
+ * Whether data leaves the host depends on the configured base URL and the
+ * surrounding Ollama deployment.
  */
 export class OllamaProvider extends BaseLLMProvider {
   constructor(config = {}) {
@@ -22,7 +22,7 @@ export class OllamaProvider extends BaseLLMProvider {
   }
 
   getRequiredEnvVars() {
-    // Zero API keys required for local inference
+    // The default local Ollama API does not require an API key.
     return [];
   }
 

@@ -786,7 +786,7 @@ export class ObservationsChartComponent
 
   // Sort observations by effective date (newest first)
   private sortObservationsByDate(observations: Observation[]): Observation[] {
-    return observations.sort((a, b) => {
+    return [...observations].sort((a, b) => {
       const dateA = this.extractObservationDate(a);
       const dateB = this.extractObservationDate(b);
 

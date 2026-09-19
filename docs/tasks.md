@@ -3,31 +3,12 @@
 This file provides a developer-friendly checklist for each implementation phase.  
 Follow test-driven development: write tests first, then implement, then validate.
 
-## 🚀 **Current Progress Summary**
+## Current progress summary
 
-| Phase        | Status       | Description                                 | Tests    | Commit    |
-| ------------ | ------------ | ------------------------------------------- | -------- | --------- |
-| **Phase 1**  | ✅ COMPLETED | Project Setup (Angular + Express + Testing) | 2/2 ✅   | `bc4cd6f` |
-| **Phase 2**  | ✅ COMPLETED | OAuth2 SMART Login Backend                  | 15/15 ✅ | `f8afddd` |
-| **Phase 3**  | ✅ COMPLETED | SMART Client Context Handling Frontend      | 29/33 ✅ | `e464642` |
-| **Phase 4**  | ✅ COMPLETED | Patient Summary Component                   | 61/69 ✅ | `acbb75e` |
-| **Phase 5**  | ✅ COMPLETED | Conditions List Component                   | 48/48 ✅ | `3652eba` |
-| **Phase 6**  | ✅ COMPLETED | Observations Chart Component                | 18/18 ✅ | `8542225` |
-| **Phase 7**  | ✅ COMPLETED | Medications List Component                  | 8/8 ✅   | `b8d7e9a` |
-| **Phase 8**  | ✅ COMPLETED | Static FHIR Bundle Upload                   | 8/8 ✅   | `de2cd1f` |
-| **Phase 9**  | ✅ COMPLETED | Optional Backend FHIR Proxy                 | 17/17 ✅ | `current` |
-| **Phase 10** | ✅ COMPLETED | LLM Summary Integration (MacBook Air Safe)  | 8/8 ✅   | `current` |
-| **Phase 11** | ⏳ PENDING   | Deployment & Integration Testing            | 0/0 ⏳   | -         |
-| **Phase 12** | ✅ COMPLETED | Custom Chat UI (Provider-Facing)            | 10/10 ✅ | `current` |
-| **Phase 13** | ⏳ PENDING   | Code Quality & Technical Debt Resolution    | 0/12 ⏳  | -         |
-| **Phase 15** | ✅ COMPLETED | Task Comments Management                    | 12/12 ✅ | `current` |
-| **Phase 14** | ⏳ PENDING   | Material Design System Implementation       | 0/12 ⏳  | -         |
-| **Phase 15** | ⏳ PENDING   | Chat UI with Pre-Set Topics                 | 0/0 ⏳   | -         |
-| **Phase 16** | ⏳ PENDING   | Enhanced Security & Compliance              | 0/0 ⏳   | -         |
-| **Phase 17** | ⏳ PENDING   | Performance & Optimization                  | 0/0 ⏳   | -         |
-| **Phase 18** | ⏳ PENDING   | Advanced Features                           | 0/0 ⏳   | -         |
-
-**Overall Test Status**: 138 frontend + 40 backend + 12 task comments = **190 tests passing** 🎯
+The project is a working reference implementation, not a completed product
+plan. The source of truth for active priorities is [the roadmap](../roadmap/roadmap.md).
+Run the repository checks locally for current test counts; avoid copying counts
+into documentation because they change as the examples evolve.
 
 ## 📋 **Priority Rationale**
 
@@ -44,8 +25,8 @@ The sequence **Code Quality → Material Design → Chat Topics** creates a soli
 
 ## Phase 1: Project Setup
 
-- [x] Scaffold Angular frontend using Extreme Angular template
-- [x] Set up Angular 16+ with modern tooling
+- [x] Scaffold Angular frontend with standalone components and modern tooling
+- [x] Set up Angular 20+ with modern tooling
 - [x] Scaffold Express backend with health check
 - [x] Set up Jest for backend testing
 - [x] Set up Jasmine + Karma for frontend testing

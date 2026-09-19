@@ -102,6 +102,7 @@ export class TaskCommentsComponent {
       time: new Date().toISOString(),
       text: commentText,
     };
+    const optimisticComment = this.pendingComment;
 
     // Clear input immediately for better UX
     this.newComment = '';
@@ -112,18 +113,21 @@ export class TaskCommentsComponent {
         this.http.post<{ success: boolean; task: FHIRTask; message: string }>(
           `${environment.apiBaseUrl}/api/tasks/${this.task.id}/comments`,
           { text: commentText } as CommentAppendRequest,
-          { headers: { 'If-Match': this.task.version?.toString() || '1' } },
+          {
+            headers: {
+              'If-Match': `W/"${this.task.meta?.versionId ?? '1'}"`,
+            },
+          },
         ),
       );
 
       if (response.success) {
-        // Update task with server response
-        if (response.task.note) {
-          this.task.note = response.task.note;
-        }
-        if (response.task.version) {
-          this.task.version = response.task.version;
-        }
+        const serverComments = response.task.note ?? [];
+        const addedComment =
+          serverComments[serverComments.length - 1] ?? optimisticComment;
+
+        // Keep the complete server representation, including the new version.
+        this.task = response.task;
 
         // Clear pending comment
         this.pendingComment = null;
@@ -131,7 +135,7 @@ export class TaskCommentsComponent {
         // Emit success event
         this.commentAdded.emit({
           task: this.task,
-          comment: this.pendingComment!,
+          comment: addedComment,
         });
 
         // Show success message

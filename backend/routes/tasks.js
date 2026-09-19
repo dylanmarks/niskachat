@@ -4,330 +4,230 @@ import logger from "../utils/logger.js";
 
 const router = express.Router();
 
-// In-memory storage for demo purposes (replace with FHIR server in production)
-const tasks = new Map();
-const taskVersions = new Map();
+// This is deliberately a demo repository, not a FHIR repository. Keeping each
+// session in a separate store prevents records loaded in one browser session
+// from being exposed to another while making the persistence boundary explicit.
+const taskStores = new Map();
+const VALID_PRIORITIES = new Set(["routine", "urgent", "asap", "stat"]);
 
-// Helper function to validate comment text
-function validateCommentText(text) {
-  if (!text || typeof text !== "string") {
-    return { valid: false, error: "Comment text is required" };
+function getTaskStore(req) {
+  // Assigning a store identifier makes the otherwise-empty Express session
+  // persistent when saveUninitialized is disabled.
+  if (!req.session.taskStoreId) {
+    req.session.taskStoreId = uuidv4();
   }
 
-  const trimmed = text.trim();
-  if (trimmed.length === 0) {
-    return { valid: false, error: "Comment text cannot be empty" };
+  let store = taskStores.get(req.session.taskStoreId);
+  if (!store) {
+    store = new Map();
+    taskStores.set(req.session.taskStoreId, store);
   }
+  return store;
+}
 
-  if (trimmed.length > 1000) {
+function validateRequiredString(value, fieldName, maxLength) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return { valid: false, error: `${fieldName} is required` };
+  }
+  const normalized = value.trim();
+  if (normalized.length > maxLength) {
     return {
       valid: false,
-      error: "Comment text cannot exceed 1000 characters",
+      error: `${fieldName} cannot exceed ${maxLength} characters`,
     };
   }
-
-  return { valid: true, text: trimmed };
+  return { valid: true, value: normalized };
 }
 
-// Helper function to create TaskNote (maps to FHIR Annotation)
+function validateCommentText(text) {
+  return validateRequiredString(text, "Comment text", 1000);
+}
+
 function createTaskNote(text, authorInfo) {
-  return {
-    authorReference: authorInfo.reference
-      ? {
-          reference: authorInfo.reference,
-          type: authorInfo.type || "Practitioner",
-          display: authorInfo.display,
-        }
-      : undefined,
-    authorString: authorInfo.display || "Unknown User",
-    time: new Date().toISOString(),
-    text: text,
-  };
+  const note = { time: new Date().toISOString(), text };
+
+  // Annotation.author[x] is a choice element: emit a reference or a string,
+  // never both.
+  if (authorInfo.reference) {
+    note.authorReference = {
+      reference: authorInfo.reference,
+      type: authorInfo.type || "Practitioner",
+      ...(authorInfo.display ? { display: authorInfo.display } : {}),
+    };
+  } else {
+    note.authorString = authorInfo.display || "Demo user";
+  }
+  return note;
 }
 
-// Helper function to get current user info from session
 function getCurrentUserInfo(req) {
-  // For demo purposes, use session or mock user
-  // In production, this would come from SMART on FHIR context
-  if (req.session && req.session.user) {
+  if (req.session?.user) {
     return {
       reference: req.session.user.reference,
       type: req.session.user.type || "Practitioner",
-      display: req.session.user.display || "Current User",
+      display: req.session.user.display || "Current user",
     };
   }
-
-  // Fallback for development/testing
-  return {
-    display: "Demo User",
-    type: "Practitioner",
-  };
+  return { display: "Demo user" };
 }
 
-// POST /api/tasks - Create new task with optional initial comment
+function parseIfMatch(value) {
+  if (!value) return null;
+  const match = /^(?:W\/)?"?(\d+)"?$/.exec(value.trim());
+  return match ? match[1] : null;
+}
+
+function setVersionEtag(res, task) {
+  res.set("ETag", `W/"${task.meta.versionId}"`);
+}
+
+// POST /api/tasks - create a session-scoped FHIR R4 Task.
 router.post("/", (req, res) => {
   try {
-    const {
-      title,
-      description,
-      priority,
+    const { title, description, priority, patientReference, initialComment } =
+      req.body;
+    const validTitle = validateRequiredString(title, "Title", 200);
+    const validPatient = validateRequiredString(
       patientReference,
-      source,
-      initialComment,
-    } = req.body;
+      "Patient reference",
+      500,
+    );
 
-    // Validate required fields
-    if (!title || !patientReference) {
+    if (!validTitle.valid || !validPatient.valid) {
       return res.status(400).json({
-        error: "Missing required fields",
-        details: {
-          title: !title ? "Title is required" : undefined,
-          patientReference: !patientReference
-            ? "Patient reference is required"
-            : undefined,
-        },
+        error: "Invalid task",
+        details: [validTitle.error, validPatient.error].filter(Boolean),
+      });
+    }
+    if (priority !== undefined && !VALID_PRIORITIES.has(priority)) {
+      return res.status(400).json({
+        error: "Invalid task",
+        details: "Priority must be one of routine, urgent, asap, or stat",
       });
     }
 
-    // Validate initial comment if provided
-    if (initialComment !== undefined) {
-      const commentValidation = validateCommentText(initialComment);
-      if (!commentValidation.valid) {
+    let normalizedDescription;
+    if (description !== undefined && description !== null) {
+      if (typeof description !== "string" || description.length > 2000) {
         return res.status(400).json({
-          error: "Invalid initial comment",
-          details: commentValidation.error,
+          error: "Invalid task",
+          details: "Description must be a string of at most 2000 characters",
         });
       }
+      normalizedDescription = description.trim();
     }
 
-    // Create new task
-    const taskId = uuidv4();
-    const version = 1;
+    let normalizedComment;
+    if (initialComment !== undefined) {
+      const validation = validateCommentText(initialComment);
+      if (!validation.valid) {
+        return res.status(400).json({
+          error: "Invalid initial comment",
+          details: validation.error,
+        });
+      }
+      normalizedComment = validation.value;
+    }
 
-    const newTask = {
+    const now = new Date().toISOString();
+    const task = {
       resourceType: "Task",
-      id: taskId,
+      id: uuidv4(),
+      meta: { versionId: "1", lastUpdated: now },
       intent: "order",
       status: "requested",
       priority: priority || "routine",
-      code: {
-        text: title.trim(),
-      },
-      description: description?.trim(),
-      for: {
-        reference: patientReference,
-      },
-      authoredOn: new Date().toISOString(),
-      _source: source || "manual",
-      _sessionId: req.sessionID || "demo-session",
-      version: version,
+      code: { text: validTitle.value },
+      ...(normalizedDescription ? { description: normalizedDescription } : {}),
+      for: { reference: validPatient.value },
+      authoredOn: now,
+      ...(normalizedComment
+        ? { note: [createTaskNote(normalizedComment, getCurrentUserInfo(req))] }
+        : {}),
     };
 
-    // Add initial comment if provided
-    if (initialComment) {
-      const userInfo = getCurrentUserInfo(req);
-      newTask.note = [createTaskNote(initialComment, userInfo)];
-    }
-
-    // Store task
-    tasks.set(taskId, newTask);
-    taskVersions.set(taskId, version);
-
-    logger.info("Task created successfully", {
-      taskId,
-      title: newTask.code.text,
-      hasInitialComment: !!initialComment,
-      sessionId: req.sessionID,
+    getTaskStore(req).set(task.id, task);
+    setVersionEtag(res, task);
+    logger.info("Task created", {
+      taskId: task.id,
+      hasInitialComment: Boolean(normalizedComment),
     });
-
-    res.status(201).json({
-      success: true,
-      task: newTask,
-      message: "Task created successfully",
-    });
+    return res.status(201).json({ success: true, task });
   } catch (error) {
-    logger.error("Error creating task", {
-      error: error.message,
-      stack: error.stack,
-    });
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to create task",
-    });
+    logger.error("Error creating task", { error: error.message });
+    return res.status(500).json({ error: "Failed to create task" });
   }
 });
 
-// POST /api/tasks/:id/comments - Append comment to existing task
+// POST /api/tasks/:id/comments - append a FHIR Annotation to Task.note.
 router.post("/:id/comments", (req, res) => {
   try {
-    const { id } = req.params;
-    const { text } = req.body;
-    const ifMatch = req.headers["if-match"];
+    const store = getTaskStore(req);
+    const task = store.get(req.params.id);
+    if (!task) return res.status(404).json({ error: "Task not found" });
 
-    // Validate task exists
-    const task = tasks.get(id);
-    if (!task) {
-      return res.status(404).json({
-        error: "Task not found",
-        message: `Task with ID ${id} does not exist`,
-      });
+    const validation = validateCommentText(req.body.text);
+    if (!validation.valid) {
+      return res
+        .status(400)
+        .json({ error: "Invalid comment", details: validation.error });
     }
 
-    // Validate comment text
-    const commentValidation = validateCommentText(text);
-    if (!commentValidation.valid) {
-      return res.status(400).json({
-        error: "Invalid comment",
-        details: commentValidation.error,
-      });
-    }
-
-    // Check optimistic concurrency
-    const currentVersion = taskVersions.get(id);
-    if (ifMatch && parseInt(ifMatch) !== currentVersion) {
-      return res.status(409).json({
+    const requestedVersion = parseIfMatch(req.headers["if-match"]);
+    if (req.headers["if-match"] && requestedVersion !== task.meta.versionId) {
+      return res.status(412).json({
         error: "Version conflict",
-        message: "Task has been modified by another user",
-        currentVersion,
-        requestedVersion: ifMatch,
+        currentVersion: task.meta.versionId,
       });
     }
 
-    // Get current user info
-    const userInfo = getCurrentUserInfo(req);
-
-    // Create new comment
-    const newComment = createTaskNote(commentValidation.text, userInfo);
-
-    // Append comment to task
-    if (!task.note) {
-      task.note = [];
-    }
-    task.note.push(newComment);
-
-    // Increment version
-    const newVersion = currentVersion + 1;
-    task.version = newVersion;
-    taskVersions.set(id, newVersion);
-
-    // Update task
-    tasks.set(id, task);
-
-    logger.info("Comment appended to task", {
-      taskId: id,
-      commentAuthor: userInfo.display,
-      commentLength: commentValidation.text.length,
-      newVersion,
-      sessionId: req.sessionID,
-    });
-
-    res.status(200).json({
-      success: true,
-      task: {
-        id: task.id,
-        note: task.note,
-        version: task.version,
+    const nextVersion = String(Number(task.meta.versionId) + 1);
+    const updatedTask = {
+      ...task,
+      meta: {
+        ...task.meta,
+        versionId: nextVersion,
+        lastUpdated: new Date().toISOString(),
       },
-      message: "Comment added successfully",
+      note: [
+        ...(task.note || []),
+        createTaskNote(validation.value, getCurrentUserInfo(req)),
+      ],
+    };
+
+    store.set(task.id, updatedTask);
+    setVersionEtag(res, updatedTask);
+    logger.info("Task comment appended", {
+      taskId: task.id,
+      newVersion: nextVersion,
     });
+    return res.status(200).json({ success: true, task: updatedTask });
   } catch (error) {
-    logger.error("Error appending comment", {
-      error: error.message,
-      stack: error.stack,
-    });
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to add comment",
-    });
+    logger.error("Error appending task comment", { error: error.message });
+    return res.status(500).json({ error: "Failed to add comment" });
   }
 });
 
-// GET /api/tasks/:id/comments - Get all comments for a task
 router.get("/:id/comments", (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Validate task exists
-    const task = tasks.get(id);
-    if (!task) {
-      return res.status(404).json({
-        error: "Task not found",
-        message: `Task with ID ${id} does not exist`,
-      });
-    }
-
-    // Return comments sorted by time (newest first)
-    const comments = (task.note || []).sort(
-      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
-    );
-
-    res.status(200).json({
-      success: true,
-      taskId: id,
-      comments,
-      count: comments.length,
-    });
-  } catch (error) {
-    logger.error("Error retrieving comments", {
-      error: error.message,
-      stack: error.stack,
-    });
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to retrieve comments",
-    });
-  }
+  const task = getTaskStore(req).get(req.params.id);
+  if (!task) return res.status(404).json({ error: "Task not found" });
+  const comments = [...(task.note || [])].sort(
+    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
+  );
+  setVersionEtag(res, task);
+  return res.json({ taskId: task.id, comments, count: comments.length });
 });
 
-// GET /api/tasks/:id - Get task by ID
 router.get("/:id", (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const task = tasks.get(id);
-    if (!task) {
-      return res.status(404).json({
-        error: "Task not found",
-        message: `Task with ID ${id} does not exist`,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      task,
-    });
-  } catch (error) {
-    logger.error("Error retrieving task", {
-      error: error.message,
-      stack: error.stack,
-    });
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to retrieve task",
-    });
-  }
+  const task = getTaskStore(req).get(req.params.id);
+  if (!task) return res.status(404).json({ error: "Task not found" });
+  setVersionEtag(res, task);
+  return res.json({ success: true, task });
 });
 
-// GET /api/tasks - Get all tasks
 router.get("/", (req, res) => {
-  try {
-    const allTasks = Array.from(tasks.values());
-
-    res.status(200).json({
-      success: true,
-      tasks: allTasks,
-      count: allTasks.length,
-    });
-  } catch (error) {
-    logger.error("Error retrieving tasks", {
-      error: error.message,
-      stack: error.stack,
-    });
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to retrieve tasks",
-    });
-  }
+  const tasks = Array.from(getTaskStore(req).values());
+  return res.json({ success: true, tasks, count: tasks.length });
 });
 
 export default router;

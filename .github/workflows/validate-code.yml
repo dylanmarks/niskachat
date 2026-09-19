@@ -22,22 +22,23 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Run lint & format verification
+        id: lint
         run: npm run lint:all
 
       - name: Run Angular headless unit tests
+        id: frontend-tests
         run: npm run test:ci
 
       - name: Run Backend Jest unit tests
+        id: backend-tests
         run: npm run test:backend
 
       - name: Generate GitHub Actions Job Summary
         if: always()
         run: |
-          echo "### 🧪 Continuous Integration Verification Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "### Continuous integration checks" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Lint & Format Validation** (\`npm run lint:all\`) | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Frontend Tests** (\`npm run test:ci\`) | Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Backend Tests** (\`npm run test:backend\`) | Passed |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Built and validated against Node.js 22 with strict type-checking and conventional commit guidelines." >> $GITHUB_STEP_SUMMARY
+          echo "| Lint and formatting | \`${{ steps.lint.outcome }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend tests | \`${{ steps.frontend-tests.outcome }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend tests | \`${{ steps.backend-tests.outcome }}\` |" >> $GITHUB_STEP_SUMMARY

@@ -2,11 +2,11 @@
 
 ## 🧭 Project Overview
 
-**NiskaChat** is a FHIR Bundle Viewer and SMART on FHIR-compliant web application that allows clinicians or patients to securely access and view a patient’s clinical data from a FHIR repository.
+**NiskaChat** is a FHIR bundle viewer and SMART on FHIR reference application for learning and prototyping interoperability workflows. It is not a clinical product or a compliance certification.
 
 The application will consist of:
 
-- **Frontend**: Angular 16+
+- **Frontend**: Angular 20+
 - **Backend**: Node.js/Express
 - **Auth**: SMART on FHIR OAuth2 with PKCE
 - **Hosting**: GitHub Pages/Netlify (frontend), Render/Heroku/Cloud Run (backend)
@@ -14,7 +14,7 @@ The application will consist of:
 
 **Goals**:
 
-- Modular, standards-compliant, test-driven application
+- Modular, standards-informed, test-driven reference application
 - Portable and extensible architecture
 - Support optional LLM-based summarization and chat
 
@@ -57,7 +57,7 @@ The application will consist of:
 
 | Layer       | Stack                                      |
 | ----------- | ------------------------------------------ |
-| Frontend    | Angular 16+, Chart.js, fhirclient.js       |
+| Frontend    | Angular 20+, Chart.js, fhirclient.js       |
 | Backend     | Node.js, Express, Jest, Supertest          |
 | Auth        | SMART on FHIR OAuth2 + PKCE                |
 | Hosting     | GitHub Pages, Netlify, Render, Heroku      |
@@ -75,7 +75,7 @@ Branch naming format: `feature/<phase-name>` (e.g. `feature/patient-summary`)
 
 ### ✅ Phase 1: Project Setup
 
-**Goal**: Initialize dev environment, CI, and test setup using Extreme Angular template.
+**Goal**: Initialize the NiskaChat development environment, CI, and test setup.
 
 **Deliverables**:
 

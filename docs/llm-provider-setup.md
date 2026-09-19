@@ -1,220 +1,89 @@
-# 🧠 LLM Provider Setup Guide
+# LLM provider setup
 
-NiskaChat now supports **Claude Haiku** with secure API key management and proper configuration. This guide shows you how to configure the Claude Haiku provider.
+LLM features are optional. Without a configured provider, NiskaChat continues to
+display FHIR data and uses a small deterministic fallback for patient summaries.
 
-## 🏗️ **Provider Architecture**
+## Data boundary
 
-### **Supported Providers**
+The backend sends a compressed representation of the current clinical record,
+the user's question, and recent conversation history to the selected provider.
+Do not use identifiable clinical data unless your organization has reviewed the
+provider, contracts, consent, retention behavior, access controls, and applicable
+legal requirements.
 
-- **Claude Haiku** (Anthropic) - Cloud-based, fast, cost-effective
+An API key in `.env` keeps the credential out of browser code; it does not make a
+cloud model appropriate for regulated clinical data. Ollama can keep inference on
+a machine you control, but the surrounding host, logs, model, and operational
+controls still require review.
 
-### **Key Features**
+## Configure a provider
 
-- ✅ **Secure API keys** - Environment variables, never exposed to client
-- ✅ **Provider selection** - Configure preferred provider
-- ✅ **Status monitoring** - Real-time provider availability checks
-- ✅ **Consistent interface** - Same API for all providers
-
-## 🔐 **Security Setup**
-
-### **1. Create Environment File**
+Copy the example configuration and select one provider:
 
 ```bash
-# Copy the example file
 cp .env.example .env
-
-# Edit with your actual values
-vim .env
 ```
 
-### **2. Configure API Keys**
+### Ollama
 
-The `.env` file is **gitignored** and never committed to version control.
+```env
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1:8b
+```
 
-```bash
-# Required for Claude Haiku
-ANTHROPIC_API_KEY=sk-ant-api03-your-actual-key-here
+### OpenRouter
 
-# Provider configuration
+```env
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=replace-me
+OPENROUTER_MODEL=anthropic/claude-3.5-haiku
+```
+
+### Anthropic
+
+```env
 LLM_PROVIDER=claude-haiku
-```
-
-## 🎯 **Claude Haiku Setup**
-
-### **1. Get Anthropic API Key**
-
-1. Visit: https://console.anthropic.com/
-2. Create an account or sign in
-3. Navigate to API Keys section
-4. Create a new API key
-5. Copy the key (starts with `sk-ant-api03-`)
-
-### **2. Add to Environment**
-
-```bash
-# In your .env file
-ANTHROPIC_API_KEY=sk-ant-api03-your-actual-key-here
-LLM_PROVIDER=claude-haiku
-```
-
-### **3. Optional Configuration**
-
-```bash
-# Customize Claude behavior
+ANTHROPIC_API_KEY=replace-me
 CLAUDE_MODEL=claude-3-haiku-20240307
-CLAUDE_MAX_TOKENS=1000
-CLAUDE_TEMPERATURE=0.3
-CLAUDE_TIMEOUT=30000
 ```
 
-### **4. Test Claude Setup**
+### Gemini
+
+```env
+LLM_PROVIDER=gemini-vertex
+GEMINI_API_KEY=replace-me
+GEMINI_MODEL=gemini-2.5-pro
+```
+
+Model identifiers and availability change over time. Override the defaults with
+an identifier currently supported by your account and provider.
+
+## Verify configuration
+
+Start the backend, then inspect provider status:
 
 ```bash
-# Start the backend
 npm run start:backend
-
-# Check provider status
-curl http://localhost:3000/llm/status
+curl http://localhost:3000/api/llm/status
 ```
 
-## ⚙️ **Provider Configuration**
-
-### **Provider Priority**
-
-Set which provider to use:
+Run the provider smoke test only with synthetic input:
 
 ```bash
-# Use Claude Haiku
-LLM_PROVIDER=claude-haiku
+npm run test-providers
 ```
 
-### **How Provider Selection Works**
+Provider selection tries `LLM_PROVIDER` first and may fall back to another
+configured, reachable provider. Do not configure fallback providers with a
+different approved data boundary unless that behavior is acceptable for your
+deployment.
 
-1. **Primary**: Try the `LLM_PROVIDER` first
-2. **Graceful Degradation**: If no providers work, show fallback messages
+## Operational notes
 
-## 🧪 **Testing Your Setup**
-
-### **1. Check Provider Status**
-
-```bash
-curl http://localhost:3000/llm/status
-```
-
-**Expected Response:**
-
-```json
-{
-  "llmAvailable": true,
-  "preferredProvider": "claude-haiku",
-  "providers": {
-    "claude-haiku": {
-      "available": true,
-      "provider": "claude-haiku",
-      "model": "claude-3-haiku-20240307",
-      "configured": true,
-      "hasApiKey": true
-    }
-  }
-}
-```
-
-### **2. Test Chat Interface**
-
-```bash
-# Start the full app
-npm run start:dev
-
-# Use the chat interface in the browser
-# Try asking: "What can you tell me about this patient?"
-```
-
-### **3. Test API Directly**
-
-```bash
-curl -X POST http://localhost:3000/llm \
-  -H "Content-Type: application/json" \
-  -d '{
-    "context": "clinical_chat",
-    "query": "What are the key clinical findings?",
-    "patientData": {"patient": {"name": [{"given": ["Test"], "family": "Patient"}]}}
-  }'
-```
-
-## 🚨 **Troubleshooting**
-
-### **Claude Haiku Issues**
-
-**❌ "Missing ANTHROPIC_API_KEY"**
-
-- Check your `.env` file has the correct key
-- Verify the key starts with `sk-ant-api03-`
-- Restart the backend server after adding the key
-
-**❌ "Authentication failed"**
-
-- Verify your API key is correct
-- Check you have credits in your Anthropic account
-- Try generating a new API key
-
-**❌ "Rate limit exceeded"**
-
-- Wait a few minutes and try again
-- Consider upgrading your Anthropic plan
-
-### **General Issues**
-
-**❌ "No LLM providers are available"**
-
-- Check provider status: `curl http://localhost:3000/llm/status`
-- Verify at least one provider is configured
-- Check server logs for detailed error messages
-
-## 📊 **Provider Comparison**
-
-| Feature         | Claude Haiku           |
-| --------------- | ---------------------- |
-| **Speed**       | Very Fast              |
-| **Cost**        | Pay per token          |
-| **Privacy**     | Data sent to Anthropic |
-| **Setup**       | API key only           |
-| **Quality**     | Excellent for medical  |
-| **Reliability** | High (cloud)           |
-| **Internet**    | Required               |
-
-## 💡 **Best Practices**
-
-### **Production Setup**
-
-```bash
-# Recommended production configuration
-LLM_PROVIDER=claude-haiku
-CLAUDE_MAX_TOKENS=800
-CLAUDE_TEMPERATURE=0.2
-```
-
-### **Development Setup**
-
-```bash
-# For development and testing
-LLM_PROVIDER=claude-haiku
-CLAUDE_MAX_TOKENS=1000
-```
-
-### **Security Reminders**
-
-- ✅ Never commit `.env` files to git
-- ✅ Use different API keys for development and production
-- ✅ Regularly rotate API keys
-- ✅ Monitor API usage and costs
-- ✅ Use environment-specific configurations
-
-## 🎉 **You're Ready!**
-
-With Claude Haiku configured, NiskaChat will:
-
-- Use Claude Haiku for fast, high-quality responses
-- Provide secure, HIPAA-appropriate clinical AI assistance
-- Maintain high availability with cloud-based reliability
-
-Your API keys are secure, your setup is robust, and you have access to excellent medical AI assistance!
+- Never commit `.env` files or keys.
+- Use distinct keys per environment and rotate them regularly.
+- Review provider logging and retention settings.
+- Treat generated content as untrusted output requiring clinician review.
+- Keep model-provider failures observable without logging prompts or patient
+  content.

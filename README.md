@@ -1,133 +1,158 @@
-# NiskaChat: FHIR Bundle Viewer & SMART on FHIR App
+# NiskaChat
 
-**NiskaChat** is a modular, standards-compliant, and test-driven web application that enables clinicians and patients to securely view clinical data from FHIR repositories. Built with an Angular frontend and a Node.js/Express backend, NiskaChat supports SMART on FHIR authentication, structured FHIR resource views, charting of observations, and optional LLM-powered summarization and chat.
+NiskaChat is an open-source reference application for exploring healthcare
+interoperability workflows. It combines a SMART on FHIR launch flow, FHIR R4
+resource views, longitudinal observation charts, session-scoped clinical tasks,
+and an optional LLM adapter layer.
 
-## 🌐 Project Overview
+The project is intended for developers learning or prototyping health-tech
+integrations. It is not a medical device, clinical decision support system, or
+production EHR integration.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="src/assets/niska-logo-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="src/assets/niska-logo.png">
-    <img src="src/assets/niska-logo.png"
-         alt="Logo icon of a goose from above with medical cross"
-         width="150">
+    <img src="src/assets/niska-logo.png" alt="Goose viewed from above with a medical cross" width="150">
   </picture>
 </p>
 
-Niska Chat draws its name from the Indigenous Cree word niska (“goose”). Just as geese fly in cooperative V-formation, the app promotes shared direction and mutual support among clinicians and patients. Geese navigate with an innate magnetic compass, mirroring the platform’s goal of steering users confidently through complex health data. Niska Chat was built in Calgary on the traditional territories of Treaty 7: the Blackfoot Confederacy (Siksika, Piikani, Kainai), the Tsuut’ina Nation, the Stoney Nakoda Nations, and the Métis Nation of Alberta, Region 3.
+The name comes from the Cree word _niska_ (goose). The project was started in
+Calgary, on the traditional territories of the Blackfoot Confederacy (Siksika,
+Piikani, and Kainai), the Tsuut'ina Nation, the Îyâxe Nakoda Nations, and the
+Otipemisiwak Métis Government.
 
-NiskaChat is designed for:
+## What the project demonstrates
 
-- **Clinicians** reviewing longitudinal patient data
-- **Care coordinators** managing multi-provider care plans
-- **Future agentic capabilities** for interpreting and guiding health actions
+- A SMART on FHIR authorization-code flow with PKCE and server-side token
+  storage.
+- Display of Patient, Condition, Observation, MedicationRequest, AllergyIntolerance,
+  Immunization, and Procedure resources from FHIR R4 bundles.
+- Observation trend visualization using coded clinical data and UCUM units.
+- FHIR R4 `Task` and `CarePlan` workflow concepts, including `Task.note`
+  annotations and `meta.versionId`-based optimistic concurrency.
+- A provider-neutral LLM boundary with OpenRouter, Ollama, Anthropic, and Gemini
+  adapters, plus streaming responses over server-sent events.
+- A no-account demo path using the example bundles in `examples/fhir-bundles`.
 
-Initial data sources include the SMART Sandbox and static FHIR Bundle uploads, with future support for the Google Cloud Healthcare API, Aidbox, or integration into SMART compliant EHRs such as Epic and Oracle.
+## Screenshots
 
----
+|                         Clinical discussion                         |                              Task workflow                              |
+| :-----------------------------------------------------------------: | :---------------------------------------------------------------------: |
+| ![Clinical discussion](docs/screenshots/04-clinical-ai-discuss.png) | ![FHIR CarePlan and tasks](docs/screenshots/05-fhir-careplan-tasks.png) |
 
-## 📸 Application Showcase
-
-|                Clinical AI Assistant & Suggested Actions                |               FHIR CarePlan & Clinical Tasks Management               |
-| :---------------------------------------------------------------------: | :-------------------------------------------------------------------: |
-| ![Clinical Chat & Actions](docs/screenshots/04-clinical-ai-discuss.png) | ![FHIR CarePlan & Tasks](docs/screenshots/05-fhir-careplan-tasks.png) |
-
-|            Longitudinal Observation Trends (Chart.js)             |             Patient Overview & Medical Records              |
+|                        Observation trends                         |                       Patient record                        |
 | :---------------------------------------------------------------: | :---------------------------------------------------------: |
-| ![Observation Charts](docs/screenshots/03-observation-charts.png) | ![Patient Records](docs/screenshots/02-patient-records.png) |
+| ![Observation charts](docs/screenshots/03-observation-charts.png) | ![Patient records](docs/screenshots/02-patient-records.png) |
 
-|                 Privacy-First Offline FHIR Ingestion                  |
-| :-------------------------------------------------------------------: |
-| ![Offline Landing Mode](docs/screenshots/01-landing-offline-mode.png) |
+## Architecture and trust boundaries
 
----
+The Angular client renders FHIR data and uses `fhirclient` for the browser-based
+SMART launch. The Express backend owns the task demo API and is the only
+component that calls model providers. It also contains an experimental
+server-side SMART session and FHIR proxy; that path is not yet wired into the
+Angular client.
 
-## ⚙️ Tech Stack
+Important limitations:
 
-| Layer                 | Tech                                                                                                                       |
-| :-------------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend**          | Angular 20 (Standalone Components), Angular Material 20, Chart.js 4, fhirclient.js                                         |
-| **Backend**           | Node.js 22 + Express, Helmet, Express Session, PKCE OAuth2                                                                 |
-| **Standards**         | HL7 FHIR R4, US Core, SMART on FHIR App Launch Framework                                                                   |
-| **AI Providers**      | **OpenRouter** (Unified Claude/Llama/DeepSeek), **Ollama** (Local/Offline Private AI), **Claude Haiku**, **Google Gemini** |
-| **Testing & Quality** | Jest, Jasmine/Karma, ESLint 9, Stylelint, Pa11y (WCAG 2.1 AA)                                                              |
+- The task repository is an in-memory, session-scoped demonstration store. Data
+  is lost on restart and is not written back to an EHR or FHIR server.
+- The primary browser SMART flow relies on `fhirclient` discovery and browser
+  storage. Configure its public client ID and redirect URI in
+  `src/environments/environment.ts` before testing a registered client.
+- The separate backend SMART/proxy prototype uses endpoints from `.env`; it is
+  not a second automatic fallback for the browser flow.
+- Uploaded bundles remain in the browser for normal viewing. If an LLM feature
+  is used, a compressed clinical representation is sent to the configured model
+  provider. Ollama is the local-processing option.
+- Example bundles are for demonstration only. Do not upload real protected
+  health information to a public deployment or send it to a model provider
+  without the agreements, consent, security controls, and governance required
+  by your jurisdiction and organization.
+- Generated summaries and suggested tasks require human review. They must not
+  be treated as medical advice or autonomous clinical decisions.
 
----
+These boundaries are deliberate: the repository shows integration patterns
+without claiming production compliance it does not provide.
 
-## 🔐 Key Features
+## Getting started
 
-- **SMART on FHIR OAuth2 Login**: Secure PKCE flow supporting EHR Launch and Standalone Launch.
-- **Privacy-First Offline Mode**: Ingest and explore synthetic FHIR Bundles (Synthea) with zero network egress.
-- **Longitudinal Clinical Charting**: Interactive time-series trends for Vitals, Labs (HbA1c, BP, Glucose) with Chart.js.
-- **Next Best Action AI Engine**: Translates conversational clinical summaries into structured **FHIR CarePlan** and **FHIR Task** resources.
-- **Multi-Provider LLM Gateway**: Seamlessly switch between OpenRouter, local air-gapped Ollama models, or direct vendor APIs with automatic fallback.
-- **Accessibility**: Full WCAG 2.1 AA compliance verified with automated Pa11y/Axe audits.
+### Requirements
 
----
+- Node.js 22
+- npm
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 20+ (Node 22 recommended)
-- Angular CLI
-
-### Setup
+### Install and run
 
 ```bash
-# Clone the repository
 git clone https://github.com/dylanmarks/niskachat.git
 cd niskachat
-
-# Install dependencies
 npm install
+cp .env.example .env
+npm run start:dev
 ```
+
+The Angular app runs at `http://localhost:4200` and the API at
+`http://localhost:3000`.
+
+To explore without an EHR connection, load one of the bundled example patient
+records from the landing page.
 
 ### Configuration
 
-Copy the example environment configuration:
-
-```bash
-cp .env.example .env
-```
-
-Configure your preferred LLM provider in `.env`:
+At minimum, set a development session secret:
 
 ```env
-# Choose provider: openrouter | ollama | claude-haiku | gemini-vertex
-LLM_PROVIDER=openrouter
-
-# If using OpenRouter (Recommended - access Claude, Llama 3.3, etc. with one key):
-OPENROUTER_API_KEY=your_openrouter_key
-
-# If using local Ollama (100% private, zero-egress offline inference):
-# OLLAMA_BASE_URL=http://127.0.0.1:11434
-# OLLAMA_MODEL=llama3.1:8b
-
-SESSION_SECRET=dev-secret-change-in-production
+SESSION_SECRET=replace-with-a-long-random-value
 CORS_ORIGINS=http://localhost:4200
 ```
 
-### Running the Application
+LLM features are optional. Select one provider:
 
-```bash
-# Run both backend and frontend concurrently:
-npm run start:dev
-
-# Or run separately:
-npm run start:backend # Express API on port 3000
-npm start             # Angular dev server on port 4200
+```env
+# openrouter | ollama | claude-haiku | gemini-vertex
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1:8b
 ```
 
-Open `http://localhost:4200/` in your browser.
+For the experimental backend SMART/proxy path, configure the registered client
+and endpoints:
 
-- **Offline Mode**: Click "Load John Smith Data" or "Load Maria Johnson Data" to instantly explore clinical data without connecting to an EHR.
-- **SMART Sandbox Mode**: Launch via the [SMART Health IT Launcher](https://launch.smarthealthit.org/?launch_url=http%3A%2F%2Flocalhost%3A4200%2F&launch=WzAsImJhYjdmYmJlLTliODQtNGIyYi1iNTQxLWJiMWZlNzY5NzcyYSIsIjFjYjUxMTU3LTgwODMtNDEwZi04N2QxLTA3YTk0NjI5MjIyYSIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDAsMSwiIl0) to test EHR practitioner launch workflows.
+```env
+SMART_CLIENT_ID=your-registered-client-id
+SMART_REDIRECT_URI=http://localhost:3000/auth/callback
+SMART_AUTH_URL=https://launch.smarthealthit.org/v/r4/auth/authorize
+SMART_TOKEN_URL=https://launch.smarthealthit.org/v/r4/auth/token
+SMART_FHIR_BASE_URL=https://launch.smarthealthit.org/v/r4/fhir
+```
 
-### Capturing Fresh UI Screenshots
+See [the provider setup guide](docs/llm-provider-setup.md) for provider-specific
+variables.
 
-To re-generate portfolio screenshots automatically using headless Chrome:
+## Quality checks
 
 ```bash
-node scripts/capture-screenshots.mjs
+npm run lint:all
+npm run test:ci
+npm run test:backend
+npm run build
 ```
+
+The repository uses strict TypeScript compilation, ESLint, Stylelint, Prettier,
+Jasmine/Karma, Jest, CodeQL, and Dependabot. Warnings are tracked technical debt,
+not evidence of clinical validation.
+
+## Project status
+
+NiskaChat is a portfolio and community reference project under active
+development. The [roadmap](roadmap/roadmap.md) distinguishes implemented demo
+features from work needed for durable persistence, broader SMART compatibility,
+terminology handling, accessibility verification, and deployment hardening.
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and use
+synthetic or fully de-identified data in issues and pull requests.
+
+## License
+
+See [LICENSE.txt](LICENSE.txt).

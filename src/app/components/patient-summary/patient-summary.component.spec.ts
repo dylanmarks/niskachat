@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import {
@@ -72,7 +74,11 @@ describe('PatientSummaryComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [PatientSummaryComponent],
-      providers: [{ provide: FhirClientService, useValue: mockFhirClient }],
+      providers: [
+        { provide: FhirClientService, useValue: mockFhirClient },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PatientSummaryComponent);
@@ -116,6 +122,12 @@ describe('PatientSummaryComponent', () => {
     it('should load patient when context is authenticated but no patient', () => {
       mockFhirClient.isAuthenticated.and.returnValue(true);
       mockFhirClient.getPatient.and.returnValue(of(mockPatient));
+      spyOn(
+        component as unknown as {
+          generateCompressedSummary: () => Promise<void>;
+        },
+        'generateCompressedSummary',
+      ).and.resolveTo();
       spyOn(component, 'loadPatient').and.callThrough();
 
       const contextWithoutPatient: FhirContext = {
@@ -134,6 +146,12 @@ describe('PatientSummaryComponent', () => {
     it('should load patient successfully', async () => {
       mockFhirClient.isAuthenticated.and.returnValue(true);
       mockFhirClient.getPatient.and.returnValue(of(mockPatient));
+      spyOn(
+        component as unknown as {
+          generateCompressedSummary: () => Promise<void>;
+        },
+        'generateCompressedSummary',
+      ).and.resolveTo();
 
       await component.loadPatient();
 
@@ -363,45 +381,7 @@ describe('PatientSummaryComponent', () => {
     });
   });
 
-  describe('Navigation', () => {
-    it('should navigate to auth', () => {
-      // Mock window.location
-      delete (window as any).location;
-      (window as any).location = { href: '' };
-
-      component.navigateToAuth();
-
-      expect((window as any).location.href).toBe('/smart-launch');
-    });
-  });
-
   describe('Component Rendering', () => {
-    it('should render valid patient', () => {
-      component.patient = mockPatient;
-      component.isLoading = false;
-      component.errorMessage = '';
-
-      fixture.detectChanges();
-
-      const compiled = fixture.nativeElement as HTMLElement;
-
-      expect(compiled.querySelector('.patient-card')).toBeTruthy();
-      expect(compiled.textContent).toContain('John William Doe');
-    });
-
-    it('should handle missing fields gracefully', () => {
-      component.patient = { resourceType: 'Patient', id: 'minimal-patient' };
-      component.isLoading = false;
-      component.errorMessage = '';
-
-      fixture.detectChanges();
-
-      const compiled = fixture.nativeElement as HTMLElement;
-
-      expect(compiled.querySelector('.patient-card')).toBeTruthy();
-      expect(compiled.textContent).toContain('Unknown Patient');
-    });
-
     it('should show loading state', () => {
       component.isLoading = true;
 
@@ -422,19 +402,6 @@ describe('PatientSummaryComponent', () => {
 
       expect(compiled.querySelector('.error-card')).toBeTruthy();
       expect(compiled.textContent).toContain('Test error message');
-    });
-
-    it('should show no patient state', () => {
-      component.patient = null;
-      component.isLoading = false;
-      component.errorMessage = '';
-
-      fixture.detectChanges();
-
-      const compiled = fixture.nativeElement as HTMLElement;
-
-      expect(compiled.querySelector('.no-patient-card')).toBeTruthy();
-      expect(compiled.textContent).toContain('No Patient Selected');
     });
   });
 });

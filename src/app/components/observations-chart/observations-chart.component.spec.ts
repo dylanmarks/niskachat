@@ -3,6 +3,7 @@ import { of, throwError } from 'rxjs';
 
 import {
   FhirClientService,
+  FhirContext,
   Observation,
 } from '../../services/fhir-client.service';
 import { ObservationsChartComponent } from './observations-chart.component';
@@ -84,7 +85,15 @@ describe('ObservationsChartComponent', () => {
   beforeEach(async () => {
     const spy = jasmine.createSpyObj<FhirClientService>('FhirClientService', [
       'getObservations',
+      'getCurrentContext',
     ]);
+    const context = {
+      authenticated: true,
+      patient: { resourceType: 'Patient', id: '123' },
+    } as FhirContext;
+    spy.context$ = of(context);
+    spy.getObservations.and.returnValue(of([]));
+    spy.getCurrentContext.and.returnValue(context);
 
     await TestBed.configureTestingModule({
       imports: [ObservationsChartComponent],
@@ -243,6 +252,10 @@ describe('ObservationsChartComponent', () => {
   });
 
   describe('Template Integration', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
     it('should render loading state', () => {
       component.loading = true;
       fixture.detectChanges();

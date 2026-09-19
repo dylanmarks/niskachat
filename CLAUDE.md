@@ -39,12 +39,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Project Structure
 
-NiskaChat is a FHIR Bundle Viewer and SMART on FHIR-compliant web application with:
+NiskaChat is a FHIR bundle viewer and SMART on FHIR reference application with:
 
 - **Frontend**: Angular 20+ with Material Design, Chart.js for visualizations
 - **Backend**: Node.js/Express API with LLM integration
 - **Authentication**: SMART on FHIR OAuth2 with PKCE
-- **Data Sources**: SMART Sandbox, static FHIR Bundle uploads, future Google Cloud Healthcare API
+- **Data Sources**: SMART Sandbox and static FHIR Bundle uploads; other servers are future integration work
 
 ### Core Components
 
@@ -64,7 +64,7 @@ NiskaChat is a FHIR Bundle Viewer and SMART on FHIR-compliant web application wi
 - `routes/auth.js` - SMART on FHIR authentication endpoints
 - `routes/llm.js` - LLM summarization and chat endpoints
 - `routes/proxy.js` - FHIR API proxy for secure token handling
-- `providers/` - LLM provider abstraction (Claude Haiku via Bedrock)
+- `providers/` - LLM provider abstraction (OpenRouter, Ollama, Anthropic, and Gemini adapters)
 - `utils/logger.js` - Centralized logging (NO console.log allowed in app code)
 - `utils/fhirBundleCompressor.js` - FHIR data compression utilities
 
@@ -75,7 +75,7 @@ NiskaChat is a FHIR Bundle Viewer and SMART on FHIR-compliant web application wi
 
 ### Configuration
 
-- Angular app named "extreme-angular" in angular.json (legacy name)
+- Angular app named "niskachat" in angular.json
 - ESLint with strict TypeScript checking, some rules temporarily set to "warn"
 - Proxy configuration routes `/api/**` to backend on localhost:3000
 - Jest for backend testing, Karma/Jasmine for frontend testing
@@ -86,7 +86,7 @@ Backend requires:
 
 - `SESSION_SECRET` - Session encryption secret
 - `CORS_ORIGINS` - Comma-separated allowed origins (defaults to localhost:4200)
-- `LLM_PROVIDER` - Preferred LLM provider (defaults to "claude-haiku")
+- `LLM_PROVIDER` - Preferred LLM provider (defaults to "openrouter")
 
 ### Development Notes
 

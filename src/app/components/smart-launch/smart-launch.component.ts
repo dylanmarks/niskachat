@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  Inject,
+  InjectionToken,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +18,11 @@ import {
   FhirContext,
 } from '../../services/fhir-client.service';
 import { logger } from '../../utils/logger';
+
+export const BROWSER_WINDOW = new InjectionToken<Window>('BROWSER_WINDOW', {
+  providedIn: 'root',
+  factory: () => window,
+});
 
 @Component({
   selector: 'app-smart-launch',
@@ -37,6 +48,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
   constructor(
     private fhirClient: FhirClientService,
     private router: Router,
+    @Inject(BROWSER_WINDOW) private browserWindow: Window,
   ) {}
 
   ngOnInit(): void {
@@ -61,8 +73,9 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
    * Check if this is an automatic launch from EHR or callback
    */
   private checkForAutoLaunch(): void {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isCallback = window.location.pathname.includes('callback');
+    const urlParams = new URLSearchParams(this.browserWindow.location.search);
+    const isCallback =
+      this.browserWindow.location.pathname.includes('callback');
     const hasLaunch = urlParams.has('launch');
     const hasCode = urlParams.has('code');
 
@@ -89,6 +102,8 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.errorMessage = `Authentication failed: ${error}`;
       logger.error('OAuth2 callback error:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -101,7 +116,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     try {
-      const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(this.browserWindow.location.search);
       const iss = urlParams.get('iss');
 
       if (!iss) {
@@ -113,6 +128,8 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.errorMessage = `EHR launch failed: ${error}`;
       logger.error('EHR launch error:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -129,6 +146,8 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.errorMessage = `Standalone launch failed: ${error}`;
       logger.error('Standalone launch error:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 

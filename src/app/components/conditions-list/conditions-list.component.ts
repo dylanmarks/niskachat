@@ -94,7 +94,7 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
    * Sort conditions by most recent first (by recorded date, then onset date)
    */
   private sortConditionsByDate(conditions: Condition[]): Condition[] {
-    return conditions.sort((a, b) => {
+    return [...conditions].sort((a, b) => {
       // Use recorded date first, then onset date
       const dateA = this.getConditionSortDate(a);
       const dateB = this.getConditionSortDate(b);
@@ -213,17 +213,17 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
   formatDate(dateString?: string): string {
     if (!dateString) return 'N/A';
 
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch (error) {
-      logger.error('Error formatting date:', error);
-      return 'Invalid date';
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+      ? new Date(`${dateString}T00:00:00`)
+      : new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return dateString;
     }
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   /**
@@ -244,16 +244,18 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
     }
 
     return (
-      condition.code?.coding?.map((coding) => {
-        const result: { system: string; code: string; display?: string } = {
-          system: this.getSystemName(coding.system || ''),
-          code: coding.code || '',
-        };
-        if (coding.display) {
-          result.display = coding.display;
-        }
-        return result;
-      }) || []
+      condition.code?.coding
+        ?.filter((coding) => Boolean(coding.system && coding.code))
+        .map((coding) => {
+          const result: { system: string; code: string; display?: string } = {
+            system: this.getSystemName(coding.system!),
+            code: coding.code!,
+          };
+          if (coding.display) {
+            result.display = coding.display;
+          }
+          return result;
+        }) || []
     );
   }
 

@@ -106,6 +106,7 @@ describe('ConditionsListComponent', () => {
     // Mock the context$ observable
     Object.defineProperty(mockFhirClientService, 'context$', {
       get: () => of(mockContext),
+      configurable: true,
     });
   });
 
@@ -128,6 +129,7 @@ describe('ConditionsListComponent', () => {
       };
       Object.defineProperty(mockFhirClientService, 'context$', {
         get: () => of(unauthenticatedContext),
+        configurable: true,
       });
 
       spyOn(component, 'loadConditions');
@@ -455,8 +457,9 @@ describe('ConditionsListComponent', () => {
 
       expect(codings).toEqual([
         {
-          system: 'http://snomed.info/sct',
+          system: 'SNOMED CT',
           code: '73211009',
+          display: 'Diabetes mellitus',
         },
       ]);
     });
@@ -486,7 +489,7 @@ describe('ConditionsListComponent', () => {
 
       expect(codings).toEqual([
         {
-          system: 'http://snomed.info/sct',
+          system: 'SNOMED CT',
           code: '73211009',
         },
       ]);
@@ -509,7 +512,7 @@ describe('ConditionsListComponent', () => {
       expect(component.selectedConditionId).toBe(mockActiveCondition.id);
     });
 
-    it('should navigate to condition details when condition is clicked', () => {
+    it('should select a condition when its table row is clicked', () => {
       component.conditions = [
         mockActiveCondition,
         mockResolvedCondition,
@@ -517,20 +520,16 @@ describe('ConditionsListComponent', () => {
       ];
       fixture.detectChanges();
 
-      spyOn(window, 'open').and.stub();
-      const conditionCards = fixture.debugElement.queryAll(
-        By.css('.condition-card'),
+      const conditionRows = fixture.debugElement.queryAll(
+        By.css('tr[mat-row]'),
       );
 
-      expect(conditionCards.length).toBe(3);
+      expect(conditionRows.length).toBe(3);
 
-      // Click on first condition card
-      if (conditionCards[0]) {
-        (conditionCards[0].nativeElement as HTMLElement).click();
+      if (conditionRows[0]) {
+        (conditionRows[0].nativeElement as HTMLElement).click();
 
-        // Since we can't easily test window navigation in unit tests,
-        // we'll just verify the element exists and is clickable
-        expect(conditionCards[0].nativeElement).toBeTruthy();
+        expect(component.selectedCondition).toBe(mockActiveCondition);
       }
     });
   });
@@ -546,7 +545,7 @@ describe('ConditionsListComponent', () => {
 
       const loadingElement = (
         fixture.nativeElement as HTMLElement
-      ).querySelector('.loading-card');
+      ).querySelector('.loading-state');
 
       expect(loadingElement).toBeTruthy();
       expect(loadingElement?.textContent).toContain('Loading conditions');
@@ -558,7 +557,7 @@ describe('ConditionsListComponent', () => {
       fixture.detectChanges();
 
       const errorElement = (fixture.nativeElement as HTMLElement).querySelector(
-        '.error-card',
+        '.error-state',
       );
 
       expect(errorElement).toBeTruthy();
@@ -573,7 +572,7 @@ describe('ConditionsListComponent', () => {
 
       const noConditionsElement = (
         fixture.nativeElement as HTMLElement
-      ).querySelector('.no-conditions');
+      ).querySelector('.empty-state');
 
       expect(noConditionsElement).toBeTruthy();
       expect(noConditionsElement?.textContent).toContain(
@@ -589,13 +588,13 @@ describe('ConditionsListComponent', () => {
 
       const conditionsElement = (
         fixture.nativeElement as HTMLElement
-      ).querySelector('.conditions-list');
+      ).querySelector('.conditions-table-container');
 
       expect(conditionsElement).toBeTruthy();
 
       const conditionItems = (
         fixture.nativeElement as HTMLElement
-      ).querySelectorAll('.condition-item');
+      ).querySelectorAll('tr[mat-row]');
 
       expect(conditionItems.length).toBe(1);
     });
@@ -607,13 +606,13 @@ describe('ConditionsListComponent', () => {
       fixture.detectChanges();
 
       const countElement = (fixture.nativeElement as HTMLElement).querySelector(
-        '.conditions-count .count',
+        '.condition-count .count',
       );
 
       expect(countElement?.textContent).toBe('2');
 
       const labelElement = (fixture.nativeElement as HTMLElement).querySelector(
-        '.conditions-count .label',
+        '.condition-count .label',
       );
 
       expect(labelElement?.textContent).toContain('conditions');
@@ -626,7 +625,7 @@ describe('ConditionsListComponent', () => {
       fixture.detectChanges();
 
       const labelElement = (fixture.nativeElement as HTMLElement).querySelector(
-        '.conditions-count .label',
+        '.condition-count .label',
       );
 
       expect(labelElement?.textContent).toContain('condition');
@@ -640,7 +639,7 @@ describe('ConditionsListComponent', () => {
 
       const noPatientElement = (
         fixture.nativeElement as HTMLElement
-      ).querySelector('.no-patient-card');
+      ).querySelector('.no-patient-state');
 
       expect(noPatientElement).toBeTruthy();
       expect(noPatientElement?.textContent).toContain('No Patient Selected');

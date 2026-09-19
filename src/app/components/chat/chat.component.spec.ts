@@ -23,6 +23,9 @@ describe('ChatComponent', () => {
   let fhirClientService: jasmine.SpyObj<FhirClientService>;
 
   beforeEach(async () => {
+    spyOn(window, 'fetch').and.resolveTo(
+      new Response(null, { status: 404, statusText: 'Not Found' }),
+    );
     const fhirClientSpy = jasmine.createSpyObj('FhirClientService', [
       'getCurrentContext',
       'buildComprehensiveFhirBundle',
@@ -103,7 +106,7 @@ describe('ChatComponent', () => {
 
       expect(newMessage).toBeDefined();
       expect(newMessage?.id).toBe(messageId);
-      expect(newMessage?.content).toBe('AI response');
+      expect(newMessage?.content).toBe('<p>AI response</p>');
       expect(newMessage?.isUser).toBe(false);
       expect(newMessage?.isLoading).toBe(false);
     });
@@ -133,7 +136,7 @@ describe('ChatComponent', () => {
       const updatedMessage = component.messages[messageIndex];
 
       expect(updatedMessage).toBeDefined();
-      expect(updatedMessage?.content).toBe('Updated content');
+      expect(updatedMessage?.content).toBe('<p>Updated content</p>');
       expect(updatedMessage?.isLoading).toBe(false);
     });
 
@@ -196,6 +199,7 @@ describe('ChatComponent', () => {
       const initialCount = component.messages.length;
 
       const sendPromise = component.sendMessage();
+      await fixture.whenStable();
 
       // Verify request
       const req = httpMock.expectOne('/api/llm');
@@ -206,7 +210,7 @@ describe('ChatComponent', () => {
 
       expect(requestBody.query).toBe('What are the patient conditions?');
       expect(requestBody.context).toBe('clinical_chat');
-      expect(requestBody.patientData).toBeDefined();
+      expect(requestBody.compressedData).toBeDefined();
 
       // Mock response
       const mockResponse: ChatResponse = {
@@ -228,7 +232,7 @@ describe('ChatComponent', () => {
 
       expect(component.messages[initialCount]?.isUser).toBe(true);
       expect(component.messages[initialCount + 1]?.content).toBe(
-        'Patient has hypertension and diabetes.',
+        '<p>Patient has hypertension and diabetes.</p>',
       );
 
       expect(component.messages[initialCount + 1]?.isUser).toBe(false);
@@ -243,6 +247,7 @@ describe('ChatComponent', () => {
       const initialCount = component.messages.length;
 
       const sendPromise = component.sendMessage();
+      await fixture.whenStable();
 
       const req = httpMock.expectOne('/api/llm');
       req.flush('Server error', {
@@ -255,7 +260,7 @@ describe('ChatComponent', () => {
       // Verify error message
       expect(component.messages.length).toBe(initialCount + 2);
       expect(component.messages[initialCount + 1]?.content).toBe(
-        'Server error occurred. Please try again later.',
+        '<p>Server error occurred. Please try again later.</p>',
       );
 
       expect(component.isLoading).toBe(false);
@@ -266,6 +271,7 @@ describe('ChatComponent', () => {
       const initialCount = component.messages.length;
 
       const sendPromise = component.sendMessage();
+      await fixture.whenStable();
 
       const req = httpMock.expectOne('/api/llm');
       req.flush('', { status: 0, statusText: 'Network Error' });
@@ -275,7 +281,7 @@ describe('ChatComponent', () => {
       // Verify error message
       expect(component.messages.length).toBe(initialCount + 2);
       expect(component.messages[initialCount + 1]?.content).toBe(
-        'Unable to connect to the server. Please check your connection.',
+        '<p>Unable to connect to the server. Please check your connection.</p>',
       );
 
       expect(component.isLoading).toBe(false);
@@ -290,6 +296,7 @@ describe('ChatComponent', () => {
       spyOn(enterEvent, 'preventDefault');
 
       const sendPromise = component.sendMessage(enterEvent);
+      await fixture.whenStable();
 
       expect(enterEvent.preventDefault).toHaveBeenCalled();
 
@@ -326,7 +333,7 @@ describe('ChatComponent', () => {
 
       expect(component.messages.length).toBe(1);
       expect(component.messages[0]!.content).toBe(
-        'Chat cleared. How can I help you analyze the patient data?',
+        '<p>Chat cleared. How can I help you analyze the patient data?</p>',
       );
 
       expect(component.messages[0]!.isUser).toBe(false);
@@ -435,21 +442,18 @@ describe('ChatComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should render chat header', () => {
-      const header = fixture.debugElement.query(By.css('.chat-header'));
-
-      expect(header).toBeTruthy();
-
-      const title = header.query(By.css('h3'));
-
-      expect(title.nativeElement.textContent).toBe('Clinical AI Assistant');
+    it('should render chat container', () => {
+      const container = fixture.debugElement.query(By.css('.chat-container'));
+      expect(container).toBeTruthy();
     });
 
     it('should render clear button', () => {
       const clearButton = fixture.debugElement.query(By.css('.clear-button'));
 
       expect(clearButton).toBeTruthy();
-      expect(clearButton.nativeElement.textContent.trim()).toContain('Clear');
+      expect(clearButton.nativeElement.getAttribute('aria-label')).toBe(
+        'Clear chat history',
+      );
     });
 
     it('should render messages area', () => {

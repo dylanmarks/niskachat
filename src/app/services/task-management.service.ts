@@ -9,6 +9,7 @@ import {
   TaskGenerationResponse,
   TaskUpdateRequest,
 } from '../models/fhir-task.interface';
+import { logger } from '../utils/logger';
 
 @Injectable({
   providedIn: 'root',
@@ -53,7 +54,7 @@ export class TaskManagementService {
         throw new Error(response.message || 'Failed to create task');
       }
     } catch (error) {
-      console.error('Error creating task:', error);
+      logger.error('Error creating task:', error);
       throw error;
     }
   }
@@ -123,6 +124,7 @@ export class TaskManagementService {
     const updatedTask: FHIRTask = {
       resourceType: originalTask.resourceType,
       id: originalTask.id,
+      ...(originalTask.meta ? { meta: originalTask.meta } : {}),
       intent: originalTask.intent,
       status: request.status || originalTask.status,
       code: {
@@ -130,8 +132,6 @@ export class TaskManagementService {
       },
       for: originalTask.for,
       authoredOn: originalTask.authoredOn,
-      _source: originalTask._source,
-      _sessionId: originalTask._sessionId,
     };
 
     // Handle priority
@@ -163,11 +163,6 @@ export class TaskManagementService {
       updatedTask.note = originalTask.note;
     }
 
-    // Handle version
-    if (originalTask.version) {
-      updatedTask.version = originalTask.version;
-    }
-
     // Update task in array
     tasks[taskIndex] = updatedTask;
     this.tasksSubject.next([...tasks]);
@@ -192,7 +187,11 @@ export class TaskManagementService {
         this.http.post<{ success: boolean; task: FHIRTask; message: string }>(
           `${environment.apiBaseUrl}/api/tasks/${taskId}/comments`,
           { text: commentText },
-          { headers: { 'If-Match': task.version?.toString() || '1' } },
+          {
+            headers: {
+              'If-Match': `W/"${task.meta?.versionId ?? '1'}"`,
+            },
+          },
         ),
       );
 
@@ -204,7 +203,7 @@ export class TaskManagementService {
         throw new Error(response.message || 'Failed to add comment');
       }
     } catch (error) {
-      console.error('Error appending comment:', error);
+      logger.error('Error appending comment:', error);
       throw error;
     }
   }
@@ -319,7 +318,7 @@ export class TaskManagementService {
   }
 
   private generateSessionId(): string {
-    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `session-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
 
   /**

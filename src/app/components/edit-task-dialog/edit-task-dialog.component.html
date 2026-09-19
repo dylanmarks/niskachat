@@ -110,15 +110,6 @@
           <mat-icon>schedule</mat-icon>
           <span>Created: {{ data.task.authoredOn | date: "medium" }}</span>
         </div>
-        <div class="info-item" *ngIf="data.task._source">
-          <mat-icon>source</mat-icon>
-          <span>
-            Source:
-            {{
-              data.task._source === "clinical_chat" ? "Clinical Chat" : "Manual"
-            }}
-          </span>
-        </div>
       </div>
     </form>
   </mat-dialog-content>

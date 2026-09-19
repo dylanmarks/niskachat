@@ -40,8 +40,10 @@ describe('MedicationsListComponent', () => {
 
   beforeEach(async () => {
     const spy = jasmine.createSpyObj<FhirClientService>('FhirClientService', [
+      'isAuthenticated',
       'getMedicationRequests',
     ]);
+    spy.isAuthenticated.and.returnValue(true);
     spy.context$ = of(mockContext);
 
     await TestBed.configureTestingModule({
@@ -109,7 +111,7 @@ describe('MedicationsListComponent', () => {
   });
 
   it('should return correct status class', () => {
-    expect(component.getStatusClass('active')).toBe('active');
-    expect(component.getStatusClass('cancelled')).toBe('cancelled');
+    expect(component.getStatusClass('active')).toBe('status-active');
+    expect(component.getStatusClass('cancelled')).toBe('status-cancelled');
   });
 });

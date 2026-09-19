@@ -14,6 +14,7 @@ import {
 } from '../../models/fhir-task.interface';
 import { FhirClientService } from '../../services/fhir-client.service';
 import { TaskManagementService } from '../../services/task-management.service';
+import { logger } from '../../utils/logger';
 import { CreateTaskDialogComponent } from '../create-task-dialog/create-task-dialog.component';
 import {
   EditTaskDialogComponent,
@@ -105,7 +106,7 @@ export class TasksListComponent implements OnInit, OnDestroy {
 
             const updatedTask = this.taskService.updateTask(updateRequest);
             if (!updatedTask) {
-              console.error('Failed to update task');
+              logger.error('Failed to update task');
               return;
             }
           }
@@ -116,16 +117,13 @@ export class TasksListComponent implements OnInit, OnDestroy {
               .appendComment(task.id, comment.trim())
               .then((taskWithComment) => {
                 if (taskWithComment) {
-                  console.log(
-                    'Task updated with comment successfully:',
-                    taskWithComment,
-                  );
+                  logger.info('Task updated with comment successfully');
                 } else {
-                  console.error('Failed to add comment to task');
+                  logger.error('Failed to add comment to task');
                 }
               })
               .catch((error: unknown) => {
-                console.error('Error adding comment:', error);
+                logger.error('Error adding comment:', error);
               });
           }
         }
@@ -162,13 +160,13 @@ export class TasksListComponent implements OnInit, OnDestroy {
             .createTask(taskRequest)
             .then((createdTask) => {
               if (createdTask) {
-                console.log('Task created successfully:', createdTask);
+                logger.info('Task created successfully');
               } else {
-                console.error('Failed to create task');
+                logger.error('Failed to create task');
               }
             })
             .catch((error: unknown) => {
-              console.error('Error creating task:', error);
+              logger.error('Error creating task:', error);
               // You could add a snackbar or toast notification here
             });
         }

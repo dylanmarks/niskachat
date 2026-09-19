@@ -4,6 +4,10 @@
 export interface FHIRTask {
   resourceType: 'Task';
   id: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+  };
   intent: 'proposal' | 'order' | 'original-order';
   status: 'requested' | 'in-progress' | 'completed' | 'cancelled';
   priority?: 'routine' | 'urgent' | 'asap' | 'stat' | undefined;
@@ -31,10 +35,6 @@ export interface FHIRTask {
       }
     | undefined;
   note?: TaskNote[]; // FHIR R4 Annotation array for comments
-  version?: number; // For optimistic concurrency
-  // Demo-specific extensions for session-only implementation
-  _source?: 'clinical_chat' | 'manual' | undefined;
-  _sessionId?: string | undefined;
 }
 
 // FHIR R4 TaskNote interface (maps to FHIR Annotation)
@@ -69,8 +69,6 @@ export interface FHIRCarePlan {
   note?: {
     text: string;
   }[];
-  // Demo-specific extensions for session-only implementation
-  _sessionId?: string;
 }
 
 // Legacy interface mapping for backward compatibility

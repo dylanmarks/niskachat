@@ -8,6 +8,7 @@ import {
   throwError,
 } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 // Import FHIR client
 import { oauth2 } from 'fhirclient';
@@ -565,9 +566,9 @@ export class FhirClientService {
   async initializeSmartLaunch(iss?: string, clientId?: string): Promise<void> {
     try {
       const client = await oauth2.init({
-        iss: iss ?? 'https://launch.smarthealthit.org/v/r4/fhir',
-        clientId: clientId ?? 'your-client-id',
-        scope: 'openid profile patient/*.read',
+        iss: iss ?? environment.smart.issuer,
+        clientId: clientId ?? environment.smart.clientId,
+        scope: environment.smart.scope,
         redirectUri: window.location.origin + '/callback',
       });
 
