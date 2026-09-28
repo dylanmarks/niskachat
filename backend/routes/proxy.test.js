@@ -38,8 +38,10 @@ describe("FHIR Proxy Routes", () => {
     });
 
     it("should reject dangerous path parameters", async () => {
+      // Encode separators so the HTTP client does not normalize the traversal
+      // before Express decodes it and the server validates the path.
       const response = await request(app).get(
-        "/proxy/fhir/../etc/passwd?sessionId=test",
+        `/proxy/fhir/${encodeURIComponent("../etc/passwd")}?sessionId=test`,
       );
 
       expect(response.status).toBe(400);
@@ -48,7 +50,7 @@ describe("FHIR Proxy Routes", () => {
 
     it("should reject paths with backslashes", async () => {
       const response = await request(app).get(
-        "/proxy/fhir/..\\windows\\system32?sessionId=test",
+        `/proxy/fhir/${encodeURIComponent("..\\windows\\system32")}?sessionId=test`,
       );
 
       expect(response.status).toBe(400);
