@@ -119,7 +119,7 @@ export class ChatComponent {
    */
   async sendMessage(event?: KeyboardEvent): Promise<void> {
     // Handle Enter key (but allow Shift+Enter for new lines)
-    if (event && event.key === 'Enter' && !event.shiftKey) {
+    if (event?.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
     } else if (event) {
       return; // Allow other key events to pass through
@@ -149,7 +149,7 @@ export class ChatComponent {
 
       // Compress FHIR bundle client-side to reduce payload size
       let chatRequest: ChatRequest;
-      if (patientData && patientData.resourceType === 'Bundle') {
+      if (patientData?.resourceType === 'Bundle') {
         const compressed = compressFhirBundleClient(patientData);
         logger.debug('Compressed FHIR bundle', {
           originalSize: compressed.originalSize,

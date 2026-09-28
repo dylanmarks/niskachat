@@ -20,11 +20,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import {
-  CommentAppendRequest,
-  FHIRTask,
-  TaskNote,
-} from '../../models/fhir-task.interface';
+import { FHIRTask, TaskNote } from '../../models/fhir-task.interface';
 import { logger } from '../../utils/logger';
 
 @Component({
@@ -112,7 +108,7 @@ export class TaskCommentsComponent {
       const response = await firstValueFrom(
         this.http.post<{ success: boolean; task: FHIRTask; message: string }>(
           `${environment.apiBaseUrl}/api/tasks/${this.task.id}/comments`,
-          { text: commentText } as CommentAppendRequest,
+          { text: commentText },
           {
             headers: {
               'If-Match': `W/"${this.task.meta?.versionId ?? '1'}"`,

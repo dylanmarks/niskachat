@@ -257,7 +257,7 @@ function groupResourcesByType(
 }
 
 function compressPatient(patient: FhirResource): string {
-  if (!patient || patient.resourceType !== 'Patient') return '';
+  if (patient?.resourceType !== 'Patient') return '';
 
   const patientResource = patient as FhirPatient;
   const name = getPatientName(patientResource);
