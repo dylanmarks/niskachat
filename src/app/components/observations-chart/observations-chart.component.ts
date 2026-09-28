@@ -575,7 +575,7 @@ export class ObservationsChartComponent
     if (typeof event === 'string') {
       newCategory = event;
     } else if (event && typeof event === 'object' && 'value' in event) {
-      newCategory = (event as { value: string }).value;
+      newCategory = event.value;
     } else {
       newCategory =
         (event as Event & { target: { value: string } }).target?.value ?? '';
