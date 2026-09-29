@@ -213,7 +213,11 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     });
   }
 
-  validateBundle(bundle: FhirBundle): void {
+  validateBundle(bundle: FhirBundle | null): void {
+    if (!bundle || typeof bundle !== 'object') {
+      throw new Error('Invalid JSON format');
+    }
+
     if (bundle.resourceType !== 'Bundle') {
       throw new Error('File is not a FHIR Bundle resource');
     }
