@@ -30,13 +30,13 @@ function logRequest(req, res, next) {
   res.send = function (data) {
     const duration = Date.now() - start;
     logger.info(
-      `[FHIR Proxy] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`,
+      `[FHIR Proxy] ${req.method} - ${res.statusCode} - ${duration}ms`,
     );
 
     // Log errors for debugging
     if (res.statusCode >= 400) {
       logger.error(
-        `[FHIR Proxy Error] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`,
+        `[FHIR Proxy Error] ${req.method} - ${res.statusCode} - ${duration}ms`,
       );
     }
 
@@ -135,6 +135,7 @@ async function proxyFhirRequest(req, res) {
     const fetchOptions = {
       method: req.method,
       headers,
+      redirect: "error",
     };
 
     // Add body for POST/PUT/PATCH requests
@@ -171,7 +172,7 @@ async function proxyFhirRequest(req, res) {
     // Return response with same status code
     res.status(response.status).send(responseData);
   } catch (error) {
-    logger.error("FHIR proxy error:", error);
+    logger.error("FHIR proxy request failed:", error?.name || "UnknownError");
 
     // Handle network errors
     if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED") {

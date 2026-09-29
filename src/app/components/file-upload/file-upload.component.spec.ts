@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import {
-  FhirBundle,
   FhirClientService,
   FhirContext,
 } from '../../services/fhir-client.service';
@@ -143,7 +142,7 @@ describe('FileUploadComponent', () => {
 
     it('should reject invalid JSON', () => {
       expect(() => {
-        component.validateBundle(null as unknown as FhirBundle);
+        component.validateBundle(null);
       }).toThrowError('Invalid JSON format');
     });
 
@@ -188,7 +187,7 @@ describe('FileUploadComponent', () => {
       expect(resources.conditions[0]?.id).toBe('condition-1');
     });
 
-    it('should handle bundle with no Patient resources', async () => {
+    it('should handle bundle with no Patient resources', () => {
       const bundleWithoutPatient = {
         resourceType: 'Bundle',
         entry: [
@@ -268,9 +267,9 @@ describe('FileUploadComponent', () => {
         type: 'application/json',
       });
 
-      const mockDataTransfer = {
+      const mockDataTransfer: DataTransfer = {
         files: [file],
-      } as any;
+      } as unknown as DataTransfer;
 
       const event = new DragEvent('drop');
       Object.defineProperty(event, 'dataTransfer', {

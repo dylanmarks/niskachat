@@ -37,7 +37,8 @@ export class OllamaProvider extends BaseLLMProvider {
       return response.ok;
     } catch (error) {
       logger.warn(
-        `Ollama local daemon unavailable at ${this.baseUrl}: ${error.message}`,
+        "Ollama endpoint is unavailable:",
+        error?.name || "UnknownError",
       );
       return false;
     }
@@ -83,7 +84,7 @@ export class OllamaProvider extends BaseLLMProvider {
 
       return data.response.trim();
     } catch (error) {
-      logger.error("Ollama generation failed:", error);
+      logger.error("Ollama generation failed:", error?.name || "UnknownError");
       if (error.name === "TimeoutError" || error.message.includes("timeout")) {
         throw new Error(
           "Ollama generation timed out. Local hardware may be under heavy load.",

@@ -34,7 +34,10 @@ export class GeminiVertexProvider extends BaseLLMProvider {
           apiKey: this.apiKey,
         });
       } catch (error) {
-        logger.error("Failed to initialize Gemini client:", error);
+        logger.error(
+          "Failed to initialize Gemini client:",
+          error?.name || "UnknownError",
+        );
         throw error;
       }
     }
@@ -72,7 +75,10 @@ export class GeminiVertexProvider extends BaseLLMProvider {
 
       return response && (response.candidates?.length > 0 || response.error);
     } catch (error) {
-      logger.warn(`Gemini Vertex unavailable: ${error.message}`);
+      logger.warn(
+        "Gemini availability check failed:",
+        error?.name || "UnknownError",
+      );
       return false;
     }
   }
@@ -130,7 +136,7 @@ export class GeminiVertexProvider extends BaseLLMProvider {
 
       return "No response generated";
     } catch (error) {
-      logger.error("Gemini Vertex call failed:", error);
+      logger.error("Gemini Vertex call failed:", error?.name || "UnknownError");
 
       // Provide more specific error messages
       if (

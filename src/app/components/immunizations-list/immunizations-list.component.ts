@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +31,8 @@ import { logger } from '../../utils/logger';
   styleUrls: ['./immunizations-list.component.scss'],
 })
 export class ImmunizationsListComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+
   immunizations: Immunization[] = [];
   context: FhirContext | null = null;
   isLoading = false;
@@ -42,15 +44,13 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fhirClient: FhirClientService) {}
-
   ngOnInit(): void {
     // Subscribe to FHIR context changes
     this.fhirClient.context$
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context?.authenticated && context.patient) {
+        if (context.authenticated && context.patient) {
           void this.loadImmunizations();
         }
       });
@@ -75,9 +75,8 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
       const immunizations = await firstValueFrom(
         this.fhirClient.getImmunizations(),
       );
-      this.immunizations = this.sortImmunizationsByDateAndVaccine(
-        immunizations ?? [],
-      );
+      this.immunizations =
+        this.sortImmunizationsByDateAndVaccine(immunizations);
     } catch (error) {
       logger.error('Error loading immunizations:', error);
       this.errorMessage = `Failed to load immunizations: ${String(error)}`;
@@ -124,15 +123,15 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
   }
 
   getVaccineName(immunization: Immunization): string {
-    if (immunization.vaccineCode?.text) {
+    if (immunization.vaccineCode.text) {
       return immunization.vaccineCode.text;
     }
 
-    if (immunization.vaccineCode?.coding?.[0]?.display) {
+    if (immunization.vaccineCode.coding?.[0]?.display) {
       return immunization.vaccineCode.coding[0].display;
     }
 
-    if (immunization.vaccineCode?.coding?.[0]?.code) {
+    if (immunization.vaccineCode.coding?.[0]?.code) {
       return immunization.vaccineCode.coding[0].code;
     }
 
@@ -149,7 +148,7 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
       case 'not-done':
         return 'Not Done';
       default:
-        return status ?? 'Unknown';
+        return status;
     }
   }
 
@@ -193,27 +192,27 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
   }
 
   getManufacturerText(immunization: Immunization): string {
-    return immunization.manufacturer?.display || '';
+    return immunization.manufacturer?.display ?? '';
   }
 
   getLotNumber(immunization: Immunization): string {
-    return immunization.lotNumber || '';
+    return immunization.lotNumber ?? '';
   }
 
   getDoseQuantityText(immunization: Immunization): string {
     if (!immunization.doseQuantity) return '';
 
     const dose = immunization.doseQuantity;
-    return `${dose.value || ''} ${dose.unit || dose.code || ''}`.trim();
+    return `${String(dose.value ?? '')} ${dose.unit ?? dose.code ?? ''}`.trim();
   }
 
   getSiteText(immunization: Immunization): string {
     if (!immunization.site) return '';
 
     return (
-      immunization.site.text ||
-      immunization.site.coding?.[0]?.display ||
-      immunization.site.coding?.[0]?.code ||
+      immunization.site.text ??
+      immunization.site.coding?.[0]?.display ??
+      immunization.site.coding?.[0]?.code ??
       ''
     );
   }
@@ -222,9 +221,9 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
     if (!immunization.route) return '';
 
     return (
-      immunization.route.text ||
-      immunization.route.coding?.[0]?.display ||
-      immunization.route.coding?.[0]?.code ||
+      immunization.route.text ??
+      immunization.route.coding?.[0]?.display ??
+      immunization.route.coding?.[0]?.code ??
       ''
     );
   }
@@ -258,7 +257,7 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
       return '';
 
     const performers = immunization.performer.map(
-      (performer) => performer.actor.display || 'Unknown Performer',
+      (performer) => performer.actor.display ?? 'Unknown Performer',
     );
 
     return performers.join(', ');
@@ -267,7 +266,7 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
   getVaccineCodes(
     immunization: Immunization,
   ): { system: string; code: string; display?: string }[] {
-    const codings = immunization.vaccineCode?.coding ?? [];
+    const codings = immunization.vaccineCode.coding ?? [];
     return codings.map((coding) => {
       const result: { system: string; code: string; display?: string } = {
         system: this.getCodeSystem(coding.system),
@@ -291,7 +290,7 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
   }
 
   trackImmunization(_index: number, immunization: Immunization): string {
-    return immunization.id ?? _index.toString();
+    return immunization.id;
   }
 
   toggleNotAdministered(): void {
@@ -325,13 +324,13 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
     const parts: string[] = [];
 
     if (protocol.doseNumberPositiveInt) {
-      parts.push(`Dose ${protocol.doseNumberPositiveInt}`);
+      parts.push(`Dose ${String(protocol.doseNumberPositiveInt)}`);
     } else if (protocol.doseNumberString) {
       parts.push(`Dose ${protocol.doseNumberString}`);
     }
 
     if (protocol.seriesDosesPositiveInt) {
-      parts.push(`of ${protocol.seriesDosesPositiveInt}`);
+      parts.push(`of ${String(protocol.seriesDosesPositiveInt)}`);
     } else if (protocol.seriesDosesString) {
       parts.push(`of ${protocol.seriesDosesString}`);
     }
@@ -340,8 +339,8 @@ export class ImmunizationsListComponent implements OnInit, OnDestroy {
       const diseases = protocol.targetDisease
         .map(
           (disease) =>
-            disease.text ||
-            disease.coding?.[0]?.display ||
+            disease.text ??
+            disease.coding?.[0]?.display ??
             disease.coding?.[0]?.code,
         )
         .filter(Boolean);

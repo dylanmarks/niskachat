@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import llmRouter from "./llm.js";
+import llmRouter, { parseClinicalChatResponse } from "./llm.js";
 
 // Create a test app
 const app = express();
@@ -137,6 +137,20 @@ describe("Summarization API", () => {
 
       expect(response.body).toHaveProperty("error");
       expect(response.body.error).toBe("Missing patient data");
+    });
+
+    it("rejects oversized prompts and untrusted source-reference formats", async () => {
+      await request(app)
+        .post("/llm")
+        .send({ bundle: mockFhirBundle, query: "x".repeat(1001) })
+        .expect(400);
+      await request(app)
+        .post("/llm")
+        .send({
+          bundle: mockFhirBundle,
+          sourceReferences: ["https://attacker.example"],
+        })
+        .expect(400);
     });
 
     it("should return 400 for empty bundle", async () => {
@@ -301,7 +315,7 @@ describe("Summarization API", () => {
       expect(response.body).toHaveProperty("error", "Invalid FHIR Bundle");
     });
 
-    it("should return 503 when no LLM providers are available", async () => {
+    it("should return 503 when the selected LLM provider is not configured", async () => {
       const response = await request(app)
         .post("/llm/stream")
         .send({ bundle: mockFhirBundle, query: "Recommend next steps" })
@@ -311,16 +325,68 @@ describe("Summarization API", () => {
     });
   });
 
+  describe("evidence-linked model output validation", () => {
+    it("keeps only allow-listed source references and assigns no model urgency", () => {
+      const result = parseClinicalChatResponse(
+        JSON.stringify({
+          response: "The record contains an observation.",
+          evidenceReferences: [
+            "Observation/observation-1",
+            "Patient/fabricated",
+          ],
+          suggestedActions: [
+            {
+              id: "action-1",
+              title: "Review the observation",
+              description: "Compare it with the current context.",
+              category: "monitoring",
+              priority: "stat",
+              evidenceReferences: ["Observation/observation-1"],
+            },
+          ],
+          carePlan: { resourceType: "CarePlan", intent: "plan" },
+          tasks: [
+            { resourceType: "Task", intent: "order", status: "requested" },
+          ],
+        }),
+        ["Observation/observation-1"],
+      );
+
+      expect(result.evidenceReferences).toEqual(["Observation/observation-1"]);
+      expect(result.suggestedActions).toHaveLength(1);
+      expect(result.suggestedActions[0].priority).toBe("routine");
+      expect(result.suggestedActions[0].evidenceReferences).toEqual([
+        "Observation/observation-1",
+      ]);
+      expect(result).not.toHaveProperty("taskGeneration");
+    });
+
+    it("rejects unstructured or unreferenced clinical output", () => {
+      expect(
+        parseClinicalChatResponse("A clinical answer", ["Patient/p-1"])
+          .response,
+      ).toContain("could not be validated");
+      expect(
+        parseClinicalChatResponse(
+          JSON.stringify({
+            response: "Unreferenced claim",
+            evidenceReferences: [],
+          }),
+          ["Patient/p-1"],
+        ).response,
+      ).toContain("could not be validated");
+    });
+  });
+
   describe("GET /llm/status", () => {
     it("should return LLM status", async () => {
       const response = await request(app).get("/llm/status").expect(200);
 
-      expect(response.body).toHaveProperty("llmAvailable");
+      expect(response.body).toHaveProperty("llmConfigured");
       expect(response.body).toHaveProperty("providers");
       expect(response.body).toHaveProperty("timestamp");
-      // Since LLM is likely not available in test environment,
-      // we expect llmAvailable to be false
-      expect(response.body.llmAvailable).toBe(false);
+      // No provider credentials should be configured in the test environment.
+      expect(response.body.llmConfigured).toBe(false);
     });
   });
 });

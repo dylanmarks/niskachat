@@ -820,7 +820,7 @@ export class FhirClientService {
 
     return this.search('Condition', searchParams).pipe(
       map((bundle) => {
-        if (bundle?.entry) {
+        if (bundle.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
             .filter(
@@ -926,7 +926,7 @@ export class FhirClientService {
 
     return this.search('Observation', searchParams).pipe(
       map((bundle) => {
-        if (bundle?.entry) {
+        if (bundle.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
             .filter(
@@ -1031,7 +1031,7 @@ export class FhirClientService {
 
     return this.search('MedicationRequest', searchParams).pipe(
       map((bundle) => {
-        if (bundle?.entry) {
+        if (bundle.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
             .filter(
@@ -1158,7 +1158,7 @@ export class FhirClientService {
 
     return this.search('AllergyIntolerance', searchParams).pipe(
       map((bundle) => {
-        if (bundle?.entry) {
+        if (bundle.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
             .filter(
@@ -1288,7 +1288,7 @@ export class FhirClientService {
 
     return this.search('Immunization', searchParams).pipe(
       map((bundle) => {
-        if (bundle?.entry) {
+        if (bundle.entry) {
           return bundle.entry
             .map((entry: FhirBundleEntry) => entry.resource)
             .filter(
@@ -1459,7 +1459,7 @@ export class FhirClientService {
 
     // If in offline mode, return offline data
     if (this.isOfflineMode() && this.offlineData) {
-      return of(this.offlineData.procedures ?? []);
+      return of(this.offlineData.procedures);
     }
 
     // Use the search method like other resource methods
@@ -1468,7 +1468,7 @@ export class FhirClientService {
     }).pipe(
       map((response: FhirBundle) => {
         const procedures: Procedure[] = [];
-        if (response?.entry && Array.isArray(response.entry)) {
+        if (response.entry && Array.isArray(response.entry)) {
           for (const entry of response.entry) {
             if (entry.resource?.resourceType === 'Procedure') {
               const mapped = this.mapFhirProcedure(entry.resource);
@@ -1544,15 +1544,11 @@ export class FhirClientService {
       type: 'collection',
       entry: [],
     };
-
-    // Ensure entry array exists
-    if (!bundle.entry) {
-      bundle.entry = [];
-    }
+    const entries = bundle.entry ?? (bundle.entry = []);
 
     try {
       // Add patient resource
-      bundle.entry.push({
+      entries.push({
         resource: currentPatient,
       });
 
@@ -1563,12 +1559,9 @@ export class FhirClientService {
         logger.debug('Using offline data');
 
         // Add conditions
-        logger.debug(
-          'Adding conditions:',
-          this.offlineData.conditions?.length || 0,
-        );
-        this.offlineData.conditions?.forEach((condition) => {
-          bundle.entry?.push({
+        logger.debug('Adding conditions:', this.offlineData.conditions.length);
+        this.offlineData.conditions.forEach((condition) => {
+          entries.push({
             resource: condition,
           });
         });
@@ -1576,10 +1569,10 @@ export class FhirClientService {
         // Add observations
         logger.debug(
           'Adding observations:',
-          this.offlineData.observations?.length || 0,
+          this.offlineData.observations.length,
         );
-        this.offlineData.observations?.forEach((observation) => {
-          bundle.entry?.push({
+        this.offlineData.observations.forEach((observation) => {
+          entries.push({
             resource: observation,
           });
         });
@@ -1587,10 +1580,10 @@ export class FhirClientService {
         // Add medication requests
         logger.debug(
           'Adding medication requests:',
-          this.offlineData.medicationRequests?.length || 0,
+          this.offlineData.medicationRequests.length,
         );
-        this.offlineData.medicationRequests?.forEach((medicationRequest) => {
-          bundle.entry?.push({
+        this.offlineData.medicationRequests.forEach((medicationRequest) => {
+          entries.push({
             resource: medicationRequest,
           });
         });
@@ -1598,10 +1591,10 @@ export class FhirClientService {
         // Add allergy intolerances
         logger.debug(
           'Adding allergy intolerances:',
-          this.offlineData.allergyIntolerances?.length || 0,
+          this.offlineData.allergyIntolerances.length,
         );
-        this.offlineData.allergyIntolerances?.forEach((allergyIntolerance) => {
-          bundle.entry?.push({
+        this.offlineData.allergyIntolerances.forEach((allergyIntolerance) => {
+          entries.push({
             resource: allergyIntolerance,
           });
         });
@@ -1609,10 +1602,10 @@ export class FhirClientService {
         // Add immunizations
         logger.debug(
           'Adding immunizations:',
-          this.offlineData.immunizations?.length || 0,
+          this.offlineData.immunizations.length,
         );
-        this.offlineData.immunizations?.forEach((immunization) => {
-          bundle.entry?.push({
+        this.offlineData.immunizations.forEach((immunization) => {
+          entries.push({
             resource: immunization,
           });
         });
@@ -1620,8 +1613,8 @@ export class FhirClientService {
         // Fetch all available resources using the existing methods
         try {
           const conditions = await firstValueFrom(this.getConditions());
-          conditions?.forEach((condition) => {
-            bundle.entry?.push({
+          conditions.forEach((condition) => {
+            entries.push({
               resource: condition,
             });
           });
@@ -1631,8 +1624,8 @@ export class FhirClientService {
 
         try {
           const observations = await firstValueFrom(this.getObservations());
-          observations?.forEach((observation) => {
-            bundle.entry?.push({
+          observations.forEach((observation) => {
+            entries.push({
               resource: observation,
             });
           });
@@ -1644,8 +1637,8 @@ export class FhirClientService {
           const medicationRequests = await firstValueFrom(
             this.getMedicationRequests(),
           );
-          medicationRequests?.forEach((medicationRequest) => {
-            bundle.entry?.push({
+          medicationRequests.forEach((medicationRequest) => {
+            entries.push({
               resource: medicationRequest,
             });
           });
@@ -1658,8 +1651,8 @@ export class FhirClientService {
           const allergyIntolerances = await firstValueFrom(
             this.getAllergyIntolerances(),
           );
-          allergyIntolerances?.forEach((allergyIntolerance) => {
-            bundle.entry?.push({
+          allergyIntolerances.forEach((allergyIntolerance) => {
+            entries.push({
               resource: allergyIntolerance,
             });
           });
@@ -1673,10 +1666,10 @@ export class FhirClientService {
               patient: currentPatient.id,
             }),
           );
-          if (procedureResponse?.entry) {
+          if (procedureResponse.entry) {
             procedureResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry?.push({ resource: entry.resource });
+                entries.push({ resource: entry.resource });
               }
             });
           }
@@ -1690,10 +1683,10 @@ export class FhirClientService {
               patient: currentPatient.id,
             }),
           );
-          if (diagnosticResponse?.entry) {
+          if (diagnosticResponse.entry) {
             diagnosticResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry?.push({ resource: entry.resource });
+                entries.push({ resource: entry.resource });
               }
             });
           }
@@ -1707,10 +1700,10 @@ export class FhirClientService {
               patient: currentPatient.id,
             }),
           );
-          if (encounterResponse?.entry) {
+          if (encounterResponse.entry) {
             encounterResponse.entry.forEach((entry: FhirBundleEntry) => {
               if (entry.resource) {
-                bundle.entry?.push({ resource: entry.resource });
+                entries.push({ resource: entry.resource });
               }
             });
           }
@@ -1721,8 +1714,8 @@ export class FhirClientService {
         // Add immunizations
         try {
           const immunizations = await firstValueFrom(this.getImmunizations());
-          immunizations?.forEach((immunization) => {
-            bundle.entry?.push({
+          immunizations.forEach((immunization) => {
+            entries.push({
               resource: immunization,
             });
           });
@@ -1731,11 +1724,7 @@ export class FhirClientService {
         }
       }
 
-      logger.debug(
-        'Completed FHIR bundle with',
-        bundle.entry?.length ?? 0,
-        'entries',
-      );
+      logger.debug('Completed FHIR bundle with', entries.length, 'entries');
       return bundle;
     } catch (error) {
       logger.error('Error building comprehensive FHIR bundle:', error);

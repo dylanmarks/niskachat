@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +31,8 @@ import { logger } from '../../utils/logger';
   styleUrls: ['./conditions-list.component.scss'],
 })
 export class ConditionsListComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+
   private destroy$ = new Subject<void>();
 
   isLoading = false;
@@ -41,15 +43,13 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
   selectedCondition: Condition | null = null;
   displayedColumns: string[] = ['name', 'status', 'onset', 'actions'];
 
-  constructor(private fhirClient: FhirClientService) {}
-
   ngOnInit(): void {
     // Subscribe to FHIR context changes
     this.fhirClient.context$
       .pipe(takeUntil(this.destroy$))
       .subscribe((context) => {
         this.context = context;
-        if (context?.authenticated && context.patient) {
+        if (context.authenticated && context.patient) {
           void this.loadConditions();
         }
       });
@@ -81,10 +81,10 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
         }),
       );
 
-      this.conditions = this.sortConditionsByDate(conditions || []);
+      this.conditions = this.sortConditionsByDate(conditions);
     } catch (error) {
       logger.error('Error loading conditions:', error);
-      this.errorMessage = `Failed to load conditions: ${error}`;
+      this.errorMessage = `Failed to load conditions: ${String(error)}`;
     } finally {
       this.isLoading = false;
     }
@@ -115,9 +115,9 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
    */
   private getConditionSortDate(condition: Condition): string | null {
     return (
-      condition.recordedDate ||
-      condition.onsetDateTime ||
-      condition.onsetPeriod?.start ||
+      condition.recordedDate ??
+      condition.onsetDateTime ??
+      condition.onsetPeriod?.start ??
       null
     );
   }
@@ -146,8 +146,8 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
    */
   getConditionStatus(condition: Condition): string {
     return (
-      condition.clinicalStatus?.coding?.[0]?.display ||
-      condition.clinicalStatus?.coding?.[0]?.code ||
+      condition.clinicalStatus?.coding?.[0]?.display ??
+      condition.clinicalStatus?.coding?.[0]?.code ??
       'Unknown'
     );
   }
@@ -178,8 +178,8 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
    */
   getVerificationStatus(condition: Condition): string | null {
     return (
-      condition.verificationStatus?.coding?.[0]?.display ||
-      condition.verificationStatus?.coding?.[0]?.code ||
+      condition.verificationStatus?.coding?.[0]?.display ??
+      condition.verificationStatus?.coding?.[0]?.code ??
       null
     );
   }
@@ -201,7 +201,7 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
     }
 
     if (condition.onsetAge) {
-      return `Age ${condition.onsetAge.value} ${condition.onsetAge.unit || 'years'}`;
+      return `Age ${String(condition.onsetAge.value)} ${condition.onsetAge.unit ?? 'years'}`;
     }
 
     return null;
@@ -248,14 +248,14 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
         ?.filter((coding) => Boolean(coding.system && coding.code))
         .map((coding) => {
           const result: { system: string; code: string; display?: string } = {
-            system: this.getSystemName(coding.system!),
-            code: coding.code!,
+            system: this.getSystemName(coding.system ?? ''),
+            code: coding.code ?? '',
           };
           if (coding.display) {
             result.display = coding.display;
           }
           return result;
-        }) || []
+        }) ?? []
     );
   }
 
@@ -268,7 +268,7 @@ export class ConditionsListComponent implements OnInit, OnDestroy {
       'http://hl7.org/fhir/sid/icd-10-cm': 'ICD-10-CM',
       'http://hl7.org/fhir/sid/icd-9-cm': 'ICD-9-CM',
     };
-    return systemNames[system] || system;
+    return systemNames[system] ?? system;
   }
 
   /**

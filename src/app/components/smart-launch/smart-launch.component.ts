@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
-  Inject,
   InjectionToken,
   OnDestroy,
   OnInit,
+  inject,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -38,18 +38,16 @@ export const BROWSER_WINDOW = new InjectionToken<Window>('BROWSER_WINDOW', {
   styleUrl: './smart-launch.component.scss',
 })
 export class SmartLaunchComponent implements OnInit, OnDestroy {
+  private fhirClient = inject(FhirClientService);
+  private router = inject(Router);
+  private browserWindow = inject<Window>(BROWSER_WINDOW);
+
   private destroy$ = new Subject<void>();
 
   isLoading = false;
   statusMessage = '';
   errorMessage = '';
   context: FhirContext | null = null;
-
-  constructor(
-    private fhirClient: FhirClientService,
-    private router: Router,
-    @Inject(BROWSER_WINDOW) private browserWindow: Window,
-  ) {}
 
   ngOnInit(): void {
     // Subscribe to FHIR context changes
@@ -81,10 +79,10 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
 
     if (isCallback || hasCode) {
       // This is a callback from authorization server
-      this.handleCallback();
+      void this.handleCallback();
     } else if (hasLaunch) {
       // This is an EHR launch
-      this.handleEhrLaunch();
+      void this.handleEhrLaunch();
     }
   }
 
@@ -100,7 +98,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
       await this.fhirClient.handleOAuth2Ready();
       this.statusMessage = 'Authentication successful!';
     } catch (error) {
-      this.errorMessage = `Authentication failed: ${error}`;
+      this.errorMessage = `Authentication failed: ${String(error)}`;
       logger.error('OAuth2 callback error:', error);
     } finally {
       this.isLoading = false;
@@ -126,7 +124,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
       this.statusMessage = 'Initializing SMART launch...';
       await this.fhirClient.initializeSmartLaunch(iss);
     } catch (error) {
-      this.errorMessage = `EHR launch failed: ${error}`;
+      this.errorMessage = `EHR launch failed: ${String(error)}`;
       logger.error('EHR launch error:', error);
     } finally {
       this.isLoading = false;
@@ -144,7 +142,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
     try {
       await this.fhirClient.initializeSmartLaunch();
     } catch (error) {
-      this.errorMessage = `Standalone launch failed: ${error}`;
+      this.errorMessage = `Standalone launch failed: ${String(error)}`;
       logger.error('Standalone launch error:', error);
     } finally {
       this.isLoading = false;
@@ -155,7 +153,7 @@ export class SmartLaunchComponent implements OnInit, OnDestroy {
    * Navigate to test mode
    */
   navigateToTestMode(): void {
-    this.router.navigate(['/test-mode']);
+    void this.router.navigate(['/test-mode']);
   }
 
   /**

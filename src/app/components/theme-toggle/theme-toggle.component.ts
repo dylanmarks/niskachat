@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -20,10 +20,10 @@ import { Theme, ThemeService } from '../../services/theme.service';
   styleUrl: './theme-toggle.component.scss',
 })
 export class ThemeToggleComponent {
+  themeService = inject(ThemeService);
+
   @Input() showLabel = false;
   @Input() variant: 'icon' | 'button' | 'menu' = 'icon';
-
-  constructor(public themeService: ThemeService) {}
 
   setTheme(theme: Theme): void {
     this.themeService.setTheme(theme);

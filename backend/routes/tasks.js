@@ -148,13 +148,10 @@ router.post("/", (req, res) => {
 
     getTaskStore(req).set(task.id, task);
     setVersionEtag(res, task);
-    logger.info("Task created", {
-      taskId: task.id,
-      hasInitialComment: Boolean(normalizedComment),
-    });
+    logger.info("Demo task created");
     return res.status(201).json({ success: true, task });
   } catch (error) {
-    logger.error("Error creating task", { error: error.message });
+    logger.error("Demo task creation failed:", error?.name || "UnknownError");
     return res.status(500).json({ error: "Failed to create task" });
   }
 });
@@ -197,13 +194,10 @@ router.post("/:id/comments", (req, res) => {
 
     store.set(task.id, updatedTask);
     setVersionEtag(res, updatedTask);
-    logger.info("Task comment appended", {
-      taskId: task.id,
-      newVersion: nextVersion,
-    });
+    logger.info("Demo task comment appended");
     return res.status(200).json({ success: true, task: updatedTask });
   } catch (error) {
-    logger.error("Error appending task comment", { error: error.message });
+    logger.error("Demo task comment failed:", error?.name || "UnknownError");
     return res.status(500).json({ error: "Failed to add comment" });
   }
 });

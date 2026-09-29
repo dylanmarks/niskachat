@@ -143,7 +143,7 @@ export class TaskCardComponent {
 
   getFocusDisplay(): string {
     if (!this.task.focus) return '';
-    return this.task.focus.display || this.task.focus.reference;
+    return this.task.focus.display ?? this.task.focus.reference;
   }
 
   getStatusDisplay(): string {
@@ -181,7 +181,7 @@ export class TaskCardComponent {
     const ref = this.task.basedOn[0].reference;
     // Extract just the ID part after the slash
     const parts = ref.split('/');
-    return parts.length > 1 ? parts[1] || ref : ref;
+    return parts.length > 1 ? (parts[1] ?? ref) : ref;
   }
 
   hasComments(): boolean {
@@ -189,7 +189,7 @@ export class TaskCardComponent {
   }
 
   getCommentCount(): number {
-    return this.task.note?.length || 0;
+    return this.task.note?.length ?? 0;
   }
 
   toggleComments(): void {

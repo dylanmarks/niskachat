@@ -36,6 +36,10 @@
     *ngIf="patient && !isLoading && !errorMessage && (summary || summaryError)"
     class="patient-content"
   >
+    <p class="summary-warning" role="note">
+      AI requests send this FHIR context to the configured provider. Use
+      synthetic records only; the app does not de-identify data.
+    </p>
     <!-- Summary Card -->
     <mat-card *ngIf="summary" class="summary-card">
       <mat-card-header>
@@ -57,6 +61,18 @@
       <mat-card-content>
         <div class="summary-content">
           <pre [innerHTML]="convertMarkdownToHtml(summary)"></pre>
+        </div>
+        <div class="summary-warning" *ngIf="summaryUsedLLM">
+          AI-generated summary
+          <span *ngIf="summaryProvider">by {{ summaryProvider }}</span>
+          . Review the source record; this demo does not diagnose or recommend
+          treatment.
+          <div *ngIf="summaryEvidenceReferences.length">
+            Source records: {{ summaryEvidenceReferences.join(", ") }}
+          </div>
+          <div *ngIf="!summaryEvidenceReferences.length">
+            No FHIR source references were validated for this summary.
+          </div>
         </div>
         <div class="summary-warning" *ngIf="summaryWarning">
           <mat-icon color="warn">warning</mat-icon>

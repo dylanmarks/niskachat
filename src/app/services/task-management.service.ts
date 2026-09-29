@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
@@ -15,11 +15,11 @@ import { logger } from '../utils/logger';
   providedIn: 'root',
 })
 export class TaskManagementService {
+  private http = inject(HttpClient);
+
   private tasksSubject = new BehaviorSubject<FHIRTask[]>([]);
   private carePlansSubject = new BehaviorSubject<FHIRCarePlan[]>([]);
   private currentSessionId = this.generateSessionId();
-
-  constructor(private http: HttpClient) {}
 
   // Observable streams
   tasks$ = this.tasksSubject.asObservable();
@@ -83,7 +83,7 @@ export class TaskManagementService {
             if (!tasksByCarePlan.has(carePlanId)) {
               tasksByCarePlan.set(carePlanId, []);
             }
-            tasksByCarePlan.get(carePlanId)!.push(task);
+            tasksByCarePlan.get(carePlanId)?.push(task);
           } else {
             unassignedTasks.push(task);
           }
@@ -97,7 +97,7 @@ export class TaskManagementService {
 
     // Add groups for each CarePlan
     carePlans.forEach((carePlan) => {
-      const planTasks = tasksByCarePlan.get(carePlan.id) || [];
+      const planTasks = tasksByCarePlan.get(carePlan.id) ?? [];
       groups.push({ carePlan, tasks: planTasks });
     });
 
@@ -120,15 +120,18 @@ export class TaskManagementService {
       return null;
     }
 
-    const originalTask = tasks[taskIndex]!;
+    const originalTask = tasks[taskIndex];
+    if (!originalTask) {
+      return null;
+    }
     const updatedTask: FHIRTask = {
       resourceType: originalTask.resourceType,
       id: originalTask.id,
       ...(originalTask.meta ? { meta: originalTask.meta } : {}),
       intent: originalTask.intent,
-      status: request.status || originalTask.status,
+      status: request.status ?? originalTask.status,
       code: {
-        text: request.title || originalTask.code.text,
+        text: request.title ?? originalTask.code.text,
       },
       for: originalTask.for,
       authoredOn: originalTask.authoredOn,
@@ -318,7 +321,7 @@ export class TaskManagementService {
   }
 
   private generateSessionId(): string {
-    return `session-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+    return `session-${String(Date.now())}-${Math.random().toString(36).slice(2, 11)}`;
   }
 
   /**
