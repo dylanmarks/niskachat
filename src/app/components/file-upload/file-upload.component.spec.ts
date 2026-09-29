@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import {
-  FhirBundle,
   FhirClientService,
   FhirContext,
 } from '../../services/fhir-client.service';
@@ -143,7 +142,7 @@ describe('FileUploadComponent', () => {
 
     it('should reject invalid JSON', () => {
       expect(() => {
-        component.validateBundle(null as unknown as FhirBundle);
+        component.validateBundle(null);
       }).toThrowError('Invalid JSON format');
     });
 

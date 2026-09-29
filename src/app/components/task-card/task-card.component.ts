@@ -50,8 +50,7 @@ export class TaskCardComponent {
     this.deleteTask.emit(this.task.id);
   }
 
-  onCommentAdded(event: { task: FHIRTask; comment: TaskNote }): void {
-    void event;
+  onCommentAdded(_event: { task: FHIRTask; comment: TaskNote }): void {
     // Task has been updated with new comment, no need to emit edit event
     // The task-comments component already handles the update internally
   }
