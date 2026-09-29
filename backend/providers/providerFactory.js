@@ -60,142 +60,66 @@ export class LLMProviderFactory {
   }
 
   /**
-   * Get the best available provider based on configuration and availability
+   * Resolve only the explicitly configured provider.
+   *
+   * Clinical context must never be sent to a different provider as an implicit
+   * retry: each provider has a distinct data-processing boundary.
    * @returns {Promise<BaseLLMProvider|null>}
    */
   async getBestProvider() {
-    // Try the preferred provider
-    const preferred = this.providers.get(this.preferredProvider);
+    const provider = this.providers.get(this.preferredProvider);
     if (
-      preferred &&
-      preferred.isConfigured() &&
-      (await preferred.isAvailable())
+      !provider ||
+      !provider.isConfigured() ||
+      !(await provider.isAvailable())
     ) {
-      logger.info(`Using preferred provider: ${this.preferredProvider}`);
-      return preferred;
+      logger.warn(
+        `Configured LLM provider is unavailable: ${this.preferredProvider}`,
+      );
+      return null;
     }
 
-    // If preferred is not available, try any other configured provider
-    for (const [name, provider] of this.providers) {
-      if (name !== this.preferredProvider) {
-        if (provider.isConfigured() && (await provider.isAvailable())) {
-          logger.info(`Using alternative provider: ${name}`);
-          return provider;
-        }
-      }
-    }
-
-    logger.warn("No LLM providers are available");
-    return null;
+    return provider;
   }
 
   /**
-   * Generate a response using the best available provider
+   * Generate a response using only the explicitly configured provider.
    * @param {string} prompt
    * @param {Object} options
    * @returns {Promise<{response: string, provider: string}>}
    */
   async generateResponse(prompt, options = {}) {
     const provider = await this.getBestProvider();
-
     if (!provider) {
-      throw new Error("No LLM providers are available");
+      throw new Error(
+        `Configured LLM provider is unavailable: ${this.preferredProvider}`,
+      );
     }
 
-    try {
-      const response = await provider.generateResponse(prompt, options);
-      return {
-        response,
-        provider: provider.getName(),
-      };
-    } catch (error) {
-      // If the provider fails, try another one
-      logger.warn(`Provider ${provider.getName()} failed: ${error.message}`);
-
-      // Try other providers
-      for (const [name, fallbackProvider] of this.providers) {
-        if (name !== provider.getName() && fallbackProvider.isConfigured()) {
-          try {
-            if (await fallbackProvider.isAvailable()) {
-              logger.info(`Trying fallback provider: ${name}`);
-              const response = await fallbackProvider.generateResponse(
-                prompt,
-                options,
-              );
-              return {
-                response,
-                provider: fallbackProvider.getName(),
-              };
-            }
-          } catch (fallbackError) {
-            logger.warn(
-              `Fallback provider ${name} also failed: ${fallbackError.message}`,
-            );
-          }
-        }
-      }
-
-      // If all providers fail, throw the original error
-      throw error;
-    }
+    const response = await provider.generateResponse(prompt, options);
+    return {
+      response,
+      provider: provider.getName(),
+    };
   }
 
   /**
-   * Stream a response using the best available provider.
-   * Falls back to other providers if the selected one fails mid-selection;
-   * once streaming has started, errors are surfaced to the caller.
+   * Stream from the explicitly configured provider. Provider failures are
+   * surfaced instead of retrying the prompt across another data boundary.
    * @param {string} prompt
    * @param {Object} options
    * @yields {{type: string, text?: string, provider?: string}}
    */
   async *streamResponse(prompt, options = {}) {
     const provider = await this.getBestProvider();
-
     if (!provider) {
-      throw new Error("No LLM providers are available");
+      throw new Error(
+        `Configured LLM provider is unavailable: ${this.preferredProvider}`,
+      );
     }
 
-    let emittedAnyChunk = false;
-
-    try {
-      for await (const chunk of provider.streamResponse(prompt, options)) {
-        emittedAnyChunk = true;
-        yield { ...chunk, provider: provider.getName() };
-      }
-    } catch (error) {
-      logger.warn(
-        `Provider ${provider.getName()} stream failed: ${error.message}`,
-      );
-
-      // Only fall back if nothing has streamed yet; otherwise the fallback
-      // would concatenate a second provider's text onto a partial response
-      if (emittedAnyChunk) {
-        throw error;
-      }
-
-      for (const [name, fallbackProvider] of this.providers) {
-        if (name === provider.getName() || !fallbackProvider.isConfigured()) {
-          continue;
-        }
-        try {
-          if (await fallbackProvider.isAvailable()) {
-            logger.info(`Streaming via fallback provider: ${name}`);
-            for await (const chunk of fallbackProvider.streamResponse(
-              prompt,
-              options,
-            )) {
-              yield { ...chunk, provider: name };
-            }
-            return;
-          }
-        } catch (fallbackError) {
-          logger.warn(
-            `Fallback provider ${name} stream also failed: ${fallbackError.message}`,
-          );
-        }
-      }
-
-      throw error;
+    for await (const chunk of provider.streamResponse(prompt, options)) {
+      yield { ...chunk, provider: provider.getName() };
     }
   }
 
@@ -204,24 +128,54 @@ export class LLMProviderFactory {
    * @returns {Promise<Object>}
    */
   async getProvidersStatus() {
+    const provider = this.providers.get(this.preferredProvider);
     const status = {
       preferredProvider: this.preferredProvider,
+      fallbackEnabled: false,
       providers: {},
     };
 
-    for (const [name, provider] of this.providers) {
+    if (!provider) {
+      return status;
+    }
+
+    let available = false;
+    try {
+      available = provider.isConfigured() && (await provider.isAvailable());
+    } catch {
+      available = false;
+    }
+
+    const destination = this.getProviderDestination(provider);
+    status.providers[this.preferredProvider] = {
+      provider: this.preferredProvider,
+      model: provider.model || null,
+      configured: provider.isConfigured(),
+      available,
+      destination,
+      processingBoundary:
+        this.preferredProvider === "ollama"
+          ? "Ollama-compatible endpoint; confirm where that endpoint runs"
+          : "External model provider; data leaves this application host",
+    };
+
+    return status;
+  }
+
+  getProviderDestination(provider) {
+    if (provider.baseUrl) {
       try {
-        status.providers[name] = await provider.getStatus();
-      } catch (error) {
-        status.providers[name] = {
-          provider: name,
-          available: false,
-          error: error.message,
-        };
+        return new URL(provider.baseUrl).origin;
+      } catch {
+        return "Configured provider endpoint";
       }
     }
 
-    return status;
+    if (provider.getName() === "gemini-vertex") {
+      return "Google Gemini API";
+    }
+
+    return "Provider endpoint configured by its SDK";
   }
 
   /**

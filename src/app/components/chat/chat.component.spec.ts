@@ -9,12 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
 import { FhirClientService, Patient } from '../../services/fhir-client.service';
-import {
-  ChatComponent,
-  ChatMessage,
-  ChatRequest,
-  ChatResponse,
-} from './chat.component';
+import { ChatComponent, ChatMessage, ChatRequest } from './chat.component';
 
 describe('ChatComponent', () => {
   let component: ChatComponent;
@@ -42,6 +37,15 @@ describe('ChatComponent', () => {
 
     fixture = TestBed.createComponent(ChatComponent);
     component = fixture.componentInstance;
+    component.providerStatusLoading = false;
+    component.providerDisclosure = {
+      provider: 'ollama',
+      model: 'llama3.1:8b',
+      destination: 'http://127.0.0.1:11434',
+      processingBoundary:
+        'Ollama-compatible endpoint; confirm where that endpoint runs',
+      available: true,
+    };
     httpMock = TestBed.inject(HttpTestingController);
     fhirClientService = fhirClientSpy;
   });
@@ -194,96 +198,94 @@ describe('ChatComponent', () => {
       expect(component.messages.length).toBe(initialCount);
     });
 
-    it('should send message successfully', async () => {
+    it('sends one request to the disclosed provider and displays validated evidence', async () => {
       component.currentMessage = 'What are the patient conditions?';
       const initialCount = component.messages.length;
+      const responseEvent = {
+        summary: 'The record includes a patient resource.',
+        provider: 'ollama',
+        suggestedActions: [],
+        evidenceReferences: ['Patient/test-patient'],
+      };
+      const fetchSpy = window.fetch as jasmine.Spy;
+      fetchSpy.and.resolveTo(
+        new Response(
+          `event: done\ndata: ${JSON.stringify(responseEvent)}\n\n`,
+          { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+        ),
+      );
 
-      const sendPromise = component.sendMessage();
-      await fixture.whenStable();
+      await component.sendMessage();
 
-      // Verify request
-      const req = httpMock.expectOne('/api/llm');
-
-      expect(req.request.method).toBe('POST');
-
-      const requestBody = req.request.body as ChatRequest;
-
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy.calls.mostRecent().args[0]).toBe('/api/llm/stream');
+      const requestBody = JSON.parse(
+        (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string,
+      ) as ChatRequest;
       expect(requestBody.query).toBe('What are the patient conditions?');
       expect(requestBody.context).toBe('clinical_chat');
       expect(requestBody.compressedData).toBeDefined();
+      expect(requestBody.sourceReferences).toContain('Patient/test-patient');
+      expect(httpMock.match('/api/llm').length).toBe(0);
 
-      // Mock response
-      const mockResponse: ChatResponse = {
-        success: true,
-        summary: 'Patient has hypertension and diabetes.',
-        llmUsed: false,
-        context: 'clinical_chat',
-        timestamp: new Date().toISOString(),
-      };
-      req.flush(mockResponse);
-
-      await sendPromise;
-
-      // Verify messages
-      expect(component.messages.length).toBe(initialCount + 2); // user + AI
-      expect(component.messages[initialCount]?.content).toBe(
-        'What are the patient conditions?',
-      );
-
+      expect(component.messages.length).toBe(initialCount + 2);
       expect(component.messages[initialCount]?.isUser).toBe(true);
       expect(component.messages[initialCount + 1]?.content).toBe(
-        '<p>Patient has hypertension and diabetes.</p>',
+        '<p>The record includes a patient resource.</p>',
       );
+      expect(component.messages[initialCount + 1]?.evidenceReferences).toEqual([
+        'Patient/test-patient',
+      ]);
+      expect(component.isLoading).toBe(false);
+    });
 
-      expect(component.messages[initialCount + 1]?.isUser).toBe(false);
-
-      // Verify state
+    it('sends on the user action without a separate disclosure confirmation', async () => {
+      component.currentMessage = 'Summarize the current record';
+      const fetchSpy = window.fetch as jasmine.Spy;
+      fetchSpy.and.resolveTo(
+        new Response(
+          `event: done\ndata: ${JSON.stringify({
+            summary: 'A source-linked summary.',
+            evidenceReferences: ['Patient/test-patient'],
+          })}\n\n`,
+          { status: 200 },
+        ),
+      );
+      await component.sendMessage();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
       expect(component.currentMessage).toBe('');
+    });
+
+    it('does not retry through another endpoint when the stream request fails', async () => {
+      component.currentMessage = 'Test message';
+      const fetchSpy = window.fetch as jasmine.Spy;
+      fetchSpy.and.resolveTo(new Response('Unavailable', { status: 503 }));
+
+      await component.sendMessage();
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(httpMock.match('/api/llm').length).toBe(0);
+      expect(component.messages.at(-1)?.content).toContain(
+        'No complete answer was returned',
+      );
       expect(component.isLoading).toBe(false);
     });
 
-    it('should handle server error', async () => {
+    it('handles a network failure without exposing provider error details', async () => {
       component.currentMessage = 'Test message';
-      const initialCount = component.messages.length;
-
-      const sendPromise = component.sendMessage();
-      await fixture.whenStable();
-
-      const req = httpMock.expectOne('/api/llm');
-      req.flush('Server error', {
-        status: 500,
-        statusText: 'Internal Server Error',
-      });
-
-      await sendPromise;
-
-      // Verify error message
-      expect(component.messages.length).toBe(initialCount + 2);
-      expect(component.messages[initialCount + 1]?.content).toBe(
-        '<p>Server error occurred. Please try again later.</p>',
+      const fetchSpy = window.fetch as jasmine.Spy;
+      fetchSpy.and.callFake(() =>
+        Promise.reject(new Error('private provider detail')),
       );
 
-      expect(component.isLoading).toBe(false);
-    });
+      await component.sendMessage();
 
-    it('should handle network error', async () => {
-      component.currentMessage = 'Test message';
-      const initialCount = component.messages.length;
-
-      const sendPromise = component.sendMessage();
-      await fixture.whenStable();
-
-      const req = httpMock.expectOne('/api/llm');
-      req.flush('', { status: 0, statusText: 'Network Error' });
-
-      await sendPromise;
-
-      // Verify error message
-      expect(component.messages.length).toBe(initialCount + 2);
-      expect(component.messages[initialCount + 1]?.content).toBe(
-        '<p>Unable to connect to the server. Please check your connection.</p>',
+      expect(component.messages.at(-1)?.content).toContain(
+        'did not retry the request through another endpoint',
       );
-
+      expect(component.messages.at(-1)?.content).not.toContain(
+        'private provider detail',
+      );
       expect(component.isLoading).toBe(false);
     });
 
@@ -295,15 +297,17 @@ describe('ChatComponent', () => {
       });
       spyOn(enterEvent, 'preventDefault');
 
-      const sendPromise = component.sendMessage(enterEvent);
-      await fixture.whenStable();
+      const fetchSpy = window.fetch as jasmine.Spy;
+      fetchSpy.and.resolveTo(
+        new Response(
+          `event: done\ndata: ${JSON.stringify({ summary: 'Response' })}\n\n`,
+          { status: 200 },
+        ),
+      );
+      await component.sendMessage(enterEvent);
 
       expect(enterEvent.preventDefault).toHaveBeenCalled();
-
-      const req = httpMock.expectOne('/api/llm');
-      req.flush({ summary: 'Response' });
-
-      await sendPromise;
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should allow Shift+Enter without sending', async () => {
@@ -317,7 +321,7 @@ describe('ChatComponent', () => {
       await component.sendMessage(shiftEnterEvent);
 
       expect(component.messages.length).toBe(initialCount);
-      httpMock.expectNone('/api/llm');
+      expect(window.fetch).not.toHaveBeenCalled();
     });
   });
 

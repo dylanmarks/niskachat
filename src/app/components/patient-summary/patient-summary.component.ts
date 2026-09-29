@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import DOMPurify from 'dompurify';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
@@ -23,6 +24,8 @@ export interface LLMSummaryResponse {
   llmUsed: boolean;
   warning?: string;
   error?: string;
+  provider?: string;
+  evidenceReferences?: string[];
 }
 
 type FhirBundleResource = Patient | Condition | Observation | MedicationRequest;
@@ -78,6 +81,8 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
   summaryError: string | null = null;
   summaryWarning: string | null = null;
   summaryUsedLLM = false;
+  summaryProvider: string | null = null;
+  summaryEvidenceReferences: string[] = [];
   summaryTimestamp: Date | null = null;
 
   // Compressed summary for header display
@@ -289,7 +294,11 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
    */
   convertMarkdownToHtml(text: string | null): string {
     if (!text) return '';
-    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    return DOMPurify.sanitize(formatted, {
+      ALLOWED_TAGS: ['strong', 'em', 'p', 'br', 'ul', 'ol', 'li'],
+      ALLOWED_ATTR: [],
+    });
   }
 
   /**
@@ -359,18 +368,46 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
             });
           }
         } catch (fetchError) {
-          logger.warn('Could not fetch additional resources:', fetchError);
+          logger.warn('Additional FHIR resources could not be loaded');
           // Continue with just patient data
         }
       }
 
-      // Call the backend summarization API
+      const providerStatus = await firstValueFrom(
+        this.http.get<{
+          llmAvailable: boolean;
+          preferredProvider?: string;
+          providers?: Record<
+            string,
+            { model?: string | null; destination?: string; available?: boolean }
+          >;
+        }>('/api/llm/status'),
+      );
+      const selectedProvider = providerStatus.preferredProvider
+        ? providerStatus.providers?.[providerStatus.preferredProvider]
+        : undefined;
+      if (!providerStatus.llmAvailable || !selectedProvider) {
+        this.summaryError = 'The configured AI provider is unavailable.';
+        return;
+      }
+
+      const sourceReferences = bundle.entry
+        .map(({ resource }) =>
+          resource.id ? `${resource.resourceType}/${resource.id}` : null,
+        )
+        .filter((reference): reference is string => Boolean(reference))
+        .slice(0, 100);
       const response = await firstValueFrom(
-        this.http.post<LLMSummaryResponse>('/api/llm', { bundle }),
+        this.http.post<LLMSummaryResponse>('/api/llm', {
+          bundle,
+          sourceReferences,
+        }),
       );
 
       this.summary = response.summary;
       this.summaryUsedLLM = response.llmUsed || false;
+      this.summaryProvider = response.provider || null;
+      this.summaryEvidenceReferences = response.evidenceReferences || [];
       this.summaryTimestamp = new Date();
       this.summaryWarning = response.warning || null;
 
@@ -379,7 +416,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
         logger.warn('⚠️ LLM Warning:', response.warning);
       }
     } catch (error: unknown) {
-      logger.error('Error generating summary:', error);
+      logger.error('AI summary request failed');
       const httpError = error as HttpErrorResponse;
       this.summaryError =
         httpError.error?.error ||
@@ -444,7 +481,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
             });
           }
         } catch (fetchError) {
-          logger.warn('Could not fetch additional resources:', fetchError);
+          logger.warn('Additional FHIR resources could not be loaded');
           // Continue with just patient data
         }
       }
@@ -458,7 +495,7 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
 
       this.compressedSummary = response.compressedSummary || null;
     } catch (error: unknown) {
-      logger.warn('Could not generate compressed summary:', error);
+      logger.warn('Could not generate the compressed FHIR summary');
       // Create a basic summary from patient data
       this.compressedSummary = this.createBasicSummary();
     }

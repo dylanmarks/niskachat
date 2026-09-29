@@ -16,6 +16,80 @@ const CONTEXT_TYPES = {
   CLINICAL_CHAT: "clinical_chat",
 };
 
+const MAX_QUERY_LENGTH = 1000;
+const MAX_HISTORY_MESSAGES = 10;
+const MAX_HISTORY_MESSAGE_LENGTH = 12000;
+const MAX_SOURCE_REFERENCES = 100;
+const SOURCE_REFERENCE_PATTERN = /^[A-Z][A-Za-z0-9]+\/[A-Za-z0-9.-]{1,64}$/;
+
+function resolveSourceReferences(clinicalData, suppliedReferences = []) {
+  if (
+    clinicalData?.resourceType === "Bundle" &&
+    Array.isArray(clinicalData.entry)
+  ) {
+    return clinicalData.entry
+      .map((entry) => entry?.resource)
+      .filter(
+        (resource) =>
+          resource &&
+          typeof resource.resourceType === "string" &&
+          typeof resource.id === "string" &&
+          SOURCE_REFERENCE_PATTERN.test(
+            `${resource.resourceType}/${resource.id}`,
+          ),
+      )
+      .map((resource) => `${resource.resourceType}/${resource.id}`)
+      .slice(0, MAX_SOURCE_REFERENCES);
+  }
+
+  return suppliedReferences.slice(0, MAX_SOURCE_REFERENCES);
+}
+
+function validateRequestBody(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return "A JSON object is required";
+  }
+  if (
+    body.context !== undefined &&
+    ![CONTEXT_TYPES.SUMMARY, CONTEXT_TYPES.CLINICAL_CHAT].includes(body.context)
+  ) {
+    return "Unsupported request context";
+  }
+  if (
+    body.query !== undefined &&
+    (typeof body.query !== "string" || body.query.length > MAX_QUERY_LENGTH)
+  ) {
+    return `Question must be a string of ${MAX_QUERY_LENGTH} characters or fewer`;
+  }
+  if (
+    body.conversationHistory !== undefined &&
+    (!Array.isArray(body.conversationHistory) ||
+      body.conversationHistory.length > MAX_HISTORY_MESSAGES ||
+      body.conversationHistory.some(
+        (message) =>
+          !message ||
+          typeof message.content !== "string" ||
+          message.content.length > MAX_HISTORY_MESSAGE_LENGTH ||
+          typeof message.isUser !== "boolean",
+      ))
+  ) {
+    return "Conversation history is invalid or exceeds the supported size";
+  }
+  if (
+    body.sourceReferences !== undefined &&
+    (!Array.isArray(body.sourceReferences) ||
+      body.sourceReferences.length > MAX_SOURCE_REFERENCES ||
+      body.sourceReferences.some(
+        (reference) =>
+          typeof reference !== "string" ||
+          !SOURCE_REFERENCE_PATTERN.test(reference),
+      ))
+  ) {
+    return "Source references are invalid or exceed the supported size";
+  }
+  return null;
+}
+
 /**
  * Extract relevant clinical data from FHIR Bundle
  */
@@ -160,20 +234,24 @@ function formatConversationHistory(conversationHistory) {
 
   // Bound history to the most recent 6 messages to protect context limits
   const recentHistory = conversationHistory
-    .filter((msg) => !msg.isLoading && msg.content)
+    .filter(
+      (msg) =>
+        !msg.isLoading &&
+        typeof msg.content === "string" &&
+        typeof msg.isUser === "boolean",
+    )
     .slice(-6);
 
   // Format conversation history as a readable string, truncating long assistant responses
   const formattedHistory = recentHistory
     .map((msg) => {
       const role = msg.isUser ? "Human" : "Assistant";
-      const timestamp = new Date(msg.timestamp).toLocaleString();
-      let content = msg.content;
+      let content = msg.content.slice(0, MAX_HISTORY_MESSAGE_LENGTH);
       // Assistant responses can be very long (CarePlans/JSON); trim past turns to 400 chars
       if (!msg.isUser && content.length > 400) {
         content = `${content.substring(0, 400)}... [truncated]`;
       }
-      return `[${timestamp}] ${role}: ${content}`;
+      return `${role}: ${content}`;
     })
     .join("\n");
 
@@ -188,12 +266,13 @@ function generatePrompt(
   data,
   userQuery = null,
   conversationHistory = null,
+  sourceReferences = [],
 ) {
   logger.debug("generatePrompt called", {
     context,
     dataType: typeof data,
     dataKeys: data ? Object.keys(data) : null,
-    userQuery,
+    queryLength: typeof userQuery === "string" ? userQuery.length : 0,
   });
 
   switch (context) {
@@ -206,6 +285,7 @@ function generatePrompt(
           patientData: data,
           userQuery: userQuery || "Please provide an overview of this patient.",
           conversationHistory: formatConversationHistory(conversationHistory),
+          sourceReferences: sourceReferences.join("\n"),
         });
       }
       // For chat interactions, check if we have a full FHIR bundle
@@ -218,6 +298,7 @@ function generatePrompt(
           patientData: compressedData,
           userQuery: userQuery || "Please provide an overview of this patient.",
           conversationHistory: formatConversationHistory(conversationHistory),
+          sourceReferences: sourceReferences.join("\n"),
         });
       } else {
         logger.debug("Processing legacy structured data");
@@ -247,6 +328,7 @@ function generatePrompt(
           patientData,
           userQuery: userQuery || "Please provide an overview of this patient.",
           conversationHistory: formatConversationHistory(conversationHistory),
+          sourceReferences: sourceReferences.join("\n"),
         });
       }
     }
@@ -259,12 +341,14 @@ function generatePrompt(
         const compressedData = compressFHIRBundle(data);
         return getFormattedPrompt("clinical-summary", {
           fhirData: compressedData,
+          sourceReferences: sourceReferences.join("\n"),
         });
       } else {
         // Legacy handling for structured data
         const formattedData = formatClinicalData(data);
         return getFormattedPrompt("clinical-summary", {
           fhirData: formattedData,
+          sourceReferences: sourceReferences.join("\n"),
         });
       }
     }
@@ -286,227 +370,123 @@ async function callLLM(prompt, options = {}) {
       provider: result.provider,
     };
   } catch (error) {
-    logger.error("LLM call failed:", error);
+    logger.error("LLM call failed:", error?.name || "UnknownError");
     throw error;
   }
 }
 
 /**
- * Parse and validate Clinical Chat response with suggested actions and optional FHIR tasks
+ * Parse a chat response and retain only the narrow, display-only suggestion shape.
+ * Model-generated FHIR resources are intentionally ignored; a human-created task
+ * is built by the app only after an explicit review action.
  */
-function parseClinicalChatResponse(llmResponse) {
+export function parseClinicalChatResponse(
+  llmResponse,
+  allowedSourceReferences = [],
+) {
+  const plainText = {
+    response:
+      "The model response could not be validated against the expected evidence-linked format. No clinical answer or suggestions are available.",
+    suggestedActions: [],
+    evidenceReferences: [],
+    isPlainText: true,
+  };
+
+  if (allowedSourceReferences.length === 0) {
+    return plainText;
+  }
+
   try {
-    logger.debug("Parsing clinical chat response", {
-      responseLength: llmResponse.length,
-      responseStart: llmResponse.substring(0, 200),
-    });
+    if (typeof llmResponse !== "string" || !llmResponse.trim()) {
+      return plainText;
+    }
+    const trimmed = llmResponse.trim();
+    const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+    const jsonText = fencedMatch ? fencedMatch[1].trim() : trimmed;
 
-    // Log the full response for debugging JSON issues
-    logger.debug("Full LLM response for debugging:", {
-      fullResponse: llmResponse,
-    });
-
-    // Try to parse JSON from the response
-    let parsedResponse;
-    let jsonText = "";
-
-    // Handle cases where response might be wrapped in markdown code blocks
-    const jsonMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (jsonMatch) {
-      jsonText = jsonMatch[1].trim();
-      logger.debug("Found JSON in code block", { jsonLength: jsonText.length });
-    } else {
-      // Try to find JSON-like content in the response
-      const jsonStart = llmResponse.indexOf("{");
-      const jsonEnd = llmResponse.lastIndexOf("}");
-
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        jsonText = llmResponse.substring(jsonStart, jsonEnd + 1).trim();
-        logger.debug("Extracted JSON-like content", {
-          jsonLength: jsonText.length,
-        });
-      } else {
-        // If no JSON structure found, treat as plain text response
-        logger.debug("No JSON structure found, treating as plain text");
-        return {
-          response: llmResponse,
-          suggestedActions: [],
-          isPlainText: true,
-        };
-      }
+    if (!jsonText.startsWith("{")) {
+      return plainText;
     }
 
-    // Try to fix common JSON truncation issues
-    if (jsonText && !jsonText.endsWith("}")) {
-      logger.warn("JSON appears to be truncated, attempting to fix");
-      // Count open braces to try to close properly
-      const openBraces = (jsonText.match(/\{/g) || []).length;
-      const closeBraces = (jsonText.match(/\}/g) || []).length;
-      const missingBraces = openBraces - closeBraces;
-
-      if (missingBraces > 0) {
-        // Add missing closing braces
-        jsonText += "}".repeat(missingBraces);
-        logger.debug("Added missing closing braces", { count: missingBraces });
-      }
-
-      // Try to complete arrays if they're incomplete
-      if (
-        jsonText.includes('"tasks": [') &&
-        !jsonText.includes('"tasks": []')
-      ) {
-        const tasksMatch = jsonText.match(/"tasks":\s*\[([^\]]*?)$/);
-        if (tasksMatch && !jsonText.endsWith("]]")) {
-          // Try to close incomplete task array
-          if (jsonText.endsWith(",")) {
-            jsonText = jsonText.slice(0, -1); // Remove trailing comma
-          }
-          if (!jsonText.endsWith("]")) {
-            jsonText += "]";
-            logger.debug("Closed incomplete tasks array");
-          }
-        }
-      }
-    }
-
-    try {
-      parsedResponse = JSON.parse(jsonText);
-    } catch (parseError) {
-      logger.warn("JSON parsing failed, attempting cleanup", {
-        error: parseError.message,
-        jsonSample: jsonText.substring(0, 200),
-      });
-
-      // Try progressive cleanup strategies
-      // eslint-disable-next-line no-control-regex
-      const controlCharsRegex = /[\x00-\x1F\x7F-\x9F]/g;
-      try {
-        // Strategy 1: Remove control characters and fix common issues
-        let cleanedJsonText = jsonText
-          .replace(controlCharsRegex, "") // Remove control characters
-          .replace(/,(\s*[}\]])/g, "$1") // Remove trailing commas
-          .trim();
-
-        parsedResponse = JSON.parse(cleanedJsonText);
-      } catch (cleanupError) {
-        try {
-          // Strategy 2: More aggressive character replacement
-          let aggressiveCleanup = jsonText
-            .replace(controlCharsRegex, " ") // Replace control chars with spaces
-            .replace(/,\s*([}\]])/g, "$1") // Remove trailing commas before closing
-            .replace(/([}\]]),\s*([}\]])/g, "$1$2") // Fix multiple trailing commas
-            .trim();
-
-          parsedResponse = JSON.parse(aggressiveCleanup);
-        } catch (aggressiveError) {
-          logger.debug(
-            "All JSON parsing attempts failed, treating as plain text",
-            {
-              originalError: parseError.message,
-              cleanupError: cleanupError.message,
-              aggressiveError: aggressiveError.message,
-            },
-          );
-          // Fall back to plain text response
-          return {
-            response: llmResponse,
-            suggestedActions: [],
-            isPlainText: true,
-          };
-        }
-      }
-    }
-
-    // Validate structure - be flexible about structure
-    if (typeof parsedResponse.response !== "string") {
-      logger.debug("Invalid response structure, using raw response");
+    const parsedResponse = JSON.parse(jsonText);
+    if (
+      !parsedResponse ||
+      typeof parsedResponse !== "object" ||
+      typeof parsedResponse.response !== "string" ||
+      parsedResponse.response.length > 12000
+    ) {
       return {
-        response: llmResponse,
-        suggestedActions: [],
-        isPlainText: true,
+        ...plainText,
+        response:
+          "The model returned a response that did not pass validation. No suggested actions were shown.",
       };
     }
 
-    // Ensure suggestedActions is an array
-    if (!Array.isArray(parsedResponse.suggestedActions)) {
-      parsedResponse.suggestedActions = [];
-    }
-
-    // Validate suggested actions structure
-    parsedResponse.suggestedActions = parsedResponse.suggestedActions.filter(
-      (action, index) => {
-        if (!action.id || !action.title || !action.description) {
-          logger.debug(
-            `Invalid suggested action at index ${index}, filtering out`,
-          );
-          return false;
-        }
-        return true;
-      },
+    const allowedCategories = new Set([
+      "diagnostic",
+      "therapeutic",
+      "monitoring",
+      "preventive",
+    ]);
+    const sourceReferenceSet = new Set(allowedSourceReferences);
+    const filterReferences = (references) =>
+      Array.isArray(references)
+        ? [
+            ...new Set(
+              references.filter((reference) =>
+                sourceReferenceSet.has(reference),
+              ),
+            ),
+          ].slice(0, 20)
+        : [];
+    const evidenceReferences = filterReferences(
+      parsedResponse.evidenceReferences,
     );
-
-    // Check if this response includes FHIR task generation (when user requests comprehensive actions)
-    let taskGeneration = null;
-    if (
-      parsedResponse.carePlan &&
-      parsedResponse.tasks &&
-      Array.isArray(parsedResponse.tasks)
-    ) {
-      // Validate CarePlan structure
-      const carePlan = parsedResponse.carePlan;
-      if (
-        carePlan.resourceType === "CarePlan" &&
-        carePlan.id &&
-        carePlan.title
-      ) {
-        // Validate Task structures
-        const validTasks = parsedResponse.tasks.filter((task, index) => {
-          if (task.resourceType !== "Task" || !task.id || !task.code?.text) {
-            logger.debug(
-              `Invalid Task structure at index ${index}, filtering out`,
-            );
-            return false;
-          }
-          return true;
-        });
-
-        if (validTasks.length > 0) {
-          taskGeneration = {
-            summary: parsedResponse.response,
-            carePlan: carePlan,
-            tasks: validTasks,
-            source: "clinical_chat",
-          };
-          logger.info("Successfully parsed FHIR task generation", {
-            carePlanId: carePlan.id,
-            taskCount: validTasks.length,
-          });
-        }
-      }
+    if (allowedSourceReferences.length > 0 && evidenceReferences.length === 0) {
+      return plainText;
     }
 
-    logger.info("Successfully parsed clinical chat response", {
-      responseLength: parsedResponse.response.length,
-      suggestedActionsCount: parsedResponse.suggestedActions.length,
-      hasTaskGeneration: !!taskGeneration,
-    });
+    const suggestedActions = Array.isArray(parsedResponse.suggestedActions)
+      ? parsedResponse.suggestedActions
+          .slice(0, 5)
+          .filter(
+            (action) =>
+              action &&
+              typeof action.id === "string" &&
+              action.id.length <= 80 &&
+              typeof action.title === "string" &&
+              action.title.trim().length > 0 &&
+              action.title.length <= 120 &&
+              typeof action.description === "string" &&
+              action.description.trim().length > 0 &&
+              action.description.length <= 1000 &&
+              allowedCategories.has(action.category) &&
+              filterReferences(action.evidenceReferences).length > 0,
+          )
+          .map((action) => ({
+            id: action.id,
+            title: action.title.trim(),
+            description: action.description.trim(),
+            // Prioritization requires clinician judgment; model urgency is not used.
+            priority: "routine",
+            category: action.category,
+            evidenceReferences: filterReferences(action.evidenceReferences),
+          }))
+      : [];
 
     return {
-      response: parsedResponse.response,
-      suggestedActions: parsedResponse.suggestedActions,
-      taskGeneration: taskGeneration,
+      response: parsedResponse.response.trim(),
+      suggestedActions,
+      evidenceReferences,
       isPlainText: false,
     };
-  } catch (error) {
-    logger.warn("Failed to parse clinical chat response, using fallback", {
-      error: error.message,
-    });
-
-    // Return fallback structure with plain text response
+  } catch {
+    logger.warn(
+      "Clinical chat response did not pass structured-output validation",
+    );
     return {
-      response: llmResponse,
+      ...plainText,
       suggestedActions: [],
-      isPlainText: true,
     };
   }
 }
@@ -630,6 +610,12 @@ function resolveClinicalData(body) {
  */
 router.post("/stream", async (req, res) => {
   try {
+    const validationError = validateRequestBody(req.body);
+    if (validationError) {
+      return res
+        .status(400)
+        .json({ error: "Invalid request", message: validationError });
+    }
     const {
       context = CONTEXT_TYPES.CLINICAL_CHAT,
       query,
@@ -645,6 +631,10 @@ router.post("/stream", async (req, res) => {
     }
 
     const { clinicalData } = resolved;
+    const sourceReferences = resolveSourceReferences(
+      clinicalData,
+      req.body.sourceReferences || [],
+    );
     const llmFactory = getLLMProviderFactory();
     const hasProvider = await llmFactory.hasAvailableProvider();
 
@@ -672,6 +662,7 @@ router.post("/stream", async (req, res) => {
       clinicalData,
       sanitizedQuery,
       conversationHistory,
+      sourceReferences,
     );
 
     const abortController = new AbortController();
@@ -706,7 +697,6 @@ router.post("/stream", async (req, res) => {
         }
         if (chunk.text) {
           accumulatedText += chunk.text;
-          sendEvent("chunk", { text: chunk.text });
         }
       }
 
@@ -715,25 +705,27 @@ router.post("/stream", async (req, res) => {
       }
 
       let parsedActions = null;
-      let taskGeneration = null;
       let isStructuredResponse = false;
+      let evidenceReferences = [];
       let cleanResponseText = accumulatedText;
 
       if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
-        const parsed = parseClinicalChatResponse(accumulatedText);
+        const parsed = parseClinicalChatResponse(
+          accumulatedText,
+          sourceReferences,
+        );
         cleanResponseText = parsed.response;
         parsedActions = parsed.suggestedActions;
-        taskGeneration = parsed.taskGeneration;
+        evidenceReferences = parsed.evidenceReferences;
         isStructuredResponse = !parsed.isPlainText;
       }
 
       sendEvent("done", {
         success: true,
         summary: cleanResponseText,
-        fullText: accumulatedText,
         provider: usedProvider,
         suggestedActions: parsedActions,
-        taskGeneration,
+        evidenceReferences,
         isStructuredResponse,
         context,
         timestamp: new Date().toISOString(),
@@ -747,10 +739,13 @@ router.post("/stream", async (req, res) => {
         logger.debug("SSE stream ended due to client disconnect");
         return;
       }
-      logger.error("Error during streaming generation:", streamError);
+      logger.error(
+        "Streaming generation failed:",
+        streamError?.name || "UnknownError",
+      );
       sendEvent("error", {
         error: "Stream generation failed",
-        message: streamError.message,
+        message: "The configured model provider did not complete the request.",
       });
     } finally {
       if (!res.writableEnded) {
@@ -758,11 +753,11 @@ router.post("/stream", async (req, res) => {
       }
     }
   } catch (error) {
-    logger.error("Streaming setup error:", error);
+    logger.error("Streaming setup failed:", error?.name || "UnknownError");
     if (!res.headersSent) {
       res.status(500).json({
         error: "Streaming failed",
-        message: error.message,
+        message: "The request could not be completed. Please try again.",
       });
     } else {
       res.end();
@@ -775,6 +770,12 @@ router.post("/stream", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
+    const validationError = validateRequestBody(req.body);
+    if (validationError) {
+      return res
+        .status(400)
+        .json({ error: "Invalid request", message: validationError });
+    }
     const {
       context = CONTEXT_TYPES.SUMMARY,
       query,
@@ -790,6 +791,10 @@ router.post("/", async (req, res) => {
     }
 
     const { clinicalData } = resolved;
+    const sourceReferences = resolveSourceReferences(
+      clinicalData,
+      req.body.sourceReferences || [],
+    );
 
     let summary;
     let llmUsed = false;
@@ -799,6 +804,7 @@ router.post("/", async (req, res) => {
     const response = {
       success: true,
       summary: "", // Will be set below
+      evidenceReferences: [],
       llmUsed,
       provider,
       context,
@@ -811,11 +817,7 @@ router.post("/", async (req, res) => {
 
     if (hasProvider) {
       try {
-        logger.debug(`Generating prompt for ${context} context`, {
-          clinicalDataType: typeof clinicalData,
-          clinicalDataKeys: clinicalData ? Object.keys(clinicalData) : null,
-          query,
-        });
+        logger.debug(`Generating prompt for ${context} context`);
 
         // Generate appropriate prompt based on context
         const sanitizedQuery = query ? sanitizeInput(query) : null;
@@ -824,6 +826,7 @@ router.post("/", async (req, res) => {
           clinicalData,
           sanitizedQuery,
           conversationHistory,
+          sourceReferences,
         );
         logger.debug(`Generated prompt length: ${prompt.length}`);
 
@@ -835,39 +838,44 @@ router.post("/", async (req, res) => {
 
         const llmResult = await callLLM(prompt, llmOptions);
 
-        // Handle clinical chat responses (which now includes both simple and comprehensive actions)
         if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
-          const parsedResponse = parseClinicalChatResponse(llmResult.response);
+          const parsedResponse = parseClinicalChatResponse(
+            llmResult.response,
+            sourceReferences,
+          );
           summary = parsedResponse.response;
           provider = llmResult.provider;
           llmUsed = true;
 
           // Add the parsed suggested actions to the response
           response.suggestedActions = parsedResponse.suggestedActions;
+          response.evidenceReferences = parsedResponse.evidenceReferences;
           response.isStructuredResponse = !parsedResponse.isPlainText;
 
-          // Add task generation if present (for comprehensive action requests)
-          if (parsedResponse.taskGeneration) {
-            response.taskGeneration = parsedResponse.taskGeneration;
-          }
-
-          logger.info("✅ Clinical chat LLM call successful, parsed response", {
-            responseLength: summary.length,
+          logger.info("Clinical chat response passed validation", {
             suggestedActionsCount: parsedResponse.suggestedActions?.length || 0,
-            hasTaskGeneration: !!parsedResponse.taskGeneration,
-            isPlainText: parsedResponse.isPlainText || false,
+            sourceReferenceCount:
+              parsedResponse.evidenceReferences?.length || 0,
           });
         } else {
-          summary = llmResult.response;
+          const parsedSummary = parseClinicalChatResponse(
+            llmResult.response,
+            sourceReferences,
+          );
+          summary = parsedSummary.response;
+          response.evidenceReferences = parsedSummary.evidenceReferences;
           provider = llmResult.provider;
           llmUsed = true;
-          logger.info("✅ LLM call successful, using AI-generated summary");
+          logger.info("AI summary passed evidence-reference validation", {
+            sourceReferenceCount: parsedSummary.evidenceReferences.length,
+          });
         }
       } catch (llmError) {
-        logger.warn(
-          `LLM providers unavailable for ${context} context, using fallback: ${llmError.message}`,
+        logger.warn(`Configured LLM provider failed for ${context} context`);
+        logger.debug(
+          "LLM provider error type:",
+          llmError?.name || "UnknownError",
         );
-        logger.debug("Error stack:", llmError.stack);
 
         // Fall back based on context
         if (context === CONTEXT_TYPES.CLINICAL_CHAT) {
@@ -969,10 +977,13 @@ router.post("/", async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    logger.error("Summarization error:", error);
+    logger.error(
+      "Summarization request failed:",
+      error?.name || "UnknownError",
+    );
     res.status(500).json({
       error: "Summarization failed",
-      message: error.message,
+      message: "The request could not be completed. Please try again.",
     });
   }
 });
@@ -984,18 +995,19 @@ router.get("/status", async (req, res) => {
   try {
     const llmFactory = getLLMProviderFactory();
     const providersStatus = await llmFactory.getProvidersStatus();
-    const hasAvailable = await llmFactory.hasAvailableProvider();
+    const selectedProvider =
+      providersStatus.providers[providersStatus.preferredProvider] || null;
 
     res.json({
-      llmAvailable: hasAvailable,
+      llmAvailable: selectedProvider?.available || false,
       ...providersStatus,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error("Status check error:", error);
+    logger.error("Status check failed:", error?.name || "UnknownError");
     res.json({
       llmAvailable: false,
-      error: error.message,
+      fallbackEnabled: false,
       timestamp: new Date().toISOString(),
     });
   }
@@ -1024,7 +1036,10 @@ router.post("/compress", async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error("Error compressing FHIR bundle:", error);
+    logger.error(
+      "FHIR bundle compression failed:",
+      error?.name || "UnknownError",
+    );
     res.status(500).json({
       error: "Internal server error",
       message: "Failed to compress FHIR bundle",

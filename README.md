@@ -62,15 +62,26 @@ Important limitations:
   `src/environments/environment.ts` before testing a registered client.
 - The separate backend SMART/proxy prototype uses endpoints from `.env`; it is
   not a second automatic fallback for the browser flow.
-- Uploaded bundles remain in the browser for normal viewing. If an LLM feature
-  is used, a compressed clinical representation is sent to the configured model
-  provider. Ollama is the local-processing option.
+- If an AI feature is used, the app shows the selected provider, model, and
+  destination before a request. The send action triggers the call without a
+  separate confirmation dialog. It sends the question, recent
+  conversation, compressed clinical context, and FHIR source references. It
+  does not de-identify data. Ollama inference may still use a remote configured
+  endpoint.
 - Example bundles are for demonstration only. Do not upload real protected
   health information to a public deployment or send it to a model provider
   without the agreements, consent, security controls, and governance required
   by your jurisdiction and organization.
-- Generated summaries and suggested tasks require human review. They must not
-  be treated as medical advice or autonomous clinical decisions.
+- AI output is evidence-linked to supplied FHIR resource references where
+  possible. Reference matching proves only that a resource exists in the input;
+  it does not prove the model interpreted it correctly. AI output is not medical
+  advice, diagnosis, treatment guidance, or an order.
+- Suggested workflow actions are display-only proposals. A user must review a
+  suggestion and explicitly add a separate in-memory demo task; the app does not
+  write AI-generated CarePlan or Task resources to an EHR.
+- The API still uses anonymous Express sessions and an in-memory task store.
+  Authentication, tenant authorization, durable audit, retention, and deployment
+  controls are intentionally outside this portfolio proof of concept.
 
 These boundaries are deliberate: the repository shows integration patterns
 without claiming production compliance it does not provide.
@@ -116,8 +127,8 @@ OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=llama3.1:8b
 ```
 
-For the experimental backend SMART/proxy path, configure the registered client
-and endpoints:
+For the experimental backend SMART/proxy path, configure the registered client,
+endpoints, and exact allowed issuer URLs:
 
 ```env
 SMART_CLIENT_ID=your-registered-client-id
@@ -125,10 +136,12 @@ SMART_REDIRECT_URI=http://localhost:3000/auth/callback
 SMART_AUTH_URL=https://launch.smarthealthit.org/v/r4/auth/authorize
 SMART_TOKEN_URL=https://launch.smarthealthit.org/v/r4/auth/token
 SMART_FHIR_BASE_URL=https://launch.smarthealthit.org/v/r4/fhir
+SMART_ALLOWED_ISSUERS=https://launch.smarthealthit.org/v/r4/fhir
 ```
 
 See [the provider setup guide](docs/llm-provider-setup.md) for provider-specific
-variables.
+variables and [the clinical AI safety notes](docs/clinical-ai-safety.md) for
+request flow, output validation, and the remaining proof-of-concept limits.
 
 ## Quality checks
 

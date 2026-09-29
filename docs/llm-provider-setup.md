@@ -74,10 +74,13 @@ Run the provider smoke test only with synthetic input:
 npm run test-providers
 ```
 
-Provider selection tries `LLM_PROVIDER` first and may fall back to another
-configured, reachable provider. Do not configure fallback providers with a
-different approved data boundary unless that behavior is acceptable for your
-deployment.
+Only `LLM_PROVIDER` is used. If it is unavailable or fails, the request fails;
+clinical context is never retried through another provider. `/api/llm/status`
+reports the selected model, endpoint origin, availability, and whether it is an
+external service or an Ollama-compatible endpoint. Endpoint origin is a routing
+label, not a data-residency or contract guarantee. The chat and patient-summary
+flows display that destination before sending clinical context. The user's send
+or summary action triggers the call without a separate confirmation dialog.
 
 ## Operational notes
 
@@ -85,5 +88,10 @@ deployment.
 - Use distinct keys per environment and rotate them regularly.
 - Review provider logging and retention settings.
 - Treat generated content as untrusted output requiring clinician review.
-- Keep model-provider failures observable without logging prompts or patient
-  content.
+- No prompt, response, task text, token, FHIR request URL, or provider error body
+  should be written to application logs. Add log-capture regression tests when
+  introducing new request or error-handling paths.
+- FHIR source-reference validation checks that a reference was present in the
+  supplied bundle. It does not validate the clinical meaning of the answer.
+- The browser may still contain identifiable data; this project does not
+  de-identify data and does not certify any provider for regulated use.

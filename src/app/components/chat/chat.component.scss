@@ -656,3 +656,32 @@
     }
   }
 }
+
+.provider-disclosure {
+  margin: var(--niska-spacing-sm) var(--niska-spacing-md);
+  border: 1px solid var(--niska-primary-200);
+  border-radius: var(--niska-radius-md);
+  background: var(--niska-primary-50);
+  padding: var(--niska-spacing-sm) var(--niska-spacing-md);
+  color: var(--niska-text-primary);
+  font-size: 0.875rem;
+
+  strong,
+  small,
+  span {
+    display: block;
+  }
+}
+
+.response-provenance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--niska-spacing-xs);
+  margin: 0 var(--niska-spacing-md) var(--niska-spacing-xs);
+  color: var(--niska-text-secondary);
+  font-size: 0.75rem;
+
+  code {
+    overflow-wrap: anywhere;
+  }
+}

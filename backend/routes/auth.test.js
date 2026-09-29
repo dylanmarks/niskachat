@@ -1,7 +1,10 @@
 import express from "express";
 import session from "express-session";
 import request from "supertest";
-import authRouter from "./auth.js";
+
+process.env.SMART_ALLOWED_ISSUERS =
+  "https://test-fhir.example.com,https://launch.smarthealthit.org/v/r4/fhir";
+const { default: authRouter } = await import("./auth.js");
 
 // Create a test app
 const app = express();
@@ -77,6 +80,17 @@ describe("OAuth2 SMART Authentication Routes", () => {
         iss: "https://test-fhir.example.com",
       });
       validState = launchResponse.body.state;
+    });
+
+    it("rejects unapproved or unsafe FHIR issuer URLs", async () => {
+      await request(app)
+        .post("/auth/launch")
+        .send({ iss: "http://169.254.169.254/latest/meta-data" })
+        .expect(400);
+      await request(app)
+        .post("/auth/launch")
+        .send({ iss: "https://unapproved.example/fhir" })
+        .expect(400);
     });
 
     it("should return 400 for missing code parameter", async () => {

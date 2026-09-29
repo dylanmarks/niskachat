@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { BaseLLMProvider } from "./baseProvider.js";
 import { LLMProviderFactory } from "./providerFactory.js";
 
@@ -51,6 +52,7 @@ describe("LLMProviderFactory streamResponse", () => {
     factory.providers.clear();
     const provider1 = new MockProvider("mock-1", false, ["token1", "token2"]);
     factory.providers.set("mock-1", provider1);
+    factory.preferredProvider = "mock-1";
 
     const chunks = [];
     for await (const chunk of factory.streamResponse("test prompt")) {
@@ -70,27 +72,25 @@ describe("LLMProviderFactory streamResponse", () => {
     });
   });
 
-  it("should fall back to next provider if first provider fails before emitting chunks", async () => {
+  it("does not send a failed stream to a different provider", async () => {
     const factory = new LLMProviderFactory();
     factory.providers.clear();
     const failingProvider = new MockProvider("failing", true);
     const fallbackProvider = new MockProvider("backup", false, [
       "backup-chunk",
     ]);
+    const fallbackStream = jest.spyOn(fallbackProvider, "streamResponse");
     factory.providers.set("failing", failingProvider);
     factory.providers.set("backup", fallbackProvider);
+    factory.preferredProvider = "failing";
 
-    const chunks = [];
-    for await (const chunk of factory.streamResponse("test prompt")) {
-      chunks.push(chunk);
-    }
-
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0]).toEqual({
-      type: "chunk",
-      text: "backup-chunk",
-      provider: "backup",
-    });
+    await expect(async () => {
+      // eslint-disable-next-line no-unused-vars
+      for await (const _chunk of factory.streamResponse("test prompt")) {
+        // no-op
+      }
+    }).rejects.toThrow("failing stream error");
+    expect(fallbackStream).not.toHaveBeenCalled();
   });
 
   it("should respect abort signal", async () => {
@@ -102,6 +102,7 @@ describe("LLMProviderFactory streamResponse", () => {
       "chunk3",
     ]);
     factory.providers.set("slow", slowProvider);
+    factory.preferredProvider = "slow";
 
     const controller = new AbortController();
     controller.abort();
@@ -116,6 +117,20 @@ describe("LLMProviderFactory streamResponse", () => {
     expect(chunks).toHaveLength(0);
   });
 
+  it("does not select an alternative when the configured provider is unavailable", async () => {
+    const factory = new LLMProviderFactory();
+    factory.providers.clear();
+    const selectedProvider = new MockProvider("selected");
+    const alternateProvider = new MockProvider("alternate");
+    const alternateAvailability = jest.spyOn(alternateProvider, "isAvailable");
+    factory.providers.set("selected", selectedProvider);
+    factory.providers.set("alternate", alternateProvider);
+    factory.preferredProvider = "missing";
+
+    await expect(factory.getBestProvider()).resolves.toBeNull();
+    expect(alternateAvailability).not.toHaveBeenCalled();
+  });
+
   it("should throw if no providers are available", async () => {
     const factory = new LLMProviderFactory();
     factory.providers.clear();
@@ -125,6 +140,24 @@ describe("LLMProviderFactory streamResponse", () => {
       for await (const _chunk of factory.streamResponse("test prompt")) {
         // no-op
       }
-    }).rejects.toThrow("No LLM providers are available");
+    }).rejects.toThrow("Configured LLM provider is unavailable");
+  });
+});
+
+describe("LLMProviderFactory generateResponse", () => {
+  it("does not retry clinical prompts through another provider", async () => {
+    const factory = new LLMProviderFactory();
+    factory.providers.clear();
+    const selectedProvider = new MockProvider("selected", true);
+    const otherProvider = new MockProvider("other");
+    const otherGenerate = jest.spyOn(otherProvider, "generateResponse");
+    factory.providers.set("selected", selectedProvider);
+    factory.providers.set("other", otherProvider);
+    factory.preferredProvider = "selected";
+
+    await expect(factory.generateResponse("synthetic prompt")).rejects.toThrow(
+      "selected failed",
+    );
+    expect(otherGenerate).not.toHaveBeenCalled();
   });
 });

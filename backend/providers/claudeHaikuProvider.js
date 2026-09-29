@@ -57,7 +57,10 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
 
       return response.ok;
     } catch (error) {
-      logger.warn(`Claude Haiku unavailable: ${error.message}`);
+      logger.warn(
+        "Claude availability check failed:",
+        error?.name || "UnknownError",
+      );
       return false;
     }
   }
@@ -122,7 +125,7 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
 
       return "No response generated";
     } catch (error) {
-      logger.error("Claude Haiku call failed:", error);
+      logger.error("Claude Haiku call failed:", error?.name || "UnknownError");
 
       // Provide more specific error messages
       if (error.message.includes("401")) {

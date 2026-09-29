@@ -119,7 +119,7 @@ app.use("*", (req, res) => {
 
 // Error handler
 app.use((err, req, res) => {
-  logger.error(err.stack);
+  logger.error("Unhandled request error:", err?.name || "UnknownError");
   res.status(500).json({ error: "Something went wrong!" });
 });
 

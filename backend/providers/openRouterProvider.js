@@ -49,7 +49,10 @@ export class OpenRouterProvider extends BaseLLMProvider {
 
       return response.ok;
     } catch (error) {
-      logger.warn(`OpenRouter check failed: ${error.message}`);
+      logger.warn(
+        "OpenRouter availability check failed:",
+        error?.name || "UnknownError",
+      );
       return false;
     }
   }
@@ -118,7 +121,10 @@ export class OpenRouterProvider extends BaseLLMProvider {
 
       return text.trim();
     } catch (error) {
-      logger.error("OpenRouter API call failed:", error);
+      logger.error(
+        "OpenRouter API call failed:",
+        error?.name || "UnknownError",
+      );
 
       if (
         error.message.includes("401") ||

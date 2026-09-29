@@ -7,6 +7,33 @@ const router = express.Router();
 // Session data is stored per-user via express-session
 
 // SMART on FHIR configuration
+function normalizeIssuer(issuer) {
+  if (typeof issuer !== "string" || issuer.length > 2048) {
+    return null;
+  }
+
+  try {
+    const url = new URL(issuer);
+    const isLoopback = ["localhost", "127.0.0.1", "[::1]"].includes(
+      url.hostname,
+    );
+    if (
+      (url.protocol !== "https:" &&
+        !(url.protocol === "http:" && isLoopback)) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    ) {
+      return null;
+    }
+    url.pathname = url.pathname.replace(/\/+$/, "");
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
 const SMART_CONFIG = {
   // Default to SMART Health IT sandbox
   clientId: process.env.SMART_CLIENT_ID || "your-client-id",
@@ -24,6 +51,13 @@ const SMART_CONFIG = {
     process.env.SMART_FHIR_BASE_URL ||
     "https://launch.smarthealthit.org/v/r4/fhir",
 };
+
+const allowedIssuers = new Set(
+  (process.env.SMART_ALLOWED_ISSUERS || SMART_CONFIG.fhirBaseUrl)
+    .split(",")
+    .map((issuer) => normalizeIssuer(issuer.trim()))
+    .filter(Boolean),
+);
 
 /**
  * Generate PKCE code verifier and challenge
@@ -43,6 +77,14 @@ function generatePKCE() {
 router.post("/launch", (req, res) => {
   try {
     const { iss, launch } = req.body;
+    const normalizedIssuer = normalizeIssuer(iss || SMART_CONFIG.fhirBaseUrl);
+    if (!normalizedIssuer || !allowedIssuers.has(normalizedIssuer)) {
+      return res.status(400).json({
+        error: "FHIR issuer is not allowed",
+        message:
+          "Configure the exact HTTPS FHIR base URL in SMART_ALLOWED_ISSUERS.",
+      });
+    }
 
     // Generate state and PKCE parameters
     const state = crypto.randomBytes(16).toString("hex");
@@ -52,7 +94,7 @@ router.post("/launch", (req, res) => {
     req.session.sessions = req.session.sessions || {};
     req.session.sessions[state] = {
       codeVerifier,
-      iss: iss || SMART_CONFIG.fhirBaseUrl,
+      iss: normalizedIssuer,
       launch,
       timestamp: Date.now(),
     };
@@ -81,7 +123,7 @@ router.post("/launch", (req, res) => {
       message: "Redirect user to authUrl to begin OAuth2 flow",
     });
   } catch (error) {
-    logger.error("Auth launch error:", error);
+    logger.error("SMART launch setup failed:", error?.name || "UnknownError");
     res.status(500).json({ error: "Failed to initiate OAuth2 flow" });
   }
 });
@@ -143,11 +185,12 @@ router.get("/callback", async (req, res) => {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      logger.error("Token exchange failed:", errorData);
+      logger.warn(
+        "SMART token exchange was rejected by the authorization server",
+      );
       return res.status(400).json({
         error: "Token exchange failed",
-        details: errorData,
+        details: "The authorization server rejected the exchange.",
       });
     }
 
@@ -174,7 +217,7 @@ router.get("/callback", async (req, res) => {
       expiresIn: tokenData.expires_in,
     });
   } catch (error) {
-    logger.error("Auth callback error:", error);
+    logger.error("SMART callback failed:", error?.name || "UnknownError");
     res.status(500).json({ error: "Authentication failed" });
   }
 });
