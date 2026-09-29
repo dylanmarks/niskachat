@@ -29,6 +29,10 @@ jobs:
         id: frontend-tests
         run: npm run test:ci
 
+      - name: Build production application
+        id: build
+        run: npm run build
+
       - name: Run Backend Jest unit tests
         id: backend-tests
         run: npm run test:backend
@@ -41,4 +45,5 @@ jobs:
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
           echo "| Lint and formatting | \`${{ steps.lint.outcome }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend tests | \`${{ steps.frontend-tests.outcome }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production build | \`${{ steps.build.outcome }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Backend tests | \`${{ steps.backend-tests.outcome }}\` |" >> $GITHUB_STEP_SUMMARY

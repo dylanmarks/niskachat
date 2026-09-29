@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
@@ -25,6 +26,7 @@ import { FHIRTask, TaskNote } from '../../models/fhir-task.interface';
 import { logger } from '../../utils/logger';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-task-comments',
   standalone: true,
   imports: [

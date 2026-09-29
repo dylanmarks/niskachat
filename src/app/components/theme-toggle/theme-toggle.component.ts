@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  inject,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -7,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Theme, ThemeService } from '../../services/theme.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-theme-toggle',
   standalone: true,
   imports: [

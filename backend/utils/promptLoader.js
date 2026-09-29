@@ -29,7 +29,9 @@ export function loadPrompt(promptName) {
     return promptContent;
   } catch (error) {
     console.error(`Failed to load prompt '${promptName}':`, error.message);
-    throw new Error(`Prompt template '${promptName}' not found`);
+    throw new Error(`Prompt template '${promptName}' not found`, {
+      cause: error,
+    });
   }
 }
 

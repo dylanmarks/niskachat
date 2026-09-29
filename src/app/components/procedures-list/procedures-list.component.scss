@@ -119,7 +119,7 @@
     max-width: 300px;
     color: var(--niska-on-surface);
     font-weight: 500;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
 
     &.selected {
       color: #2e7d32;
@@ -275,7 +275,7 @@
       color: #333;
       font-weight: 400;
       font-size: 0.875rem;
-      word-wrap: break-word;
+      overflow-wrap: break-word;
 
       &.status-completed {
         color: #2e7d32;
@@ -439,13 +439,13 @@
 // Screen reader only content
 .sr-only {
   position: absolute;
+  clip-path: inset(50%);
   margin: -1px;
+  border: 0;
   padding: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
   white-space: nowrap;
 }
 

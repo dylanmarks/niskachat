@@ -53,7 +53,9 @@ describe('FhirClientService', () => {
   let readySpy: jasmine.Spy;
 
   beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- this focused mock omits unrelated Client members.
     initSpy = spyOn(oauth2, 'init').and.resolveTo(mockFhirClient as never);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- this focused mock omits unrelated Client members.
     readySpy = spyOn(oauth2, 'ready').and.resolveTo(mockFhirClient as never);
     TestBed.configureTestingModule({});
     service = TestBed.inject(FhirClientService);

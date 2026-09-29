@@ -131,15 +131,21 @@ export class ClaudeHaikuProvider extends BaseLLMProvider {
       if (error.message.includes("401")) {
         throw new Error(
           "Claude API authentication failed. Please check your ANTHROPIC_API_KEY.",
+          { cause: error },
         );
       } else if (error.message.includes("429")) {
         throw new Error(
           "Claude API rate limit exceeded. Please try again later.",
+          { cause: error },
         );
       } else if (error.message.includes("timeout")) {
-        throw new Error("Claude API request timed out. Please try again.");
+        throw new Error("Claude API request timed out. Please try again.", {
+          cause: error,
+        });
       } else {
-        throw new Error(`Claude Haiku error: ${error.message}`);
+        throw new Error(`Claude Haiku error: ${error.message}`, {
+          cause: error,
+        });
       }
     }
   }

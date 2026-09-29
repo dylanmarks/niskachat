@@ -88,6 +88,7 @@ export class OllamaProvider extends BaseLLMProvider {
       if (error.name === "TimeoutError" || error.message.includes("timeout")) {
         throw new Error(
           "Ollama generation timed out. Local hardware may be under heavy load.",
+          { cause: error },
         );
       }
       throw error;

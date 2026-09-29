@@ -64,7 +64,6 @@
 .patient-card {
   mat-card-header {
     margin: 0;
-    margin-bottom: 0;
     border-radius: var(--niska-radius-md) var(--niska-radius-md) 0 0;
     background: linear-gradient(
       135deg,
@@ -278,12 +277,12 @@
 
       pre {
         margin: 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
         color: var(--niska-on-surface);
         font-size: var(--niska-font-size-sm);
         line-height: var(--niska-line-height-relaxed);
         font-family: inherit;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
       }
     }
 

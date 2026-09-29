@@ -142,14 +142,14 @@
         margin-bottom: var(--niska-spacing-sm);
 
         .task-title {
+          flex: 1;
           margin: 0;
+          min-width: 0;
           color: var(--niska-on-surface);
           font-weight: var(--niska-font-weight-semibold);
           font-size: 1.125rem;
           line-height: 1.4;
-          word-wrap: break-word;
-          flex: 1;
-          min-width: 0;
+          overflow-wrap: break-word;
 
           &.completed-text {
             color: var(--niska-on-surface-variant);
@@ -311,7 +311,7 @@
       color: var(--niska-on-surface);
       font-size: var(--niska-font-size-sm);
       line-height: 1.5;
-      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
   }
 }

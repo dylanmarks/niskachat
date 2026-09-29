@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   InjectionToken,
   OnDestroy,
@@ -25,6 +26,7 @@ export const BROWSER_WINDOW = new InjectionToken<Window>('BROWSER_WINDOW', {
 });
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-smart-launch',
   standalone: true,
   imports: [

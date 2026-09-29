@@ -376,21 +376,21 @@ mat-card {
 input[type="file"] {
   position: absolute;
   opacity: 0;
+  clip-path: inset(50%);
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
 }
 
 // Screen reader only content
 .sr-only {
   position: absolute;
+  clip-path: inset(50%);
   margin: -1px;
+  border: 0;
   padding: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
   white-space: nowrap;
 }

@@ -35,6 +35,8 @@ export default config(
     },
     processor: processInlineTemplates,
     rules: {
+      // Existing mutable, Zone-based components retain Eager rendering after Angular 22.
+      "@angular-eslint/prefer-on-push-component-change-detection": "off",
       "@angular-eslint/directive-selector": [
         "error",
         {
@@ -77,7 +79,10 @@ export default config(
       ...ngConfigs.templateAccessibility,
       prettierConfig,
     ],
-    rules: {},
+    rules: {
+      // Migrate existing structural-directive templates separately from the toolchain upgrade.
+      "@angular-eslint/template/prefer-control-flow": "off",
+    },
   },
   {
     files: ["**/*.json"],
@@ -100,6 +105,10 @@ export default config(
       // Jasmine spies intentionally expose methods as unbound functions in
       // expectations; these rules produce false positives for that pattern.
       "@typescript-eslint/unbound-method": "off",
+      // Jasmine's dynamic spies and matchers do not retain useful type information here.
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
       "jasmine/prefer-toHaveBeenCalledWith": "off",
       "jasmine/no-unsafe-spy": "off",
     },

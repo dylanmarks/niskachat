@@ -123,6 +123,7 @@ describe('PatientSummaryComponent', () => {
       mockFhirClient.isAuthenticated.and.returnValue(true);
       mockFhirClient.getPatient.and.returnValue(of(mockPatient));
       spyOn(
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- the private method needs a test-only public view.
         component as unknown as {
           generateCompressedSummary: () => Promise<void>;
         },
@@ -147,6 +148,7 @@ describe('PatientSummaryComponent', () => {
       mockFhirClient.isAuthenticated.and.returnValue(true);
       mockFhirClient.getPatient.and.returnValue(of(mockPatient));
       spyOn(
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- the private method needs a test-only public view.
         component as unknown as {
           generateCompressedSummary: () => Promise<void>;
         },

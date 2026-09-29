@@ -145,6 +145,7 @@ export class GeminiVertexProvider extends BaseLLMProvider {
       ) {
         throw new Error(
           "Gemini API authentication failed. Please check your GEMINI_API_KEY.",
+          { cause: error },
         );
       } else if (
         error.message.includes("429") ||
@@ -152,11 +153,16 @@ export class GeminiVertexProvider extends BaseLLMProvider {
       ) {
         throw new Error(
           "Gemini API rate limit or quota exceeded. Please try again later.",
+          { cause: error },
         );
       } else if (error.message.includes("timeout")) {
-        throw new Error("Gemini API request timed out. Please try again.");
+        throw new Error("Gemini API request timed out. Please try again.", {
+          cause: error,
+        });
       } else {
-        throw new Error(`Gemini Vertex error: ${error.message}`);
+        throw new Error(`Gemini Vertex error: ${error.message}`, {
+          cause: error,
+        });
       }
     }
   }

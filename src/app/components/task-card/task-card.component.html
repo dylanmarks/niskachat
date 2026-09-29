@@ -105,7 +105,13 @@
         [attr.aria-label]="'Toggle comments for task ' + task.code.text"
       >
         <mat-icon>{{ showComments ? "expand_less" : "expand_more" }}</mat-icon>
-        {{ showComments ? 'Hide Comments' : (hasComments() ? `Show Comments (${getCommentCount()})` : 'Add Comment') }}
+        {{
+          showComments
+            ? "Hide Comments"
+            : hasComments()
+              ? `Show Comments (${getCommentCount()})`
+              : "Add Comment"
+        }}
       </button>
 
       <app-task-comments

@@ -132,6 +132,7 @@ export class OpenRouterProvider extends BaseLLMProvider {
       ) {
         throw new Error(
           "OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY.",
+          { cause: error },
         );
       } else if (
         error.message.includes("429") ||
@@ -139,9 +140,12 @@ export class OpenRouterProvider extends BaseLLMProvider {
       ) {
         throw new Error(
           "OpenRouter rate limit exceeded or credit exhausted. Please check your account.",
+          { cause: error },
         );
       } else if (error.message.includes("timeout")) {
-        throw new Error("OpenRouter API request timed out. Please try again.");
+        throw new Error("OpenRouter API request timed out. Please try again.", {
+          cause: error,
+        });
       }
 
       throw error;

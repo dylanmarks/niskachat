@@ -90,7 +90,7 @@ without claiming production compliance it does not provide.
 
 ### Requirements
 
-- Node.js 22
+- Node.js 22.22.3+ or 24.15.0+ (see `package.json` for supported versions)
 - npm
 
 ### Install and run

@@ -114,8 +114,8 @@
         position: relative;
         padding: var(--niska-spacing-md) var(--niska-spacing-lg);
         max-width: 80%;
-        word-wrap: break-word;
         line-height: var(--niska-line-height-normal);
+        overflow-wrap: break-word;
 
         .message-text {
           // Style for markdown or HTML content

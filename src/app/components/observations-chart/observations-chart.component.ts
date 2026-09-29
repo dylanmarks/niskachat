@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   inject,
@@ -74,6 +75,7 @@ interface ObservationChartData {
 type GroupedObservations = Record<string, Observation[]>;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-observations-chart',
   standalone: true,
   imports: [
