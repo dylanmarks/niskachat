@@ -44,7 +44,7 @@ describe('ChatComponent', () => {
       destination: 'http://127.0.0.1:11434',
       processingBoundary:
         'Ollama-compatible endpoint; confirm where that endpoint runs',
-      available: true,
+      configured: true,
     };
     httpMock = TestBed.inject(HttpTestingController);
     fhirClientService = fhirClientSpy;
@@ -269,6 +269,23 @@ describe('ChatComponent', () => {
         'No complete answer was returned',
       );
       expect(component.isLoading).toBe(false);
+    });
+
+    it('does not block a send when provider status could not be loaded', async () => {
+      component.providerDisclosure = null;
+      component.currentMessage = 'Summarize this synthetic record';
+      const fetchSpy = window.fetch as jasmine.Spy;
+      fetchSpy.and.resolveTo(
+        new Response(
+          `event: done\ndata: ${JSON.stringify({ summary: 'Synthetic summary.' })}\n\n`,
+          { status: 200 },
+        ),
+      );
+
+      await component.sendMessage();
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy.calls.mostRecent().args[0]).toBe('/api/llm/stream');
     });
 
     it('handles a network failure without exposing provider error details', async () => {

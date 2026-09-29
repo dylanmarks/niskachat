@@ -74,11 +74,13 @@ Run the provider smoke test only with synthetic input:
 npm run test-providers
 ```
 
-Only `LLM_PROVIDER` is used. If it is unavailable or fails, the request fails;
-clinical context is never retried through another provider. `/api/llm/status`
-reports the selected model, endpoint origin, availability, and whether it is an
-external service or an Ollama-compatible endpoint. Endpoint origin is a routing
-label, not a data-residency or contract guarantee. The chat and patient-summary
+Only `LLM_PROVIDER` is used. If it is unconfigured or the request fails, the
+request fails; clinical context is never retried through another provider.
+`/api/llm/status` reports configuration only and never sends a test prompt. The
+first model request is the user's chat or summary request. Status reports the
+selected model, endpoint origin, configuration, and whether it is an external
+service or an Ollama-compatible endpoint. Endpoint origin is a routing label,
+not a data-residency or contract guarantee. The chat and patient-summary
 flows display that destination before sending clinical context. The user's send
 or summary action triggers the call without a separate confirmation dialog.
 

@@ -117,18 +117,20 @@ describe("LLMProviderFactory streamResponse", () => {
     expect(chunks).toHaveLength(0);
   });
 
-  it("does not select an alternative when the configured provider is unavailable", async () => {
+  it("does not probe provider availability before the user's request", async () => {
     const factory = new LLMProviderFactory();
     factory.providers.clear();
     const selectedProvider = new MockProvider("selected");
-    const alternateProvider = new MockProvider("alternate");
-    const alternateAvailability = jest.spyOn(alternateProvider, "isAvailable");
+    const selectedAvailability = jest.spyOn(selectedProvider, "isAvailable");
     factory.providers.set("selected", selectedProvider);
-    factory.providers.set("alternate", alternateProvider);
-    factory.preferredProvider = "missing";
+    factory.preferredProvider = "selected";
 
-    await expect(factory.getBestProvider()).resolves.toBeNull();
-    expect(alternateAvailability).not.toHaveBeenCalled();
+    expect(factory.getConfiguredProvider()).toBe(selectedProvider);
+    await expect(factory.hasConfiguredProvider()).resolves.toBe(true);
+    const status = await factory.getProvidersStatus();
+    expect(status.providers.selected.configured).toBe(true);
+    expect(status.providers.selected).not.toHaveProperty("available");
+    expect(selectedAvailability).not.toHaveBeenCalled();
   });
 
   it("should throw if no providers are available", async () => {
@@ -140,7 +142,7 @@ describe("LLMProviderFactory streamResponse", () => {
       for await (const _chunk of factory.streamResponse("test prompt")) {
         // no-op
       }
-    }).rejects.toThrow("Configured LLM provider is unavailable");
+    }).rejects.toThrow("Configured LLM provider is not configured");
   });
 });
 

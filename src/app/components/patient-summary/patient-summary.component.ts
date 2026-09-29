@@ -373,24 +373,6 @@ export class PatientSummaryComponent implements OnInit, OnDestroy {
         }
       }
 
-      const providerStatus = await firstValueFrom(
-        this.http.get<{
-          llmAvailable: boolean;
-          preferredProvider?: string;
-          providers?: Record<
-            string,
-            { model?: string | null; destination?: string; available?: boolean }
-          >;
-        }>('/api/llm/status'),
-      );
-      const selectedProvider = providerStatus.preferredProvider
-        ? providerStatus.providers?.[providerStatus.preferredProvider]
-        : undefined;
-      if (!providerStatus.llmAvailable || !selectedProvider) {
-        this.summaryError = 'The configured AI provider is unavailable.';
-        return;
-      }
-
       const sourceReferences = bundle.entry
         .map(({ resource }) =>
           resource.id ? `${resource.resourceType}/${resource.id}` : null,

@@ -315,7 +315,7 @@ describe("Summarization API", () => {
       expect(response.body).toHaveProperty("error", "Invalid FHIR Bundle");
     });
 
-    it("should return 503 when no LLM providers are available", async () => {
+    it("should return 503 when the selected LLM provider is not configured", async () => {
       const response = await request(app)
         .post("/llm/stream")
         .send({ bundle: mockFhirBundle, query: "Recommend next steps" })
@@ -382,12 +382,11 @@ describe("Summarization API", () => {
     it("should return LLM status", async () => {
       const response = await request(app).get("/llm/status").expect(200);
 
-      expect(response.body).toHaveProperty("llmAvailable");
+      expect(response.body).toHaveProperty("llmConfigured");
       expect(response.body).toHaveProperty("providers");
       expect(response.body).toHaveProperty("timestamp");
-      // Since LLM is likely not available in test environment,
-      // we expect llmAvailable to be false
-      expect(response.body.llmAvailable).toBe(false);
+      // No provider credentials should be configured in the test environment.
+      expect(response.body.llmConfigured).toBe(false);
     });
   });
 });

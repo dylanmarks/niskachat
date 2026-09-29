@@ -79,7 +79,7 @@ async function testProviders() {
   // Test the factory's best provider selection
   logger.info("🎯 Testing Best Provider Selection:");
   try {
-    const hasProvider = await factory.hasAvailableProvider();
+    const hasProvider = await factory.hasConfiguredProvider();
     logger.info(`Has available provider: ${hasProvider ? "✅" : "❌"}`);
 
     if (hasProvider) {

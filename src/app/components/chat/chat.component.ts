@@ -67,11 +67,11 @@ interface ProviderDisclosure {
   model: string | null;
   destination: string;
   processingBoundary: string;
-  available: boolean;
+  configured: boolean;
 }
 
 interface ProviderStatusResponse {
-  llmAvailable: boolean;
+  llmConfigured: boolean;
   preferredProvider?: string;
   providers?: Record<string, ProviderDisclosure>;
 }
@@ -143,9 +143,7 @@ export class ChatComponent implements OnInit {
       const selected = status.preferredProvider
         ? status.providers?.[status.preferredProvider]
         : undefined;
-      this.providerDisclosure = selected
-        ? { ...selected, available: status.llmAvailable && selected.available }
-        : null;
+      this.providerDisclosure = selected || null;
     } catch {
       this.providerDisclosure = null;
     } finally {
@@ -164,15 +162,7 @@ export class ChatComponent implements OnInit {
     }
 
     const messageText = this.currentMessage.trim();
-    if (!messageText || this.isLoading || this.providerStatusLoading) {
-      return;
-    }
-
-    if (!this.providerDisclosure?.available) {
-      this.addMessage(
-        'The configured model provider is unavailable. No patient context was sent.',
-        false,
-      );
+    if (!messageText || this.isLoading) {
       return;
     }
 

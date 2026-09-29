@@ -64,17 +64,13 @@ export class LLMProviderFactory {
    *
    * Clinical context must never be sent to a different provider as an implicit
    * retry: each provider has a distinct data-processing boundary.
-   * @returns {Promise<BaseLLMProvider|null>}
+   * @returns {BaseLLMProvider|null}
    */
-  async getBestProvider() {
+  getConfiguredProvider() {
     const provider = this.providers.get(this.preferredProvider);
-    if (
-      !provider ||
-      !provider.isConfigured() ||
-      !(await provider.isAvailable())
-    ) {
+    if (!provider || !provider.isConfigured()) {
       logger.warn(
-        `Configured LLM provider is unavailable: ${this.preferredProvider}`,
+        `Configured LLM provider is not configured: ${this.preferredProvider}`,
       );
       return null;
     }
@@ -89,10 +85,10 @@ export class LLMProviderFactory {
    * @returns {Promise<{response: string, provider: string}>}
    */
   async generateResponse(prompt, options = {}) {
-    const provider = await this.getBestProvider();
+    const provider = this.getConfiguredProvider();
     if (!provider) {
       throw new Error(
-        `Configured LLM provider is unavailable: ${this.preferredProvider}`,
+        `Configured LLM provider is not configured: ${this.preferredProvider}`,
       );
     }
 
@@ -111,10 +107,10 @@ export class LLMProviderFactory {
    * @yields {{type: string, text?: string, provider?: string}}
    */
   async *streamResponse(prompt, options = {}) {
-    const provider = await this.getBestProvider();
+    const provider = this.getConfiguredProvider();
     if (!provider) {
       throw new Error(
-        `Configured LLM provider is unavailable: ${this.preferredProvider}`,
+        `Configured LLM provider is not configured: ${this.preferredProvider}`,
       );
     }
 
@@ -139,19 +135,11 @@ export class LLMProviderFactory {
       return status;
     }
 
-    let available = false;
-    try {
-      available = provider.isConfigured() && (await provider.isAvailable());
-    } catch {
-      available = false;
-    }
-
     const destination = this.getProviderDestination(provider);
     status.providers[this.preferredProvider] = {
       provider: this.preferredProvider,
       model: provider.model || null,
       configured: provider.isConfigured(),
-      available,
       destination,
       processingBoundary:
         this.preferredProvider === "ollama"
@@ -179,11 +167,13 @@ export class LLMProviderFactory {
   }
 
   /**
-   * Check if any provider is available
+   * Check whether the explicitly selected provider is configured. This does
+   * not probe the network or send a test prompt; the user request is the first
+   * model request.
    * @returns {Promise<boolean>}
    */
-  async hasAvailableProvider() {
-    const provider = await this.getBestProvider();
+  async hasConfiguredProvider() {
+    const provider = this.getConfiguredProvider();
     return provider !== null;
   }
 }

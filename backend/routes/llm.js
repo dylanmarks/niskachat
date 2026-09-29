@@ -636,7 +636,7 @@ router.post("/stream", async (req, res) => {
       req.body.sourceReferences || [],
     );
     const llmFactory = getLLMProviderFactory();
-    const hasProvider = await llmFactory.hasAvailableProvider();
+    const hasProvider = await llmFactory.hasConfiguredProvider();
 
     if (!hasProvider) {
       return res.status(503).json({
@@ -813,7 +813,7 @@ router.post("/", async (req, res) => {
 
     // Check if any LLM provider is available
     const llmFactory = getLLMProviderFactory();
-    const hasProvider = await llmFactory.hasAvailableProvider();
+    const hasProvider = await llmFactory.hasConfiguredProvider();
 
     if (hasProvider) {
       try {
@@ -999,14 +999,14 @@ router.get("/status", async (req, res) => {
       providersStatus.providers[providersStatus.preferredProvider] || null;
 
     res.json({
-      llmAvailable: selectedProvider?.available || false,
+      llmConfigured: selectedProvider?.configured || false,
       ...providersStatus,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     logger.error("Status check failed:", error?.name || "UnknownError");
     res.json({
-      llmAvailable: false,
+      llmConfigured: false,
       fallbackEnabled: false,
       timestamp: new Date().toISOString(),
     });

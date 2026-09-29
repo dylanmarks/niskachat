@@ -13,10 +13,11 @@ code does and what it does not establish.
    endpoint. Sending a chat message or requesting a summary triggers the call
    without a separate confirmation dialog. The UI does not de-identify data;
    this demo is intended for synthetic records only.
-3. The backend sends the request only to `LLM_PROVIDER`. If that provider is
-   unavailable or fails, the request fails; the backend does not send it to a
-   second provider. The status endpoint exposes the selected endpoint origin,
-   not provider contract, retention, or residency guarantees.
+3. The status check reports configuration without probing the network or
+   sending a test prompt. The user's chat or summary request is sent only to
+   `LLM_PROVIDER`. If it fails, the backend does not retry through a second
+   provider. Status does not establish runtime availability, provider contract,
+   retention, or residency guarantees.
 4. `ollama` identifies an Ollama-compatible endpoint. It does not prove that
    inference is local: `OLLAMA_BASE_URL` may point to another host.
 

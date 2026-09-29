@@ -17,19 +17,19 @@
       <span>Checking the configured model provider…</span>
     </ng-container>
     <ng-container *ngIf="!providerStatusLoading && providerDisclosure as flow">
-      <span *ngIf="flow.available">
+      <span *ngIf="flow.configured">
         {{ flow.provider }}
         <span *ngIf="flow.model">· {{ flow.model }}</span>
         · {{ flow.destination }}
       </span>
-      <span *ngIf="!flow.available">
-        The configured provider is unavailable.
+      <span *ngIf="!flow.configured">
+        The selected provider is not configured.
       </span>
       <small>{{ flow.processingBoundary }}</small>
     </ng-container>
     <span *ngIf="!providerStatusLoading && !providerDisclosure">
-      Provider details could not be loaded. Requests may fail; no alternate
-      provider will receive the data.
+      Provider details could not be loaded. You can still try the request; no
+      alternate provider will receive the data.
     </span>
     <small>
       Sending a message sends its question, recent chat, and current FHIR
